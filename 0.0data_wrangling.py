@@ -1,8 +1,10 @@
+# %%
 import sys
 import enlighten
 import pandas as pd
 from os.path import join, exists
 
+# %%
 # assembling a dictionary of data structure shortnames and columns of interest
 variables = {
     "abcd_smrip10201": [
@@ -2003,8 +2005,14 @@ variables = {
         "demo_race_a_p___24",
         "demo_race_a_p___25",
     ],
+    "abcd_ssphp01": ["pds_p_ss_female_category_2", 
+        "pds_p_ss_male_category_2"]
 }
 
+# %%
+print(variables.keys())
+
+# %%
 # read in csvs of interest one a time so you don't crash your computer
 # grab the vars you want, then clear the rest and read in the next
 # make one "missing" column for each modality if, like RSI, a subj is missing
@@ -2020,6 +2028,7 @@ changes = ['abcd_smrip10201', 'abcd_smrip20201', 'abcd_smrip30201',
            'abcd_drsip101', 'abcd_drsip201', 'abcd_mrirsfd01', 
            'abcd_mrirstv02', 'abcd_betnet02', 'mrirscor02', 'abcd_tbss01']
 
+# %%
 # column names to retain in the mega dataset
 qc_vars = [
     "imgincl_dmri_include",
@@ -2031,6 +2040,7 @@ qc_vars = [
     "interview_age",
 ]
 
+# %%
 # initialize the progress bars
 manager = enlighten.get_manager()
 tocks = manager.counter(total=len(variables.keys()), desc='Data Structures', unit='data structures')
@@ -2050,13 +2060,16 @@ for key in variables.keys():
             temp_df = pd.read_csv(path, index_col="subjectkey", header=0)
             for column in variables[key]:
                 try:
+                    # grab baselines and 2yfu values
                     df[f'{column}.baseline_year_1_arm_1'] = temp_df[f'{column}.baseline_year_1_arm_1'].copy()
                     df[f'{column}.2_year_follow_up_y_arm_1'] = temp_df[f'{column}.2_year_follow_up_y_arm_1'].copy()
                     if column not in qc_vars:
+                        # and the change score, if it's not a qc variable
                         df[f'{column}.change_score'] = temp_df[f'{column}.change_score'].copy()
                     else:
                         pass
                 except:
+                    # keep track of missing variables
                     missing[key].append(column)
                 ticks.update()
             ticks.refresh()
@@ -2068,6 +2081,10 @@ for key in variables.keys():
         if exists(path):
             ticks = manager.counter(total=len(variables[key]), desc=key, unit='variables')
             temp_df = pd.read_csv(path, index_col="subjectkey", header=0, skiprows=[1])
+
+            # original ABCD data structures are in long form, with eventname as a column
+            # but I want the data in wide form, only one row per participant
+            # and separate columns for values collected at different timepoints/events
             base_df = temp_df[temp_df["eventname"] == "baseline_year_1_arm_1"].copy()
             y2fu_df = temp_df[temp_df["eventname"] == "2_year_follow_up_y_arm_1"].copy()
             temp_df = None
@@ -2078,13 +2095,21 @@ for key in variables.keys():
             ticks.refresh()
     new_columns = len(df.columns) - old_columns
     print(f"\t{new_columns} variables added!")
+    if len(missing[key]) >= 1:
+        print(f"The following {len(missing[key])}variables could not be added:\n{missing[key]}")
+    else:
+        print("All variables were successfully added.")
     temp_df = None
     base_df = None
     y2fu_df = None
     tocks.update()
 
+
+# how big is this thing?
 print(f"Full dataframe is {sys.getsizeof(df) / 1000000000}GB.")
 
+# write out resulting dataframe
 df.to_csv(
     "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/data/data.csv"
 )
+# %%
