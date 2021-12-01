@@ -1618,7 +1618,6 @@ variables = {
         "rsfmri_var_scs_pallidumrh",
         "rsfmri_var_scs_hpusrh",
         "rsfmri_var_scs_amygdalarh",
-        "rsfmri_var_scs_lesionrh",
         "rsfmri_var_scs_aarh",
         "rsfmri_var_scs_ventraldcrh",
     ],
@@ -1973,7 +1972,7 @@ variables = {
         "nihtbx_picture_uncorrected",
         "nihtbx_reading_uncorrected",
     ],
-    "abcd_mri01": [
+    "abcd_mri01": ["sex",
         "mri_info_manufacturer",
         "interview_date"
     ],
@@ -2098,7 +2097,7 @@ for key in variables.keys():
     if len(missing[key]) >= 1:
         print(f"The following {len(missing[key])}variables could not be added:\n{missing[key]}")
     else:
-        print("All variables were successfully added.")
+        print(f"All variables were successfully added from {key}.")
     temp_df = None
     base_df = None
     y2fu_df = None

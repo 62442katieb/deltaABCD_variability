@@ -34,6 +34,8 @@ for structure in structures:
                             header=0, skiprows=[1])
     temp_df['interview_age_yrs'] = temp_df['interview_age'] / 12
     float_vars = list(temp_df.dtypes[temp_df.dtypes == float].keys())
+    int_vars = list(temp_df.dtypes[temp_df.dtypes == int].keys())
+    num_vars = list(set(float_vars + int_vars) - set(img_qc_vars))
     base_df = temp_df[temp_df['eventname'] == 'baseline_year_1_arm_1']
     y2fu_df = temp_df[temp_df['eventname'] == '2_year_follow_up_y_arm_1']
     change_df = pd.DataFrame(index=base_df.index)
@@ -54,8 +56,8 @@ for structure in structures:
                         pass
     else:
         pass
-    ticks = manager.counter(total=len(float_vars), desc=structure, unit='variables')
-    for var in float_vars:
+    ticks = manager.counter(total=len(num_vars), desc=structure, unit='variables')
+    for var in num_vars:
         for i in base_df.index:
             try:
                 base = base_df.loc[i, var]
