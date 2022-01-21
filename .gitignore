@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+.DS_Store
+
 # C extensions
 *.so
 
@@ -130,3 +132,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#the trash example images I made for my OHBM abstracts
+**.png
