@@ -92,6 +92,7 @@ estimator = BayesianGaussianMixture(
 
 # hyper parameter tuning
 for atlas in atlases.keys():
+    print(atlas)
     data = atlases[atlas]
     # need train test split
     train, test = train_test_split(data, train_size=0.5)
@@ -100,7 +101,8 @@ for atlas in atlases.keys():
     search = HalvingGridSearchCV(estimator, 
                                 parameter_grid, 
                                 factor=3, 
-                                cv=10, 
+                                cv=10,
+                                verbose=2, 
                                 n_jobs=-1).fit(train_df)
     best_params = pd.Series(search.best_estimator_.get_params())
     best_params['test_score'] = search.best_estimator_.score(test_df)
@@ -129,87 +131,3 @@ for atlas in atlases.keys():
     labels_df.to_csv(join(PROJ_DIR, 
                         OUTP_DIR, 
                         f'bgmm_{atlas}_labels.csv'))
-
-
-# In[ ]:
-
-
-# outdated
-# parameter iterating here is replaced by halving grid search above
-# yay hyperparameter tuning
-
-for atlas in atlases.keys():
-    manager = enlighten.get_manager()
-    tocks = manager.counter(total=max_k-2, 
-                            desc='Number of Components', 
-                            unit='k')
-
-    for k in range(2,max_k+1):
-        ticks = manager.counter(total=n_iter * k_split, desc='Iterations', unit='iters')
-        for i in range(0,n_iter):
-            # should be doing k-folds cv instead of split-half
-            # need to adress this in the prereg, too
-            data = atlases[atlas]
-            all_ppts = list(data.index)
-            kf = KFold(n_splits=k_split)
-            lls = []
-            j = 0
-            for train, test in kf.split(all_ppts):
-                train_df = data.iloc[train]
-                test_df = data.iloc[test]
-                bgmm = BayesianGaussianMixture(n_components=k,
-                                               weight_concentration_prior_type='dirichlet_process',
-                                               weight_concentration_prior=10**4,
-                                               max_iter=1000).fit(train_df)
-                log_likelihood.at[(i,j),k] = bgmm.score(test_df)
-                if bgmm.converged_ == False:
-                    print(k, f'iteration {i}', 'did not converge')
-                ticks.update()
-                j += 1
-
-        ticks.close()
-        tocks.update()
-        #label = bgmm.predict(imputed_cdk)
-        #labels[k] = pd.Series(label, index=imputed_cdk.index)
-    ll_long = log_likelihood.melt(value_vars=list(range(2,max_k+1)), 
-                              value_name='Log Likelihood', 
-                              var_name='k')
-    ll_long['k'] = ll_long['k'] - 2
-    fig,ax = plt.subplots(figsize=(10,7))
-    sns.lineplot(x='k', 
-                 y='Log Likelihood', 
-                 data=ll_long, 
-                 ax=ax)
-    sns.stripplot(data=log_likelihood, dodge=True, ax=ax)
-    plt.tight_layout()
-    fig.savefig(f'../figures/gmm_{atlas}_loglikelihood.png', dpi=400)
-
-
-# In[12]:
-
-
-ll_long = log_likelihood.melt(value_vars=[2,3,4,5,6,7,8,9], 
-                          value_name='Log Likelihood', 
-                          var_name='k')
-ll_long['k'] = ll_long['k'] - 2
-fig,ax = plt.subplots(figsize=(10,7))
-sns.lineplot(x='k', 
-             y='Log Likelihood', 
-             data=ll_long, 
-             ax=ax)
-sns.stripplot(data=log_likelihood, dodge=True, ax=ax)
-plt.tight_layout()
-fig.savefig(f'../figures/gmm_{atlas}_loglikelihood.png', dpi=400)
-
-
-# In[101]:
-
-
-pd.Series(g.predict(data), index=data.index)
-
-
-# In[ ]:
-
-
-
-
