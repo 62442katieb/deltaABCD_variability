@@ -1978,38 +1978,42 @@ variables = {
         "rel_family_id", 
         "rel_group_id", 
         "rel_ingroup_order", 
-        "rel_relationship"
+        "rel_relationship",
+        "race_ethnicity"
     ],
     "abcd_lt01": ["site_id_l"],
-    "pdem02": ["demo_prnt_ethn_v2",
+    "pdem02": [#"demo_prnt_ethn_v2",
         "demo_prnt_marital_v2",
         "demo_prnt_ed_v2",
         "demo_comb_income_v2",
-        "demo_race_a_p___10",
-        "demo_race_a_p___11",
-        "demo_race_a_p___12",
-        "demo_race_a_p___13",
-        "demo_race_a_p___14",
-        "demo_race_a_p___15",
-        "demo_race_a_p___16",
-        "demo_race_a_p___17",
-        "demo_race_a_p___18",
-        "demo_race_a_p___19",
-        "demo_race_a_p___20",
-        "demo_race_a_p___21",
-        "demo_race_a_p___22",
-        "demo_race_a_p___23",
-        "demo_race_a_p___24",
-        "demo_race_a_p___25",
+        #"demo_race_a_p___10",
+        #"demo_race_a_p___11",
+        #"demo_race_a_p___12",
+        #"demo_race_a_p___13",
+        #"demo_race_a_p___14",
+        #"demo_race_a_p___15",
+        #"demo_race_a_p___16",
+        #"demo_race_a_p___17",
+        #"demo_race_a_p___18",
+        #"demo_race_a_p___19",
+        #"demo_race_a_p___20",
+        #"demo_race_a_p___21",
+        #"demo_race_a_p___22",
+        #"demo_race_a_p___23",
+        #"demo_race_a_p___24",
+        #"demo_race_a_p___25",
     ],
 }
 
-df = pd.DataFrame(columns=[‘data_structure’, ‘variable_description’])
-data_dict = pd.read_csv(join(DATA_DIR, ‘csv’, ‘data_dictionary.csv’))
+df = pd.DataFrame(columns=['data_structure', 'variable_description'])
+data_dict = pd.read_csv(join(DATA_DIR, 'generate_dataset/data_element_names.csv'), index_col=0)
 
 for structure in variables.keys():
-     for variable in variables[structure]:
-          df.at[variable, ‘data_structure’] = structure
-          df.at[variable, ‘variable_description’] = data_dict.loc[variable, ‘’]
+    try:
+        for variable in variables[structure]:
+            df.at[variable, 'data_structure'] = structure
+            df.at[variable, 'variable_description'] = data_dict.loc[variable, 'description']
+    except Exception as e:
+        print('Something went wrong: ', e)
 
-df.to_csv(‘/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/data/data_dictionary.csv’)
+df.to_csv('/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/data/data_dictionary.csv')

@@ -18,7 +18,8 @@ events_of_interest = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1']
 
 structures = ['abcd_smrip30201', 'abcd_mrirsfd01', 'abcd_mrisdp20201', 'abcd_smrip20201', 'abcd_smrip10201', 'abcd_mrisdp10201', 
               'abcd_dti_p101', 'abcd_drsip101', 'abcd_drsip201', 
-              'abcd_mrirstv02', 'abcd_betnet02', 'mrirscor02', 'abcd_tbss01']
+              'abcd_mrirstv02', 'abcd_tbss01']
+structures = ['abcd_betnet02', 'mrirscor02']
 
 manager = enlighten.get_manager()
 tocks = manager.counter(total=len(structures), desc='Data Structures', unit='data structures')
@@ -60,8 +61,32 @@ for structure in structures:
     for var in num_vars:
         for i in base_df.index:
             try:
-                base = base_df.loc[i, var]
-                y2fu = y2fu_df.loc[i, var]
+                # annualized percent change for resting state connectivity had absurd values
+                # and standard deviations in the millions!!
+                # due to very very small denominators in the "percent" part of the formula
+                # calculating the changes in the absolute value of connectivity fixes this
+                # and any sign changes are retained in the "{var}.sign_change" variables
+                # sign change abs(value) = 1, there was no change
+                # sign change abs(value) = 2, sign changed between timepoints
+                # sign change +, r-value increased from baseline to 2yfu
+                # sign change -, r-value decreased from baseline to 2yfu
+                # I hope that makes sense...
+                if 'rsfmri_c' in var:
+                    base = abs(base_df.loc[i, var])
+                    y2fu = abs(y2fu_df.loc[i, var])
+                    if base * y2fu > 0:
+                        if y2fu > 0:
+                            change_df.at[i, f'{var}.sign_change'] = 1
+                        else:
+                            change_df.at[i, f'{var}.sign_change'] = -1
+                    else:
+                        if y2fu > 0:
+                            change_df.at[i, f'{var}.sign_change'] = 2
+                        else:
+                            change_df.at[i, f'{var}.sign_change'] = -2
+                else:
+                    base = base_df.loc[i, var]
+                    y2fu = y2fu_df.loc[i, var]
                 age0 = base_df.loc[i, 'interview_age_yrs']
                 age2 = y2fu_df.loc[i, 'interview_age_yrs']
                 change_df.at[i, f'{var}.baseline_year_1_arm_1'] = base
