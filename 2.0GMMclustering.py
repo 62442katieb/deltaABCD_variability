@@ -120,12 +120,15 @@ for atlas in atlases.keys():
                 values="mean_test_score",
                 aggfunc="last",
             )
+    fig,ax = plt.subplots()
     plt.tight_layout()
     sns.heatmap(scores_matrix, 
-                cmap='viridis').savefig(join(PROJ_DIR, 
-                                             FIGS_DIR, 
-                                             f'bgmm_{atlas}_cv-scores.png'), 
-                                        dpi=400)
+                cmap='viridis',
+                ax=ax)
+    fig.savefig(join(PROJ_DIR, 
+                     FIGS_DIR, 
+                     f'bgmm_{atlas}_cv-scores.png'),
+                dpi=400)
     labels = search.best_estimator_.fit(data)
     labels_df = pd.Series(labels, index=data.index)
     labels_df.to_csv(join(PROJ_DIR, 
