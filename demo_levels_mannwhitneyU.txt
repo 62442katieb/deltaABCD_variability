@@ -1,0 +1,110 @@
+demo_hetero = {'fligner_income':{
+                    'var': income,
+                    'levels': [(0,6), (7,8), (9,10)]},
+               'fligner_scanner':{
+                   'var': mri,
+                   'levels': ['SIEMENS', 
+                           'GE MEDICAL SYSTEMS', 
+                           'Philips Medical Systems']},
+               'fligner_edu': {
+                   'var': edu, 
+                   'levels': [(0,14), (15,17), 18, (19,22)]}, 
+               'fligner_raceth': {
+                   'var': race,
+                   'levels': [1,2,3,(4,5)]},
+               'fligner_marital': {
+                   'var': marry, 
+                   'levels': [1,(2,5)]}}
+
+for fligner_var in demo_hetero.keys():
+    print('\n\n',fligner_var)
+    variable = fligner_var.split('_')[-1]
+    var = demo_hetero[fligner_var]['var']
+    levels = demo_hetero[fligner_var]['levels']
+    print(levels)
+    
+    sig_measures = var_df[var_df[(fligner_var, 'a<0.05')] == '**'].index
+    top_50 = var_df[(fligner_var, 'stat')].sort_values()[-50:].index
+    highest_heterosced = var_description.loc[top_50].describe()
+    bot_50 = var_df[(fligner_var, 'stat')].sort_values()[:50].index
+    lowest_heterosced = var_description.loc[bot_50].describe()
+    print('HIGHEST-----\n', highest_heterosced)
+    print('LOWEST-----\n', lowest_heterosced)
+    
+    if type(levels[0]) == int or type(levels[0]) == str:
+        fligner_df = df[df[var] == levels[0]]
+    elif type(levels[0]) == tuple:
+        it = levels[0]
+        fligner_df = df[df[var].between(it[0], it[1])]
+    fligner_df = pd.Series(fligner_df[var_df.index].var(), name=str(levels[0]))
+    print(levels[0])
+
+    for level in levels[1:]:
+        if type(level) == int or type(level) == str:
+            temp_df = df[df[var] == level]
+        elif type(level) == tuple:
+            temp_df = df[df[var].between(level[0], level[1])]
+        print(level)
+        temp_df = pd.Series(temp_df[var_df.index].var(), name=str(level))
+        fligner_df = pd.concat([temp_df, fligner_df], axis=1)
+    #fligner_df = fligner_df.dropna(thresh=len(levels) - 1)
+    top_50_df = fligner_df.loc[top_50]
+    not_present = list(set(levels) - set(fligner_df.columns))
+    mann_whitney_u = pd.DataFrame(columns=['stat', 'pval'])
+    for level in levels:
+        dat = fligner_df[str(level)].dropna()
+        for level1 in levels:
+            dat1 = fligner_df[str(level1)].dropna()
+            if level != level1:
+                if len(dat.index) > 0 and len(dat1.index) > 0:
+                    res = mannwhitneyu(dat, dat1, alternative='greater')
+                    mann_whitney_u.at[f'{level} > {level1}', 'stat'] = res.statistic
+                    mann_whitney_u.at[f'{level} > {level1}', 'pval'] = res.pvalue
+                else:
+                    mann_whitney_u.at[f'{level} > {level1}', 'stat'] = np.nan
+                    mann_whitney_u.at[f'{level} > {level1}', 'pval'] = np.nan
+            else:
+                pass
+    mann_whitney_u.to_csv(join('..', OUTP_DIR,f'mann_whitney_{variable}-variance_diff.csv'))
+    #convert from variance to coefficient of variation (sdev / mean)
+    heteroskedasticity = pd.Series(var_df[(fligner_var, 'stat')], 
+                                   name='heteroscedasticity')
+    fligner_cov = np.sqrt(fligner_df) / fligner_df.mean(axis=0)
+    fligner_cov = pd.concat([fligner_cov, var_description], axis=1)
+    fligner_df = pd.concat([fligner_df, 
+                            heteroskedasticity, 
+                            var_description], axis=1)
+    fligner_df.to_csv(join('..', OUTP_DIR,f'heteroscedasticity_{variable}.csv'))
+    
+    str_levels = [str(level) for level in levels]
+    long_fligner = fligner_df.loc[sig_measures].melt(value_vars=str_levels, 
+                                    value_name='variance',
+                                    var_name=variable,
+                                    id_vars=var_description.columns)
+    long_fligner2 = fligner_cov.loc[sig_measures].melt(value_vars=str_levels, 
+                                    value_name='coeff_of_var',
+                                    var_name=variable,
+                                    id_vars=var_description.columns)
+    fligner_df = None
+    k = sns.displot(
+        data=long_fligner2,
+        x=variable, y="coeff_of_var", col="measure",
+        #col_order=, 
+        log_scale=(False, True),
+        #col_wrap=4, height=4, aspect=0.9,
+        height=6, 
+    )
+    k.savefig(join('..', 
+                   FIGS_DIR, 
+                   f'heteroscedastic_{variable}_coefficient-of-variation.png'))
+    
+    k = sns.displot(
+        data=long_fligner,
+        x=variable, y="variance", col="measure", 
+        log_scale=(False, True),
+        #col_wrap=4, aspect=0.9,
+        height=6, 
+    )
+    k.savefig(join('..',
+                   FIGS_DIR,
+                   f'heteroscedastic_{variable}_variance.png'))
