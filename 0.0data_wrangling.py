@@ -7,10 +7,10 @@ from os.path import join, exists
 # %%
 # assembling a dictionary of data structure shortnames and columns of interest
 variables = {
-    "abcd_smrip10201": [
-        "imgincl_dmri_include",
+    "abcd_imgincl01": ["imgincl_dmri_include",
         "imgincl_rsfmri_include",
-        "imgincl_t1w_include",
+        "imgincl_t1w_include",],
+    "abcd_smrip10201": [
         #"imgincl_t2w_include",
         "interview_age",
         "smri_vol_scs_intracranialv",
@@ -1454,8 +1454,10 @@ variables = {
         "mrirsfd148",
     ],
     "abcd_mrirstv02": [
-        "rsfmri_c_ngd_meanmotion",
-        "rsfmri_c_ngd_ntpoints",
+        "rsfmri_var_meanmotion",
+        "rsfmri_var_subthreshnvols",
+        "rsfmri_var_subtcignvols",
+        "rsfmri_var_ntpoints",
         "rsfmri_var_cdk_banksstslh",
         "rsfmri_var_cdk_cdaclatelh",
         "rsfmri_var_cdk_cdmdflh",
@@ -2232,7 +2234,6 @@ variables = {
         "mri_info_manufacturer",
         "interview_date"
     ],
-    "abcd_imgincl01": ["imgincl_t1w_include", "imgincl_dmri_include"],
     "abcd_mrfindings02": ["mrif_score"],
     "acspsw03": [
         "rel_family_id", 
@@ -2291,10 +2292,12 @@ changes = ['abcd_smrip10201', 'abcd_smrip20201', 'abcd_smrip30201',
 qc_vars = [
     "imgincl_dmri_include",
     "imgincl_rsfmri_include",
-    "rsfmri_c_ngd_meanmotion",
-    "rsfmri_c_ngd_ntpoints",
+    "rsfmri_var_meanmotion",
+    "rsfmri_var_subthreshnvols",
+    "rsfmri_var_subtcignvols",
+    "rsfmri_var_ntpoints",
     "imgincl_t1w_include",
-    "imgincl_t2w_include",
+    #"imgincl_t2w_include",
     "interview_age",
 ]
 
