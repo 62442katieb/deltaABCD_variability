@@ -13,8 +13,8 @@ variables = {
     "abcd_smrip10201": [
         #"imgincl_t2w_include",
         "interview_age",
-        "smri_vol_scs_intracranialv",
-        "smri_vol_cdk_total",
+        #"smri_vol_scs_intracranialv",
+        #"smri_vol_cdk_total",
         #"mrisdp_604",
         "smri_area_cdk_banksstslh",
         "smri_area_cdk_cdacatelh",
@@ -756,7 +756,7 @@ variables = {
         "mrisdp_599",
         "mrisdp_600",
         "mrisdp_601",
-        "mrisdp_604"
+        #"mrisdp_604"
     ],
     "abcd_mrisdp20201": [
         "mrisdp_907",
@@ -944,9 +944,9 @@ variables = {
         "dmri_dtifa_fiberat_sifclh",
         "dmri_dtifa_fiberat_ifsfcrh",
         "dmri_dtifa_fiberat_ifsfclh",
-        "dmri_dtifa_fiberat_fxcutrh",
-        "dmri_dtifa_fiberat_fxcutlh",
-        "dmri_dtifa_fiberat_allfibers",
+        #"dmri_dtifa_fiberat_fxcutrh",
+        #"dmri_dtifa_fiberat_fxcutlh",
+        #"dmri_dtifa_fiberat_allfibers",
         "dmri_dtimd_fiberat_fxrh",
         "dmri_dtimd_fiberat_fxlh",
         "dmri_dtimd_fiberat_cgcrh",
@@ -982,9 +982,9 @@ variables = {
         "dmri_dtimd_fiberat_sifclh",
         "dmri_dtimd_fiberat_ifsfcrh",
         "dmri_dtimd_fiberat_ifsfclh",
-        "dmri_dtimd_fiberat_fxcutrh",
-        "dmri_dtimd_fiberat_fxcutlh",
-        "dmri_dtimd_fiberat_allfibers",
+        #"dmri_dtimd_fiberat_fxcutrh",
+        #"dmri_dtimd_fiberat_fxcutlh",
+        #"dmri_dtimd_fiberat_allfibers",
         "dmri_dtild_fiberat_fxrh", 
         "dmri_dtild_fiberat_fxlh", 
         "dmri_dtild_fiberat_cgcrh", 
@@ -1020,9 +1020,9 @@ variables = {
         "dmri_dtild_fiberat_sifclh", 
         "dmri_dtild_fiberat_ifsfcrh", 
         "dmri_dtild_fiberat_ifsfclh", 
-        "dmri_dtild_fiberat_fxcutrh", 
-        "dmri_dtild_fiberat_fxcutlh", 
-        "dmri_dtild_fiberat_allfibers",
+        #"dmri_dtild_fiberat_fxcutrh", 
+        #"dmri_dtild_fiberat_fxcutlh", 
+        #"dmri_dtild_fiberat_allfibers",
         "dmri_dtitd_fiberat_fxrh", 
         "dmri_dtitd_fiberat_fxlh", 
         "dmri_dtitd_fiberat_cgcrh", 
@@ -1058,9 +1058,9 @@ variables = {
         "dmri_dtitd_fiberat_sifclh", 
         "dmri_dtitd_fiberat_ifsfcrh", 
         "dmri_dtitd_fiberat_ifsfclh", 
-        "dmri_dtitd_fiberat_fxcutrh", 
-        "dmri_dtitd_fiberat_fxcutlh", 
-        "dmri_dtitd_fiberat_allfibers",
+        #"dmri_dtitd_fiberat_fxcutrh", 
+        #"dmri_dtitd_fiberat_fxcutlh", 
+        #"dmri_dtitd_fiberat_allfibers",
         "dmri_dtivol_fiberat_fxrh",
         "dmri_dtivol_fiberat_fxlh",
         "dmri_dtivol_fiberat_cgcrh",
@@ -1096,9 +1096,9 @@ variables = {
         "dmri_dtivol_fiberat_sifclh",
         "dmri_dtivol_fiberat_ifsfcrh",
         "dmri_dtivol_fiberat_ifsfclh",
-        "dmri_dtivol_fiberat_fxcutrh",
-        "dmri_dtivol_fiberat_fxcutlh",
-        "dmri_dtivol_fiberat_allfibers"
+        #"dmri_dtivol_fiberat_fxcutrh",
+        #"dmri_dtivol_fiberat_fxcutlh",
+        #"dmri_dtivol_fiberat_allfibers"
     ],
     "abcd_drsip101": [
         "dmri_rsirni_fib_fxrh",
@@ -1136,10 +1136,10 @@ variables = {
         "dmri_rsirni_fib_sifclh",
         "dmri_rsirni_fib_ifsfcrh",
         "dmri_rsirni_fib_ifsfclh",
-        "dmri_rsirni_fib_fxcutrh",
-        "dmri_rsirni_fib_fxcutlh",
-        "dmri_rsirni_scs_ilvlh",
-        "dmri_rsirni_scs_cbwmlh",
+        #"dmri_rsirni_fib_fxcutrh",
+        #"dmri_rsirni_fib_fxcutlh",
+        #"dmri_rsirni_scs_ilvlh",
+        #"dmri_rsirni_scs_cbwmlh",
         "dmri_rsirni_scs_cbclh",
         "dmri_rsirni_scs_tplh",
         "dmri_rsirni_scs_cdlh",
@@ -1153,7 +1153,7 @@ variables = {
         "dmri_rsirni_scs_cwmrh",
         "dmri_rsirni_scs_lvrh",
         "dmri_rsirni_scs_ilvrh",
-        "dmri_rsirni_scs_cbwmrh",
+        #"dmri_rsirni_scs_cbwmrh",
         "dmri_rsirni_scs_cbcrh",
         "dmri_rsirni_scs_tprh",
         "dmri_rsirni_scs_cdrh",
@@ -1237,7 +1237,7 @@ variables = {
         "dmri_rsirnigm_cdx_gspclh", 
         "dmri_rsirnigm_cdx_gssclh", 
         "dmri_rsirnigm_cdx_gstflh", 
-        "dmri_rsirnigm_cdx_gscalh", "dmri_rsirnigm_cdx_gscmalh", "dmri_rsirnigm_cdx_gscmplh", "dmri_rsirnigm_cdx_gcpdlh", "dmri_rsirnigm_cdx_gcpvlh", "dmri_rsirnigm_cdx_gcnlh", "dmri_rsirnigm_cdx_gfiolh", "dmri_rsirnigm_cdx_gfioblh", "dmri_rsirnigm_cdx_gfitlh", "dmri_rsirnigm_cdx_gfmlh", "dmri_rsirnigm_cdx_gfslh", "dmri_rsirnigm_cdx_gilscilh", "dmri_rsirnigm_cdx_gislh", "dmri_rsirnigm_cdx_gomlh", "dmri_rsirnigm_cdx_goslh", "dmri_rsirnigm_cdx_gotlflh", "dmri_rsirnigm_cdx_gotmllh", "dmri_rsirnigm_cdx_gotmplh", "dmri_rsirnigm_cdx_golh", "dmri_rsirnigm_cdx_gpialh", "dmri_rsirnigm_cdx_gpislh", "dmri_rsirnigm_cdx_gpslh", "dmri_rsirnigm_cdx_gpclh", "dmri_rsirnigm_cdx_gprctlh", "dmri_rsirnigm_cdx_gprcnlh", "dmri_rsirnigm_cdx_grlh", "dmri_rsirnigm_cdx_gslh", "dmri_rsirnigm_cdx_gtsgttlh", "dmri_rsirnigm_cdx_gtsllh", "dmri_rsirnigm_cdx_gtspplh", "dmri_rsirnigm_cdx_gtsptlh", "dmri_rsirnigm_cdx_gtilh", "dmri_rsirnigm_cdx_gtmlh", "dmri_rsirnigm_cdx_lfahlh", "dmri_rsirnigm_cdx_lfavlh", "dmri_rsirnigm_cdx_lfplh", "dmri_rsirnigm_cdx_polh", "dmri_rsirnigm_cdx_ptlh", "dmri_rsirnigm_cdx_scclh", "dmri_rsirnigm_cdx_sclh", "dmri_rsirnigm_cdx_scmlh", "dmri_rsirnigm_cdx_scialh", "dmri_rsirnigm_cdx_sciilh", "dmri_rsirnigm_cdx_scislh", "dmri_rsirnigm_cdx_sctalh", "dmri_rsirnigm_cdx_sctplh", "dmri_rsirnigm_cdx_sfilh", "dmri_rsirnigm_cdx_sfmlh", "dmri_rsirnigm_cdx_sfslh", "dmri_rsirnigm_cdx_sipjlh", "dmri_rsirnigm_cdx_siptlh", "dmri_rsirnigm_cdx_somllh", "dmri_rsirnigm_cdx_sostlh", "dmri_rsirnigm_cdx_soalh", "dmri_rsirnigm_cdx_sotllh", "dmri_rsirnigm_cdx_sotmllh", "dmri_rsirnigm_cdx_sollh", "dmri_rsirnigm_cdx_somolh", "dmri_rsirnigm_cdx_sohslh", "dmri_rsirnigm_cdx_spolh", "dmri_rsirnigm_cdx_spclh", "dmri_rsirnigm_cdx_spctlh", "dmri_rsirnigm_cdx_spriplh", "dmri_rsirnigm_cdx_sprsplh", "dmri_rsirnigm_cdx_ssolh", "dmri_rsirnigm_cdx_ssplh", "dmri_rsirnigm_cdx_stilh", "dmri_rsirnigm_cdx_stslh", "dmri_rsirnigm_cdx_sttlh", "dmri_rsirnigm_cdx_gsfmrh", "dmri_rsirnigm_cdx_gsoirh", "dmri_rsirnigm_cdx_gspcrh", "dmri_rsirnigm_cdx_gsscrh", "dmri_rsirnigm_cdx_gstfrh", "dmri_rsirnigm_cdx_gscarh", "dmri_rsirnigm_cdx_gscmarh", "dmri_rsirnigm_cdx_gscmprh", "dmri_rsirnigm_cdx_gcpdrh", "dmri_rsirnigm_cdx_gcpvrh", "dmri_rsirnigm_cdx_gcnrh", "dmri_rsirnigm_cdx_gfiorh", "dmri_rsirnigm_cdx_gfiobrh", "dmri_rsirnigm_cdx_gfitrh", "dmri_rsirnigm_cdx_gfmrh", "dmri_rsirnigm_cdx_gfsrh", "dmri_rsirnigm_cdx_gilscirh", "dmri_rsirnigm_cdx_gisrh", "dmri_rsirnigm_cdx_gomrh", "dmri_rsirnigm_cdx_gosrh", "dmri_rsirnigm_cdx_gotlfrh", "dmri_rsirnigm_cdx_gotmlrh", "dmri_rsirnigm_cdx_gotmprh", "dmri_rsirnigm_cdx_gorh", "dmri_rsirnigm_cdx_gpiarh", "dmri_rsirnigm_cdx_gpisrh", "dmri_rsirnigm_cdx_gpsrh", "dmri_rsirnigm_cdx_gpcrh", "dmri_rsirnigm_cdx_gprctrh", "dmri_rsirnigm_cdx_gprcnrh", "dmri_rsirnigm_cdx_grrh", "dmri_rsirnigm_cdx_gsrh", "dmri_rsirnigm_cdx_gtsgttrh", "dmri_rsirnigm_cdx_gtslrh", "dmri_rsirnigm_cdx_gtspprh", "dmri_rsirnigm_cdx_gtsptrh", "dmri_rsirnigm_cdx_gtirh", "dmri_rsirnigm_cdx_gtmrh", "dmri_rsirnigm_cdx_lfahrh", "dmri_rsirnigm_cdx_lfavrh", "dmri_rsirnigm_cdx_lfprh", "dmri_rsirnigm_cdx_porh", "dmri_rsirnigm_cdx_ptrh", "dmri_rsirnigm_cdx_sccrh", "dmri_rsirnigm_cdx_scrh", "dmri_rsirnigm_cdx_scmrh", "dmri_rsirnigm_cdx_sciarh", "dmri_rsirnigm_cdx_sciirh", "dmri_rsirnigm_cdx_scisrh", "dmri_rsirnigm_cdx_sctarh", "dmri_rsirnigm_cdx_sctprh", "dmri_rsirnigm_cdx_sfirh", "dmri_rsirnigm_cdx_sfmrh", "dmri_rsirnigm_cdx_sfsrh", "dmri_rsirnigm_cdx_sipjrh", "dmri_rsirnigm_cdx_siptrh", "dmri_rsirnigm_cdx_somlrh", "dmri_rsirnigm_cdx_sostrh", "dmri_rsirnigm_cdx_soarh", "dmri_rsirnigm_cdx_sotlrh", "dmri_rsirnigm_cdx_sotmlrh", "dmri_rsirnigm_cdx_solrh", "dmri_rsirnigm_cdx_somorh", "dmri_rsirnigm_cdx_sohsrh", "dmri_rsirnigm_cdx_sporh", "dmri_rsirnigm_cdx_spcrh", "dmri_rsirnigm_cdx_spctrh", "dmri_rsirnigm_cdx_spriprh", "dmri_rsirnigm_cdx_sprsprh", "dmri_rsirnigm_cdx_ssorh", "dmri_rsirnigm_cdx_ssprh", "dmri_rsirnigm_cdx_stirh", "dmri_rsirnigm_cdx_stsrh", "dmri_rsirnigm_cdx_sttrh", "dmri_rsirnigm_cdx_mean"
+        "dmri_rsirnigm_cdx_gscalh", "dmri_rsirnigm_cdx_gscmalh", "dmri_rsirnigm_cdx_gscmplh", "dmri_rsirnigm_cdx_gcpdlh", "dmri_rsirnigm_cdx_gcpvlh", "dmri_rsirnigm_cdx_gcnlh", "dmri_rsirnigm_cdx_gfiolh", "dmri_rsirnigm_cdx_gfioblh", "dmri_rsirnigm_cdx_gfitlh", "dmri_rsirnigm_cdx_gfmlh", "dmri_rsirnigm_cdx_gfslh", "dmri_rsirnigm_cdx_gilscilh", "dmri_rsirnigm_cdx_gislh", "dmri_rsirnigm_cdx_gomlh", "dmri_rsirnigm_cdx_goslh", "dmri_rsirnigm_cdx_gotlflh", "dmri_rsirnigm_cdx_gotmllh", "dmri_rsirnigm_cdx_gotmplh", "dmri_rsirnigm_cdx_golh", "dmri_rsirnigm_cdx_gpialh", "dmri_rsirnigm_cdx_gpislh", "dmri_rsirnigm_cdx_gpslh", "dmri_rsirnigm_cdx_gpclh", "dmri_rsirnigm_cdx_gprctlh", "dmri_rsirnigm_cdx_gprcnlh", "dmri_rsirnigm_cdx_grlh", "dmri_rsirnigm_cdx_gslh", "dmri_rsirnigm_cdx_gtsgttlh", "dmri_rsirnigm_cdx_gtsllh", "dmri_rsirnigm_cdx_gtspplh", "dmri_rsirnigm_cdx_gtsptlh", "dmri_rsirnigm_cdx_gtilh", "dmri_rsirnigm_cdx_gtmlh", "dmri_rsirnigm_cdx_lfahlh", "dmri_rsirnigm_cdx_lfavlh", "dmri_rsirnigm_cdx_lfplh", "dmri_rsirnigm_cdx_polh", "dmri_rsirnigm_cdx_ptlh", "dmri_rsirnigm_cdx_scclh", "dmri_rsirnigm_cdx_sclh", "dmri_rsirnigm_cdx_scmlh", "dmri_rsirnigm_cdx_scialh", "dmri_rsirnigm_cdx_sciilh", "dmri_rsirnigm_cdx_scislh", "dmri_rsirnigm_cdx_sctalh", "dmri_rsirnigm_cdx_sctplh", "dmri_rsirnigm_cdx_sfilh", "dmri_rsirnigm_cdx_sfmlh", "dmri_rsirnigm_cdx_sfslh", "dmri_rsirnigm_cdx_sipjlh", "dmri_rsirnigm_cdx_siptlh", "dmri_rsirnigm_cdx_somllh", "dmri_rsirnigm_cdx_sostlh", "dmri_rsirnigm_cdx_soalh", "dmri_rsirnigm_cdx_sotllh", "dmri_rsirnigm_cdx_sotmllh", "dmri_rsirnigm_cdx_sollh", "dmri_rsirnigm_cdx_somolh", "dmri_rsirnigm_cdx_sohslh", "dmri_rsirnigm_cdx_spolh", "dmri_rsirnigm_cdx_spclh", "dmri_rsirnigm_cdx_spctlh", "dmri_rsirnigm_cdx_spriplh", "dmri_rsirnigm_cdx_sprsplh", "dmri_rsirnigm_cdx_ssolh", "dmri_rsirnigm_cdx_ssplh", "dmri_rsirnigm_cdx_stilh", "dmri_rsirnigm_cdx_stslh", "dmri_rsirnigm_cdx_sttlh", "dmri_rsirnigm_cdx_gsfmrh", "dmri_rsirnigm_cdx_gsoirh", "dmri_rsirnigm_cdx_gspcrh", "dmri_rsirnigm_cdx_gsscrh", "dmri_rsirnigm_cdx_gstfrh", "dmri_rsirnigm_cdx_gscarh", "dmri_rsirnigm_cdx_gscmarh", "dmri_rsirnigm_cdx_gscmprh", "dmri_rsirnigm_cdx_gcpdrh", "dmri_rsirnigm_cdx_gcpvrh", "dmri_rsirnigm_cdx_gcnrh", "dmri_rsirnigm_cdx_gfiorh", "dmri_rsirnigm_cdx_gfiobrh", "dmri_rsirnigm_cdx_gfitrh", "dmri_rsirnigm_cdx_gfmrh", "dmri_rsirnigm_cdx_gfsrh", "dmri_rsirnigm_cdx_gilscirh", "dmri_rsirnigm_cdx_gisrh", "dmri_rsirnigm_cdx_gomrh", "dmri_rsirnigm_cdx_gosrh", "dmri_rsirnigm_cdx_gotlfrh", "dmri_rsirnigm_cdx_gotmlrh", "dmri_rsirnigm_cdx_gotmprh", "dmri_rsirnigm_cdx_gorh", "dmri_rsirnigm_cdx_gpiarh", "dmri_rsirnigm_cdx_gpisrh", "dmri_rsirnigm_cdx_gpsrh", "dmri_rsirnigm_cdx_gpcrh", "dmri_rsirnigm_cdx_gprctrh", "dmri_rsirnigm_cdx_gprcnrh", "dmri_rsirnigm_cdx_grrh", "dmri_rsirnigm_cdx_gsrh", "dmri_rsirnigm_cdx_gtsgttrh", "dmri_rsirnigm_cdx_gtslrh", "dmri_rsirnigm_cdx_gtspprh", "dmri_rsirnigm_cdx_gtsptrh", "dmri_rsirnigm_cdx_gtirh", "dmri_rsirnigm_cdx_gtmrh", "dmri_rsirnigm_cdx_lfahrh", "dmri_rsirnigm_cdx_lfavrh", "dmri_rsirnigm_cdx_lfprh", "dmri_rsirnigm_cdx_porh", "dmri_rsirnigm_cdx_ptrh", "dmri_rsirnigm_cdx_sccrh", "dmri_rsirnigm_cdx_scrh", "dmri_rsirnigm_cdx_scmrh", "dmri_rsirnigm_cdx_sciarh", "dmri_rsirnigm_cdx_sciirh", "dmri_rsirnigm_cdx_scisrh", "dmri_rsirnigm_cdx_sctarh", "dmri_rsirnigm_cdx_sctprh", "dmri_rsirnigm_cdx_sfirh", "dmri_rsirnigm_cdx_sfmrh", "dmri_rsirnigm_cdx_sfsrh", "dmri_rsirnigm_cdx_sipjrh", "dmri_rsirnigm_cdx_siptrh", "dmri_rsirnigm_cdx_somlrh", "dmri_rsirnigm_cdx_sostrh", "dmri_rsirnigm_cdx_soarh", "dmri_rsirnigm_cdx_sotlrh", "dmri_rsirnigm_cdx_sotmlrh", "dmri_rsirnigm_cdx_solrh", "dmri_rsirnigm_cdx_somorh", "dmri_rsirnigm_cdx_sohsrh", "dmri_rsirnigm_cdx_sporh", "dmri_rsirnigm_cdx_spcrh", "dmri_rsirnigm_cdx_spctrh", "dmri_rsirnigm_cdx_spriprh", "dmri_rsirnigm_cdx_sprsprh", "dmri_rsirnigm_cdx_ssorh", "dmri_rsirnigm_cdx_ssprh", "dmri_rsirnigm_cdx_stirh", "dmri_rsirnigm_cdx_stsrh", "dmri_rsirnigm_cdx_sttrh", #"dmri_rsirnigm_cdx_mean"
     ],
     "abcd_drsip201": [
         "dmri_rsirnd_fib_fxrh",
@@ -1275,8 +1275,8 @@ variables = {
         "dmri_rsirnd_fib_sifclh",
         "dmri_rsirnd_fib_ifsfcrh",
         "dmri_rsirnd_fib_ifsfclh",
-        "dmri_rsirnd_fib_fxcutrh",
-        "dmri_rsirnd_fib_fxcutlh",
+        #"dmri_rsirnd_fib_fxcutrh",
+        #"dmri_rsirnd_fib_fxcutlh",
         "dmri_rsirnd_scs_cwmlh",
         "dmri_rsirnd_scs_cbwmlh",
         "dmri_rsirnd_scs_cbclh",
@@ -1300,7 +1300,7 @@ variables = {
         "dmri_rsirnd_scs_agrh",
         "dmri_rsirnd_scs_abrh",
         "dmri_rsirnd_scs_vdcrh",
-        "dmri_rsirndgm_cdk_bstslh", "dmri_rsirndgm_cdk_caclh", "dmri_rsirndgm_cdk_cmflh", "dmri_rsirndgm_cdk_cnlh", "dmri_rsirndgm_cdk_erlh", "dmri_rsirndgm_cdk_fflh", "dmri_rsirndgm_cdk_iplh", "dmri_rsirndgm_cdk_itlh", "dmri_rsirndgm_cdk_iclh", "dmri_rsirndgm_cdk_lolh", "dmri_rsirndgm_cdk_loflh", "dmri_rsirndgm_cdk_lglh", "dmri_rsirndgm_cdk_moflh", "dmri_rsirndgm_cdk_mtlh", "dmri_rsirndgm_cdk_phlh", "dmri_rsirndgm_cdk_pclh", "dmri_rsirndgm_cdk_poplh", "dmri_rsirndgm_cdk_poblh", "dmri_rsirndgm_cdk_ptglh", "dmri_rsirndgm_cdk_pcclh", "dmri_rsirndgm_cdk_pctlh", "dmri_rsirndgm_cdk_pcglh", "dmri_rsirndgm_cdk_prctlh", "dmri_rsirndgm_cdk_prcnlh", "dmri_rsirndgm_cdk_raclh", "dmri_rsirndgm_cdk_rmflh", "dmri_rsirndgm_cdk_sflh", "dmri_rsirndgm_cdk_splh", "dmri_rsirndgm_cdk_stlh", "dmri_rsirndgm_cdk_smlh", "dmri_rsirndgm_cdk_fplh", "dmri_rsirndgm_cdk_tplh", "dmri_rsirndgm_cdk_ttlh", "dmri_rsirndgm_cdk_islh", "dmri_rsirndgm_cdk_bstsrh", "dmri_rsirndgm_cdk_cacrh", "dmri_rsirndgm_cdk_cmfrh", "dmri_rsirndgm_cdk_cnrh", "dmri_rsirndgm_cdk_errh", "dmri_rsirndgm_cdk_ffrh", "dmri_rsirndgm_cdk_iprh", "dmri_rsirndgm_cdk_itrh", "dmri_rsirndgm_cdk_icrh", "dmri_rsirndgm_cdk_lorh", "dmri_rsirndgm_cdk_lofrh", "dmri_rsirndgm_cdk_lgrh", "dmri_rsirndgm_cdk_mofrh", "dmri_rsirndgm_cdk_mtrh", "dmri_rsirndgm_cdk_phrh", "dmri_rsirndgm_cdk_pcrh", "dmri_rsirndgm_cdk_poprh", "dmri_rsirndgm_cdk_pobrh", "dmri_rsirndgm_cdk_ptgrh", "dmri_rsirndgm_cdk_pccrh", "dmri_rsirndgm_cdk_pctrh", "dmri_rsirndgm_cdk_pcgrh", "dmri_rsirndgm_cdk_prctrh", "dmri_rsirndgm_cdk_prcnrh", "dmri_rsirndgm_cdk_racrh", "dmri_rsirndgm_cdk_rmfrh", "dmri_rsirndgm_cdk_sfrh", "dmri_rsirndgm_cdk_sprh", "dmri_rsirndgm_cdk_strh", "dmri_rsirndgm_cdk_smrh", "dmri_rsirndgm_cdk_fprh", "dmri_rsirndgm_cdk_tprh", "dmri_rsirndgm_cdk_ttrh", "dmri_rsirndgm_cdk_isrh", "dmri_rsirndgm_cdk_mean","dmri_rsirndgm_cdx_gsfmlh", "dmri_rsirndgm_cdx_gsoilh", "dmri_rsirndgm_cdx_gspclh", "dmri_rsirndgm_cdx_gssclh", "dmri_rsirndgm_cdx_gstflh", "dmri_rsirndgm_cdx_gscalh", "dmri_rsirndgm_cdx_gscmalh", "dmri_rsirndgm_cdx_gscmplh", "dmri_rsirndgm_cdx_gcpdlh", "dmri_rsirndgm_cdx_gcpvlh", "dmri_rsirndgm_cdx_gcnlh", "dmri_rsirndgm_cdx_gfiolh", "dmri_rsirndgm_cdx_gfioblh", "dmri_rsirndgm_cdx_gfitlh", "dmri_rsirndgm_cdx_gfmlh", "dmri_rsirndgm_cdx_gfslh", "dmri_rsirndgm_cdx_gilscilh", "dmri_rsirndgm_cdx_gislh", "dmri_rsirndgm_cdx_gomlh", "dmri_rsirndgm_cdx_goslh", "dmri_rsirndgm_cdx_gotlflh", "dmri_rsirndgm_cdx_gotmllh", "dmri_rsirndgm_cdx_gotmplh", "dmri_rsirndgm_cdx_golh", "dmri_rsirndgm_cdx_gpialh", "dmri_rsirndgm_cdx_gpislh", "dmri_rsirndgm_cdx_gpslh", "dmri_rsirndgm_cdx_gpclh", "dmri_rsirndgm_cdx_gprctlh", "dmri_rsirndgm_cdx_gprcnlh", "dmri_rsirndgm_cdx_grlh", "dmri_rsirndgm_cdx_gslh", "dmri_rsirndgm_cdx_gtsgttlh", "dmri_rsirndgm_cdx_gtsllh", "dmri_rsirndgm_cdx_gtspplh", "dmri_rsirndgm_cdx_gtsptlh", "dmri_rsirndgm_cdx_gtilh", "dmri_rsirndgm_cdx_gtmlh", "dmri_rsirndgm_cdx_lfahlh", "dmri_rsirndgm_cdx_lfavlh", "dmri_rsirndgm_cdx_lfplh", "dmri_rsirndgm_cdx_polh", "dmri_rsirndgm_cdx_ptlh", "dmri_rsirndgm_cdx_scclh", "dmri_rsirndgm_cdx_sclh", "dmri_rsirndgm_cdx_scmlh", "dmri_rsirndgm_cdx_scialh", "dmri_rsirndgm_cdx_sciilh", "dmri_rsirndgm_cdx_scislh", "dmri_rsirndgm_cdx_sctalh", "dmri_rsirndgm_cdx_sctplh", "dmri_rsirndgm_cdx_sfilh", "dmri_rsirndgm_cdx_sfmlh", "dmri_rsirndgm_cdx_sfslh", "dmri_rsirndgm_cdx_sipjlh", "dmri_rsirndgm_cdx_siptlh", "dmri_rsirndgm_cdx_somllh", "dmri_rsirndgm_cdx_sostlh", "dmri_rsirndgm_cdx_soalh", "dmri_rsirndgm_cdx_sotllh", "dmri_rsirndgm_cdx_sotmllh", "dmri_rsirndgm_cdx_sollh", "dmri_rsirndgm_cdx_somolh", "dmri_rsirndgm_cdx_sohslh", "dmri_rsirndgm_cdx_spolh", "dmri_rsirndgm_cdx_spclh", "dmri_rsirndgm_cdx_spctlh", "dmri_rsirndgm_cdx_spriplh", "dmri_rsirndgm_cdx_sprsplh", "dmri_rsirndgm_cdx_ssolh", "dmri_rsirndgm_cdx_ssplh", "dmri_rsirndgm_cdx_stilh", "dmri_rsirndgm_cdx_stslh", "dmri_rsirndgm_cdx_sttlh", "dmri_rsirndgm_cdx_gsfmrh", "dmri_rsirndgm_cdx_gsoirh", "dmri_rsirndgm_cdx_gspcrh", "dmri_rsirndgm_cdx_gsscrh", "dmri_rsirndgm_cdx_gstfrh", "dmri_rsirndgm_cdx_gscarh", "dmri_rsirndgm_cdx_gscmarh", "dmri_rsirndgm_cdx_gscmprh", "dmri_rsirndgm_cdx_gcpdrh", "dmri_rsirndgm_cdx_gcpvrh", "dmri_rsirndgm_cdx_gcnrh", "dmri_rsirndgm_cdx_gfiorh", "dmri_rsirndgm_cdx_gfiobrh", "dmri_rsirndgm_cdx_gfitrh", "dmri_rsirndgm_cdx_gfmrh", "dmri_rsirndgm_cdx_gfsrh", "dmri_rsirndgm_cdx_gilscirh", "dmri_rsirndgm_cdx_gisrh", "dmri_rsirndgm_cdx_gomrh", "dmri_rsirndgm_cdx_gosrh", "dmri_rsirndgm_cdx_gotlfrh", "dmri_rsirndgm_cdx_gotmlrh", "dmri_rsirndgm_cdx_gotmprh", "dmri_rsirndgm_cdx_gorh", "dmri_rsirndgm_cdx_gpiarh", "dmri_rsirndgm_cdx_gpisrh", "dmri_rsirndgm_cdx_gpsrh", "dmri_rsirndgm_cdx_gpcrh", "dmri_rsirndgm_cdx_gprctrh", "dmri_rsirndgm_cdx_gprcnrh", "dmri_rsirndgm_cdx_grrh", "dmri_rsirndgm_cdx_gsrh", "dmri_rsirndgm_cdx_gtsgttrh", "dmri_rsirndgm_cdx_gtslrh", "dmri_rsirndgm_cdx_gtspprh", "dmri_rsirndgm_cdx_gtsptrh", "dmri_rsirndgm_cdx_gtirh", "dmri_rsirndgm_cdx_gtmrh", "dmri_rsirndgm_cdx_lfahrh", "dmri_rsirndgm_cdx_lfavrh", "dmri_rsirndgm_cdx_lfprh", "dmri_rsirndgm_cdx_porh", "dmri_rsirndgm_cdx_ptrh", "dmri_rsirndgm_cdx_sccrh", "dmri_rsirndgm_cdx_scrh", "dmri_rsirndgm_cdx_scmrh", "dmri_rsirndgm_cdx_sciarh", "dmri_rsirndgm_cdx_sciirh", "dmri_rsirndgm_cdx_scisrh", "dmri_rsirndgm_cdx_sctarh", "dmri_rsirndgm_cdx_sctprh", "dmri_rsirndgm_cdx_sfirh", "dmri_rsirndgm_cdx_sfmrh", "dmri_rsirndgm_cdx_sfsrh", "dmri_rsirndgm_cdx_sipjrh", "dmri_rsirndgm_cdx_siptrh", "dmri_rsirndgm_cdx_somlrh", "dmri_rsirndgm_cdx_sostrh", "dmri_rsirndgm_cdx_soarh", "dmri_rsirndgm_cdx_sotlrh", "dmri_rsirndgm_cdx_sotmlrh", "dmri_rsirndgm_cdx_solrh", "dmri_rsirndgm_cdx_somorh", "dmri_rsirndgm_cdx_sohsrh", "dmri_rsirndgm_cdx_sporh", "dmri_rsirndgm_cdx_spcrh", "dmri_rsirndgm_cdx_spctrh", "dmri_rsirndgm_cdx_spriprh", "dmri_rsirndgm_cdx_sprsprh", "dmri_rsirndgm_cdx_ssorh", "dmri_rsirndgm_cdx_ssprh", "dmri_rsirndgm_cdx_stirh", "dmri_rsirndgm_cdx_stsrh", "dmri_rsirndgm_cdx_sttrh", "dmri_rsirndgm_cdx_mean"
+        "dmri_rsirndgm_cdk_bstslh", "dmri_rsirndgm_cdk_caclh", "dmri_rsirndgm_cdk_cmflh", "dmri_rsirndgm_cdk_cnlh", "dmri_rsirndgm_cdk_erlh", "dmri_rsirndgm_cdk_fflh", "dmri_rsirndgm_cdk_iplh", "dmri_rsirndgm_cdk_itlh", "dmri_rsirndgm_cdk_iclh", "dmri_rsirndgm_cdk_lolh", "dmri_rsirndgm_cdk_loflh", "dmri_rsirndgm_cdk_lglh", "dmri_rsirndgm_cdk_moflh", "dmri_rsirndgm_cdk_mtlh", "dmri_rsirndgm_cdk_phlh", "dmri_rsirndgm_cdk_pclh", "dmri_rsirndgm_cdk_poplh", "dmri_rsirndgm_cdk_poblh", "dmri_rsirndgm_cdk_ptglh", "dmri_rsirndgm_cdk_pcclh", "dmri_rsirndgm_cdk_pctlh", "dmri_rsirndgm_cdk_pcglh", "dmri_rsirndgm_cdk_prctlh", "dmri_rsirndgm_cdk_prcnlh", "dmri_rsirndgm_cdk_raclh", "dmri_rsirndgm_cdk_rmflh", "dmri_rsirndgm_cdk_sflh", "dmri_rsirndgm_cdk_splh", "dmri_rsirndgm_cdk_stlh", "dmri_rsirndgm_cdk_smlh", "dmri_rsirndgm_cdk_fplh", "dmri_rsirndgm_cdk_tplh", "dmri_rsirndgm_cdk_ttlh", "dmri_rsirndgm_cdk_islh", "dmri_rsirndgm_cdk_bstsrh", "dmri_rsirndgm_cdk_cacrh", "dmri_rsirndgm_cdk_cmfrh", "dmri_rsirndgm_cdk_cnrh", "dmri_rsirndgm_cdk_errh", "dmri_rsirndgm_cdk_ffrh", "dmri_rsirndgm_cdk_iprh", "dmri_rsirndgm_cdk_itrh", "dmri_rsirndgm_cdk_icrh", "dmri_rsirndgm_cdk_lorh", "dmri_rsirndgm_cdk_lofrh", "dmri_rsirndgm_cdk_lgrh", "dmri_rsirndgm_cdk_mofrh", "dmri_rsirndgm_cdk_mtrh", "dmri_rsirndgm_cdk_phrh", "dmri_rsirndgm_cdk_pcrh", "dmri_rsirndgm_cdk_poprh", "dmri_rsirndgm_cdk_pobrh", "dmri_rsirndgm_cdk_ptgrh", "dmri_rsirndgm_cdk_pccrh", "dmri_rsirndgm_cdk_pctrh", "dmri_rsirndgm_cdk_pcgrh", "dmri_rsirndgm_cdk_prctrh", "dmri_rsirndgm_cdk_prcnrh", "dmri_rsirndgm_cdk_racrh", "dmri_rsirndgm_cdk_rmfrh", "dmri_rsirndgm_cdk_sfrh", "dmri_rsirndgm_cdk_sprh", "dmri_rsirndgm_cdk_strh", "dmri_rsirndgm_cdk_smrh", "dmri_rsirndgm_cdk_fprh", "dmri_rsirndgm_cdk_tprh", "dmri_rsirndgm_cdk_ttrh", "dmri_rsirndgm_cdk_isrh", "dmri_rsirndgm_cdk_mean","dmri_rsirndgm_cdx_gsfmlh", "dmri_rsirndgm_cdx_gsoilh", "dmri_rsirndgm_cdx_gspclh", "dmri_rsirndgm_cdx_gssclh", "dmri_rsirndgm_cdx_gstflh", "dmri_rsirndgm_cdx_gscalh", "dmri_rsirndgm_cdx_gscmalh", "dmri_rsirndgm_cdx_gscmplh", "dmri_rsirndgm_cdx_gcpdlh", "dmri_rsirndgm_cdx_gcpvlh", "dmri_rsirndgm_cdx_gcnlh", "dmri_rsirndgm_cdx_gfiolh", "dmri_rsirndgm_cdx_gfioblh", "dmri_rsirndgm_cdx_gfitlh", "dmri_rsirndgm_cdx_gfmlh", "dmri_rsirndgm_cdx_gfslh", "dmri_rsirndgm_cdx_gilscilh", "dmri_rsirndgm_cdx_gislh", "dmri_rsirndgm_cdx_gomlh", "dmri_rsirndgm_cdx_goslh", "dmri_rsirndgm_cdx_gotlflh", "dmri_rsirndgm_cdx_gotmllh", "dmri_rsirndgm_cdx_gotmplh", "dmri_rsirndgm_cdx_golh", "dmri_rsirndgm_cdx_gpialh", "dmri_rsirndgm_cdx_gpislh", "dmri_rsirndgm_cdx_gpslh", "dmri_rsirndgm_cdx_gpclh", "dmri_rsirndgm_cdx_gprctlh", "dmri_rsirndgm_cdx_gprcnlh", "dmri_rsirndgm_cdx_grlh", "dmri_rsirndgm_cdx_gslh", "dmri_rsirndgm_cdx_gtsgttlh", "dmri_rsirndgm_cdx_gtsllh", "dmri_rsirndgm_cdx_gtspplh", "dmri_rsirndgm_cdx_gtsptlh", "dmri_rsirndgm_cdx_gtilh", "dmri_rsirndgm_cdx_gtmlh", "dmri_rsirndgm_cdx_lfahlh", "dmri_rsirndgm_cdx_lfavlh", "dmri_rsirndgm_cdx_lfplh", "dmri_rsirndgm_cdx_polh", "dmri_rsirndgm_cdx_ptlh", "dmri_rsirndgm_cdx_scclh", "dmri_rsirndgm_cdx_sclh", "dmri_rsirndgm_cdx_scmlh", "dmri_rsirndgm_cdx_scialh", "dmri_rsirndgm_cdx_sciilh", "dmri_rsirndgm_cdx_scislh", "dmri_rsirndgm_cdx_sctalh", "dmri_rsirndgm_cdx_sctplh", "dmri_rsirndgm_cdx_sfilh", "dmri_rsirndgm_cdx_sfmlh", "dmri_rsirndgm_cdx_sfslh", "dmri_rsirndgm_cdx_sipjlh", "dmri_rsirndgm_cdx_siptlh", "dmri_rsirndgm_cdx_somllh", "dmri_rsirndgm_cdx_sostlh", "dmri_rsirndgm_cdx_soalh", "dmri_rsirndgm_cdx_sotllh", "dmri_rsirndgm_cdx_sotmllh", "dmri_rsirndgm_cdx_sollh", "dmri_rsirndgm_cdx_somolh", "dmri_rsirndgm_cdx_sohslh", "dmri_rsirndgm_cdx_spolh", "dmri_rsirndgm_cdx_spclh", "dmri_rsirndgm_cdx_spctlh", "dmri_rsirndgm_cdx_spriplh", "dmri_rsirndgm_cdx_sprsplh", "dmri_rsirndgm_cdx_ssolh", "dmri_rsirndgm_cdx_ssplh", "dmri_rsirndgm_cdx_stilh", "dmri_rsirndgm_cdx_stslh", "dmri_rsirndgm_cdx_sttlh", "dmri_rsirndgm_cdx_gsfmrh", "dmri_rsirndgm_cdx_gsoirh", "dmri_rsirndgm_cdx_gspcrh", "dmri_rsirndgm_cdx_gsscrh", "dmri_rsirndgm_cdx_gstfrh", "dmri_rsirndgm_cdx_gscarh", "dmri_rsirndgm_cdx_gscmarh", "dmri_rsirndgm_cdx_gscmprh", "dmri_rsirndgm_cdx_gcpdrh", "dmri_rsirndgm_cdx_gcpvrh", "dmri_rsirndgm_cdx_gcnrh", "dmri_rsirndgm_cdx_gfiorh", "dmri_rsirndgm_cdx_gfiobrh", "dmri_rsirndgm_cdx_gfitrh", "dmri_rsirndgm_cdx_gfmrh", "dmri_rsirndgm_cdx_gfsrh", "dmri_rsirndgm_cdx_gilscirh", "dmri_rsirndgm_cdx_gisrh", "dmri_rsirndgm_cdx_gomrh", "dmri_rsirndgm_cdx_gosrh", "dmri_rsirndgm_cdx_gotlfrh", "dmri_rsirndgm_cdx_gotmlrh", "dmri_rsirndgm_cdx_gotmprh", "dmri_rsirndgm_cdx_gorh", "dmri_rsirndgm_cdx_gpiarh", "dmri_rsirndgm_cdx_gpisrh", "dmri_rsirndgm_cdx_gpsrh", "dmri_rsirndgm_cdx_gpcrh", "dmri_rsirndgm_cdx_gprctrh", "dmri_rsirndgm_cdx_gprcnrh", "dmri_rsirndgm_cdx_grrh", "dmri_rsirndgm_cdx_gsrh", "dmri_rsirndgm_cdx_gtsgttrh", "dmri_rsirndgm_cdx_gtslrh", "dmri_rsirndgm_cdx_gtspprh", "dmri_rsirndgm_cdx_gtsptrh", "dmri_rsirndgm_cdx_gtirh", "dmri_rsirndgm_cdx_gtmrh", "dmri_rsirndgm_cdx_lfahrh", "dmri_rsirndgm_cdx_lfavrh", "dmri_rsirndgm_cdx_lfprh", "dmri_rsirndgm_cdx_porh", "dmri_rsirndgm_cdx_ptrh", "dmri_rsirndgm_cdx_sccrh", "dmri_rsirndgm_cdx_scrh", "dmri_rsirndgm_cdx_scmrh", "dmri_rsirndgm_cdx_sciarh", "dmri_rsirndgm_cdx_sciirh", "dmri_rsirndgm_cdx_scisrh", "dmri_rsirndgm_cdx_sctarh", "dmri_rsirndgm_cdx_sctprh", "dmri_rsirndgm_cdx_sfirh", "dmri_rsirndgm_cdx_sfmrh", "dmri_rsirndgm_cdx_sfsrh", "dmri_rsirndgm_cdx_sipjrh", "dmri_rsirndgm_cdx_siptrh", "dmri_rsirndgm_cdx_somlrh", "dmri_rsirndgm_cdx_sostrh", "dmri_rsirndgm_cdx_soarh", "dmri_rsirndgm_cdx_sotlrh", "dmri_rsirndgm_cdx_sotmlrh", "dmri_rsirndgm_cdx_solrh", "dmri_rsirndgm_cdx_somorh", "dmri_rsirndgm_cdx_sohsrh", "dmri_rsirndgm_cdx_sporh", "dmri_rsirndgm_cdx_spcrh", "dmri_rsirndgm_cdx_spctrh", "dmri_rsirndgm_cdx_spriprh", "dmri_rsirndgm_cdx_sprsprh", "dmri_rsirndgm_cdx_ssorh", "dmri_rsirndgm_cdx_ssprh", "dmri_rsirndgm_cdx_stirh", "dmri_rsirndgm_cdx_stsrh", "dmri_rsirndgm_cdx_sttrh", #"dmri_rsirndgm_cdx_mean"
         
     ],
     "abcd_mrirsfd01": [
@@ -2269,7 +2269,7 @@ variables = {
 }
 
 # %%
-print(variables.keys())
+#print(variables.keys())
 
 # %%
 # read in csvs of interest one a time so you don't crash your computer
@@ -2301,6 +2301,9 @@ qc_vars = [
     "interview_age",
 ]
 
+# read in data dictionary
+data_df = pd.read_csv(join(data_dir, 'generate_dataset/data_element_names.csv'), index_col=0, header=0)
+
 # %%
 # initialize the progress bars
 manager = enlighten.get_manager()
@@ -2311,9 +2314,11 @@ missing = {}
 
 # build the mega_df now
 df = pd.DataFrame()
+data_dict = pd.DataFrame(columns=['data_structure', 'variable_description'])
 for key in variables.keys():
     missing[key] = []
     old_columns = len(df.columns)
+    data_dict
     if key in changes:
         path = join(data_dir, 'change_scores', f'{key}_changescores_bl_tp2.csv')
         if exists(path):
@@ -2321,6 +2326,8 @@ for key in variables.keys():
             temp_df = pd.read_csv(path, index_col="subjectkey", header=0)
             for column in variables[key]:
                 try:
+                    data_dict.at[column, 'data_structure'] = key
+                    data_dict.at[column, 'variable_description'] = data_df.loc[column, 'description']
                     # grab baselines and 2yfu values
                     df[f'{column}.baseline_year_1_arm_1'] = temp_df[f'{column}.baseline_year_1_arm_1'].copy()
                     df[f'{column}.2_year_follow_up_y_arm_1'] = temp_df[f'{column}.2_year_follow_up_y_arm_1'].copy()
@@ -2350,6 +2357,8 @@ for key in variables.keys():
             y2fu_df = temp_df[temp_df["eventname"] == "2_year_follow_up_y_arm_1"].copy()
             temp_df = None
             for column in variables[key]:
+                data_dict.at[column, 'data_structure'] = key
+                data_dict.at[column, 'variable_description'] = data_df.loc[column, 'description']
                 df[f'{column}.baseline_year_1_arm_1'] = base_df[column].copy()
                 df[f'{column}.2_year_follow_up_y_arm_1'] = y2fu_df[column].copy()
                 ticks.update()
@@ -2372,5 +2381,9 @@ print(f"Full dataframe is {sys.getsizeof(df) / 1000000000}GB.")
 # write out resulting dataframe
 df.to_csv(
     "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/data/data.csv"
+)
+
+data_dict.to_csv(
+    "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/data/data_dictionary.csv"
 )
 # %%

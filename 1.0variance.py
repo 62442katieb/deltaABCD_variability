@@ -10,11 +10,14 @@ import matplotlib.pyplot as plt
 from os.path import join
 
 from scipy.stats import fligner
-from nilearn import plotting, datasets, surface
 
 sns.set(style='whitegrid', context='talk')
 plt.rcParams["font.family"] = "monospace"
 plt.rcParams['font.monospace'] = 'Courier New'
+
+
+crayons = sns.crayon_palette(['Aquamarine', 'Fuchsia', 
+                              'Jungle Green', 'Yellow Green'])
 
 
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/"
@@ -22,7 +25,7 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data.csv"), index_col=0, header=0)
+df = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data_qcd.csv"), index_col=0, header=0)
 
 
 df.drop(list(df.filter(regex='lesion.*').columns), axis=1, inplace=True)
@@ -36,36 +39,51 @@ deltarsfmri_complete = df.filter(regex='rsfmri.*change_score').dropna(how='any')
 deltarsi_complete = df.filter(regex='dmri_rsi.*change_score').dropna()
 deltadti_complete = df.filter(regex='dmri_dti.*change_score').dropna()
 
+img_modalities = {'smri': deltasmri_complete,
+                  'fmri': deltarsfmri_complete,
+                  'rsi': deltarsi_complete, 
+                  'dti': deltadti_complete}
 
 tests = ['variance', 
          'fligner_sex',
-         'fligner_puberty_m',
-         'fligner_puberty_f',
-         'fligner_puberty_1',
-         'fligner_puberty_2',
-         'fligner_puberty_3',
-         #'fligner_puberty_4',
-         #'fligner_puberty_5',
+         'fligner_puberty',
          'fligner_raceth', 
          'fligner_income', 
          'fligner_edu', 
          'fligner_marital', 
          'fligner_age', 
-         'fligner_scanner']
+         #'fligner_scanner'
+        ]
 
-
+# should I correct alpha for multiple comparisons?
 alpha = 0.05
 values = ['stat', 'p', 'diff', 'greater', f'a<{alpha}']
 columns = pd.MultiIndex.from_product([tests, values])
 
 var_df = pd.DataFrame(columns=columns)
 
+ages = df['interview_age.baseline_year_1_arm_1'].sort_values().dropna().unique()
+all_ages = df['interview_age.baseline_year_1_arm_1'].sort_values().dropna()
+q1 = np.quantile(all_ages, 0.25)
+q2 = np.quantile(all_ages, 0.5)
+q3 = np.quantile(all_ages, 0.75)
+age_bins = [ages[0], q1, q2, q3, ages[-1]]
 
-age_bins = np.zeros((10,))
-for percentile in range(0, 100, 10):
-    index = int(percentile / 10)
-    age_bins[index] = np.percentile(df['interview_age.baseline_year_1_arm_1'], 
-                                    float(percentile))
+# combine female and male pubertal development scores into one variable
+df[['pds_p_ss_female_category_2.baseline_year_1_arm_1',
+    'pds_p_ss_male_category_2.baseline_year_1_arm_1']]
+df['pds_p_ss_category_2.baseline_year_1_arm_1'] = df['pds_p_ss_female_category_2.baseline_year_1_arm_1'].fillna(0) + df['pds_p_ss_male_category_2.baseline_year_1_arm_1'].fillna(0)
+
+# name the pubertal & demographic variables (baseline)
+sex = 'sex.baseline_year_1_arm_1'
+puberty = 'pds_p_ss_category_2.baseline_year_1_arm_1' # new combined score
+race = 'race_ethnicity.baseline_year_1_arm_1'
+income = 'demo_comb_income_v2.baseline_year_1_arm_1'
+edu = 'demo_prnt_ed_v2.baseline_year_1_arm_1'
+age = 'interview_age.baseline_year_1_arm_1'
+marry = "demo_prnt_marital_v2.baseline_year_1_arm_1"
+mri = 'mri_info_manufacturer.baseline_year_1_arm_1'
+
 
 img_modalities = {'smri': deltasmri_complete,
                   'fmri': deltarsfmri_complete,
@@ -79,8 +97,8 @@ for modality in img_modalities.keys():
         var_df.at[var, ('variance', 'stat')] = np.var(df[var])
         
         # compare variance between male and female participants
-        m = df[df['sex.baseline_year_1_arm_1'] == 'M'][var].dropna()
-        f = df[df['sex.baseline_year_1_arm_1'] == 'F'][var].dropna()
+        m = df[df[sex] == 'M'][var].dropna()
+        f = df[df[sex] == 'F'][var].dropna()
         test = fligner(m, f)
         var_df.at[var, ('fligner_sex', 'stat')] = test[0]
         var_df.at[var, ('fligner_sex', 'p')] = test[1]
@@ -91,18 +109,19 @@ for modality in img_modalities.keys():
         else:
             var_df.at[var, ('fligner_sex', f'a<{alpha}')] = 'ns'
         
-        # compare variance between pubertal stages at baseline, female ppts
-        puberty = 'pds_p_ss_female_category_2.baseline_year_1_arm_1'
+        # compare variance between pubertal stages at baseline
+        # do not re-bin, unequal group sizes will have to be okay
         one = df[df[puberty] == 1.][var].dropna()
         two = df[df[puberty] == 2.][var].dropna()
         three = df[df[puberty] == 3.][var].dropna()
+        
         test = fligner(one, two, three)
-        var_df.at[var, ('fligner_puberty_f', 'stat')] = test[0]
-        var_df.at[var, ('fligner_puberty_f', 'p')] = test[1]
+        var_df.at[var, ('fligner_puberty', 'stat')] = test[0]
+        var_df.at[var, ('fligner_puberty', 'p')] = test[1]
         if test[1] < alpha:
-            var_df.at[var, ('fligner_puberty_f', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_puberty', f'a<{alpha}')] = '**'
         else:
-            var_df.at[var, ('fligner_puberty_f', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_puberty', f'a<{alpha}')] = 'ns'
         
         var_dict = {'1': np.mean(one), 
                     '2': np.mean(two), 
@@ -110,75 +129,19 @@ for modality in img_modalities.keys():
         max_key = max(var_dict, key=var_dict.get)
         min_val = min(var_dict.values())
         sorted_keys = {k: v for k, v in sorted(var_dict.items(), key=lambda item: item[1])}
-        var_df.at[var, ('fligner_puberty_f', 'diff')] = var_dict[max_key] - min_val
-        var_df.at[var, ('fligner_puberty_f', 'greater')] = [list(sorted_keys.keys())]
+        var_df.at[var, ('fligner_puberty', 'diff')] = var_dict[max_key] - min_val
+        var_df.at[var, ('fligner_puberty', 'greater')] = [list(sorted_keys.keys())]
         
-        # compare variance between pubertal stages at baseline, male ppts
-        puberty = 'pds_p_ss_male_category_2.baseline_year_1_arm_1'
-        one = df[df[puberty] == 1.][var].dropna()
-        two = df[df[puberty] == 2.][var].dropna()
-        three = df[df[puberty] == 3.][var].dropna()
-        test = fligner(one, two, three)
-        var_dict = {'1': np.mean(one), 
-                    '2': np.mean(two), 
-                    '3': np.mean(three)}
-        max_key = max(var_dict, key=var_dict.get)
-        min_val = min(var_dict.values())
-        sorted_keys = {k: v for k, v in sorted(var_dict.items(), key=lambda item: item[1])}
-        var_df.at[var, ('fligner_puberty_m', 'diff')] = var_dict[max_key] - min_val
-        var_df.at[var, ('fligner_puberty_m', 'greater')] = [list(sorted_keys.keys())]
-        var_df.at[var, ('fligner_puberty_m', 'stat')] = test[0]
-        var_df.at[var, ('fligner_puberty_m', 'p')] = test[1]
-        if test[1] < alpha:
-            var_df.at[var, ('fligner_puberty_m', f'a<{alpha}')] = '**'
-        else:
-            var_df.at[var, ('fligner_puberty_m', f'a<{alpha}')] = 'ns'
         
-        # compare variance between sexes at baseline, pubertal stages
-        puberty_f = 'pds_p_ss_female_category_2.baseline_year_1_arm_1'
-        puberty_m = 'pds_p_ss_male_category_2.baseline_year_1_arm_1'
-        one_f = df[df[puberty_f] == 1.][var].dropna()
-        two_f = df[df[puberty_f] == 2.][var].dropna()
-        three_f = df[df[puberty_f] == 3.][var].dropna()
-        one_m = df[df[puberty_m] == 1.][var].dropna()
-        two_m = df[df[puberty_m] == 2.][var].dropna()
-        three_m = df[df[puberty_m] == 3.][var].dropna()
-        test = fligner(one_f, one_m)
-        var_df.at[var, ('fligner_puberty_1', 'stat')] = test[0]
-        var_df.at[var, ('fligner_puberty_1', 'p')] = test[1]
-        var_df.at[var, ('fligner_puberty_1', 'diff')] = np.mean(one_f) - np.mean(one_m)
-        var_df.at[var, ('fligner_puberty_1', 'greater')] = 'f'
-        if test[1] < alpha:
-            var_df.at[var, ('fligner_puberty_1', f'a<{alpha}')] = '**'
-        else:
-            var_df.at[var, ('fligner_puberty_1', f'a<{alpha}')] = 'ns'
-        test = fligner(two_f, two_m)
-        var_df.at[var, ('fligner_puberty_2', 'stat')] = test[0]
-        var_df.at[var, ('fligner_puberty_2', 'p')] = test[1]
-        var_df.at[var, ('fligner_puberty_2', 'diff')] = np.mean(two_f) - np.mean(two_m)
-        var_df.at[var, ('fligner_puberty_2', 'greater')] = 'f'
-        if test[1] < alpha:
-            var_df.at[var, ('fligner_puberty_2', f'a<{alpha}')] = '**'
-        else:
-            var_df.at[var, ('fligner_puberty_2', f'a<{alpha}')] = 'ns'
-        test = fligner(three_f, three_m)
-        var_df.at[var, ('fligner_puberty_3', 'stat')] = test[0]
-        var_df.at[var, ('fligner_puberty_3', 'p')] = test[1]
-        var_df.at[var, ('fligner_puberty_3', 'diff')] = np.mean(three_f) - np.mean(three_m)
-        var_df.at[var, ('fligner_puberty_3', 'greater')] = 'f'
-        if test[1] < alpha:
-            var_df.at[var, ('fligner_puberty_3', f'a<{alpha}')] = '**'
-        else:
-            var_df.at[var, ('fligner_puberty_3', f'a<{alpha}')] = 'ns'
-        
-        #compare variance across race/ethnicities
-        race = 'race_ethnicity.baseline_year_1_arm_1'
+        # compare variance across race/ethnicities
+        # do not re-bin, unequal group sizes will have to be okay
         white = df[df[race] == 1.][var].dropna()
         black = df[df[race] == 2.][var].dropna()
         hispanic = df[df[race] == 3.][var].dropna()
         asian = df[df[race] == 4.][var].dropna()
         other = df[df[race] == 5.][var].dropna()
-        test = fligner(white, black, hispanic, asian, other)
+        asian_other = df[df[race].between(4., 5.)][var].dropna()
+        test = fligner(white, black, hispanic, asian_other)
         var_df.at[var, ('fligner_raceth', 'stat')] = test[0]
         var_df.at[var, ('fligner_raceth', 'p')] = test[1]
         if test[1] < alpha:
@@ -187,12 +150,12 @@ for modality in img_modalities.keys():
             var_df.at[var, ('fligner_raceth', f'a<{alpha}')] = 'ns'
         
         # compare variance across income
-        income = 'demo_comb_income_v2.baseline_year_1_arm_1'
-        lt50k = df[df[income] < 6.][var].dropna()
-        lt100 = df[df[income].between(6., 8.)][var].dropna()
+        # re-bin for approximately equal group sizes
+        lt75k = df[df[income] < 7.][var].dropna()
+        lt100 = df[df[income].between(7., 8.)][var].dropna()
         gt100 = df[df[income].between(9., 10.)][var].dropna()
         
-        test = fligner(lt50k, lt100, gt100)
+        test = fligner(lt75k, lt100, gt100)
         var_df.at[var, ('fligner_income', 'stat')] = test[0]
         var_df.at[var, ('fligner_income', 'p')] = test[1]
         if test[1] < alpha:
@@ -201,33 +164,13 @@ for modality in img_modalities.keys():
             var_df.at[var, ('fligner_income', f'a<{alpha}')] = 'ns'
         
         # compare variance across education
-        edu = 'demo_prnt_ed_v2.baseline_year_1_arm_1'
-        one = df[df[edu] == 1][var].dropna()
-        two = df[df[edu] == 2][var].dropna()
-        three = df[df[edu] == 3][var].dropna()
-        four = df[df[edu] == 4][var].dropna()
-        five = df[df[edu] == 5][var].dropna()
-        six = df[df[edu] == 6][var].dropna()
-        seven = df[df[edu] == 7][var].dropna()
-        eight = df[df[edu] == 8][var].dropna()
-        nine = df[df[edu] == 9][var].dropna()
-        ten = df[df[edu] == 10][var].dropna()
-        eleven = df[df[edu] == 11][var].dropna()
-        twelve = df[df[edu] == 12][var].dropna()
-        thirteen = df[df[edu] == 13][var].dropna()
-        fourteen = df[df[edu] == 14][var].dropna()
-        fifteen = df[df[edu] == 15][var].dropna()
-        sixteen = df[df[edu] == 16][var].dropna()
-        seventeen = df[df[edu] == 17][var].dropna()
-        eighteen = df[df[edu] == 18][var].dropna()
-        nineteen = df[df[edu] == 19][var].dropna()
-        twenty = df[df[edu] == 20][var].dropna()
-        twentyone = df[df[edu] == 21][var].dropna()
-        sevens = df[df[edu] == 777][var].dropna()
-        test = fligner(one, two, three, four, five, six, 
-                      seven, eight, nine, ten, sevens, 
-                      eleven, twelve, thirteen, fourteen, fifteen,
-                      sixteen, seventeen, eighteen, nineteen, twenty, twentyone)
+        # re-bin for approximately equal group sizes
+        hs_ged = df[df[edu] <= 14][var].dropna()
+        lt_4yuni = df[df[edu].between(15, 17)][var].dropna()
+        bachelors = df[df[edu] == 18][var].dropna()
+        graduate = df[df[edu].between(19, 22)][var].dropna()
+        
+        test = fligner(hs_ged, lt_4yuni, bachelors, graduate)
         var_df.at[var, ('fligner_edu', 'stat')] = test[0]
         var_df.at[var, ('fligner_edu', 'p')] = test[1]
         if test[1] < alpha:
@@ -237,20 +180,12 @@ for modality in img_modalities.keys():
         
         # compare variance across age, binned by n0th percentiles
         # age_bins are calculated above
-        age = 'interview_age.baseline_year_1_arm_1'
-        one = df[df[age] < age_bins[1]][var].dropna()
-        two = df[df[age].between(age_bins[1], age_bins[2] - 1)][var].dropna()
-        three = df[df[age].between(age_bins[2], age_bins[3] - 1.)][var].dropna()
-        four = df[df[age].between(age_bins[3], age_bins[4] - 1.)][var].dropna()
-        five = df[df[age].between(age_bins[4], age_bins[5] - 1.)][var].dropna()
-        six = df[df[age].between(age_bins[5], age_bins[6] - 1.)][var].dropna()
-        seven = df[df[age].between(age_bins[6], age_bins[7] - 1.)][var].dropna()
-        eight = df[df[age].between(age_bins[7], age_bins[8] - 1.)][var].dropna()
-        nine = df[df[age].between(age_bins[8], age_bins[9] - 1.)][var].dropna()
-        ten = df[df[age] >= age_bins[9]][var].dropna()
+        one = df[df[age] <= age_bins[1]][var].dropna()
+        two = df[df[age].between(age_bins[1], age_bins[2], inclusive='left')][var].dropna()
+        three = df[df[age].between(age_bins[2], age_bins[3], inclusive='left')][var].dropna()
+        four = df[df[age].between(age_bins[3], age_bins[4], inclusive='left')][var].dropna()
                  
-        test = fligner(one, two, three, four, five, six, 
-                      seven, eight, nine, ten)
+        test = fligner(one, two, three, four)
         var_df.at[var, ('fligner_age', 'stat')] = test[0]
         var_df.at[var, ('fligner_age', 'p')] = test[1]
         if test[1] < alpha:
@@ -259,7 +194,7 @@ for modality in img_modalities.keys():
             var_df.at[var, ('fligner_age', f'a<{alpha}')] = 'ns'
         
          # compare variance across scanner manufacturers
-        mri = 'mri_info_manufacturer.baseline_year_1_arm_1'
+         # not for the main brain change variability paper
         siemens = df[df[mri] == 'SIEMENS'][var].dropna()
         ge = df[df[mri] == 'GE MEDICAL SYSTEMS'][var].dropna()
         philips = df[df[mri] == 'Philips Medical Systems'][var].dropna()
@@ -273,15 +208,22 @@ for modality in img_modalities.keys():
             var_df.at[var, ('fligner_scanner', f'a<{alpha}')] = 'ns'
         
         # compare variance across parent marital status
-        marry = "demo_prnt_marital_v2.baseline_year_1_arm_1"
+        # re-bin for group sizes
         married = df[df[marry] == 1.][var].dropna()
-        widowed = df[df[marry] == 2.][var].dropna()
-        divorced = df[df[marry] == 3.][var].dropna()
-        separated = df[df[marry] == 4.][var].dropna()
-        never = df[df[marry] == 5.][var].dropna()
-        refuse = df[df[marry] == 777.][var].dropna()
+        notmarried = df[df[marry].between(2,5, inclusive='both')][var].dropna()
+        #widowed = df[df[marry] == 2.][var].dropna()
+        #divorced = df[df[marry] == 3.][var].dropna()
+        #separated = df[df[marry] == 4.][var].dropna()
+        #never = df[df[marry] == 5.][var].dropna()
+        #refuse = df[df[marry] == 777.][var].dropna()
         
-        test = fligner(married, widowed, separated, divorced, never, refuse)
+        test = fligner(married, notmarried
+                       #widowed, 
+                       #separated, 
+                       #divorced, 
+                       #never, 
+                       #refuse
+                      )
         var_df.at[var, ('fligner_marital', 'stat')] = test[0]
         var_df.at[var, ('fligner_marital', 'p')] = test[1]
         if test[1] < alpha:
@@ -293,59 +235,123 @@ for modality in img_modalities.keys():
 var_df.dropna(how='all', axis=1, inplace=True)
 
 # calculate what proportion of measures show significant heteroscedasticity
-# just count('**') / 1776 measures
+# just count('**') / # measures
 var_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'variance_flinger.csv'))
 
-crayons = sns.crayon_palette(['Aquamarine', 'Burnt Sienna', 'Jungle Green', 'Fuchsia', 'Lavender'])
+concepts = {'morph': ['thick', 
+                      'area', 
+                      'vol',
+                      'gmvol',
+                      'dtivol'],
+            'cell': ['t1wcnt', 
+                     'rsirni', 
+                     'rsirnd',
+                     'rsirnigm', 
+                     'rsirndgm',
+                     'dtifa', 
+                     'dtimd',
+                     'dtild', 
+                     'dtitd'],
+            'func':['var',
+                    'c',
+                     'cor']}
 
+for var in var_df.index:
+    #print(var)
+    if 'mrisdp' in var:
+        var_num = int(var.split('.')[0].split('_')[-1])
+        var_df.at[var, 'modality'] = 'smri'
+        var_df.at[var, 'atlas'] = 'dtx'
+        if var_num <= 148:
+            var_df.at[var, 'measure'] = 'thick'
+        elif var_num <= 450 and var_num >= 303:
+            var_df.at[var, 'measure'] = 'area'
+        elif var_num < 604 and var_num >= 450:
+            var_df.at[var, 'measure'] = 'vol'
+        elif var_num <= 1054 and var_num >= 907:
+            var_df.at[var, 'measure'] = 't1wcnt'
+        elif var_num == 604:
+            var_df.at[var, 'measure'] = 'gmvol'
+    elif '_' in var:
+        var_list = var.split('.')[0].split('_')
+        var_df.at[var, 'modality'] = var_list[0]
+        var_df.at[var, 'measure'] = var_list[1]
+        var_df.at[var, 'atlas'] = var_list[2]
+        var_df.at[var, 'region'] = '_'.join(var_list[3:])
+
+var_df = var_df[var_df['measure'] != 't1w']
+var_df = var_df[var_df['measure'] != 't2w']
+
+for i in var_df.index:
+    measure = var_df.loc[i]['measure']
+    measure = str(measure.values[0])
+    if measure in concepts['morph']:
+        var_df.at[i,'concept'] = 'macrostructure'
+    elif measure in concepts['cell']:
+        var_df.at[i,'concept'] = 'microstructure'
+    elif measure in concepts['func']:
+        var_df.at[i,'concept'] = 'function'
 
 # plot the distribution of variances of all structural mri measures
 smri_var = img_modalities['smri'].columns
 dti_var = img_modalities['dti'].columns
 rsi_var = img_modalities['rsi'].columns
+# separate wm and gm rsi
+rsi_gm = list(img_modalities['rsi'].filter(regex='.*gm').columns) + list(img_modalities['rsi'].filter(regex='.*scs').columns)
+rsi_wm = list(set(rsi_var) - set(rsi_gm))
 fmri_var = img_modalities['fmri'].columns
-fmri_cor_var = img_modalities['fmri'].filter(regex='_cor_.*').columns
+fc_cort_var = img_modalities['fmri'].filter(regex='_c_.*').columns
+fc_scor_var = img_modalities['fmri'].filter(regex='_cor_.*').columns
 fmri_var_var = img_modalities['fmri'].filter(regex='_var_.*').columns
 
+morph_var = var_df[var_df['concept'] == 'macrostructure'].index
+cell_var = var_df[var_df['concept'] == 'microstructure'].index
+func_var = list(fmri_var_var) 
+conn_var = list(fc_cort_var) + list(fc_scor_var)
 
+btwn_fc = []
+wthn_fc = []
+for var in fc_cort_var:
+    var_list = var[:-13].split('_')
+    #print(var_list)
+    if var_list[3] == var_list[5]:
+        #print(var, 'within-network')
+        wthn_fc.append(var)
+    else:
+        btwn_fc.append(var)
+        #print(var, 'between-network')
+
+# plot variance in brain changes by biological concept
 fig,ax = plt.subplots(ncols=2, figsize=(15,5))
-g = sns.kdeplot(var_df.loc[smri_var, ('variance', 'stat')], color=crayons[0], shade=True, ax=ax[0])
-h = sns.kdeplot(var_df.loc[dti_var, ('variance', 'stat')], color=crayons[1], shade=True, ax=ax[0])
-i = sns.kdeplot(var_df.loc[rsi_var, ('variance', 'stat')], color=crayons[2], shade=True, ax=ax[0])
+g = sns.kdeplot(var_df.loc[morph_var, ('variance', 'stat')], color=crayons[0], shade=True, ax=ax[0])
+h = sns.kdeplot(var_df.loc[cell_var, ('variance', 'stat')], color=crayons[1], shade=True, ax=ax[0])
+#i = sns.kdeplot(var_df.loc[func_var, ('variance', 'stat')], color=crayons[2], shade=True, ax=ax[0])
 #m = sns.kdeplot(var_df.loc[fmri_var, ('variance', 'stat')], color=crayons[3])
-j = sns.rugplot(var_df.loc[smri_var, ('variance', 'stat')], color=crayons[0], lw=1, alpha=.1, ax=ax[0])
-k = sns.rugplot(var_df.loc[dti_var, ('variance', 'stat')], color=crayons[1], lw=1, alpha=0.2, ax=ax[0])
-l = sns.rugplot(var_df.loc[rsi_var, ('variance', 'stat')], color=crayons[2], lw=1, alpha=.1, ax=ax[0])
+j = sns.rugplot(var_df.loc[morph_var, ('variance', 'stat')], color=crayons[0], lw=1, alpha=.1, ax=ax[0])
+k = sns.rugplot(var_df.loc[cell_var, ('variance', 'stat')], color=crayons[1], lw=1, alpha=0.2, ax=ax[0])
+#l = sns.rugplot(var_df.loc[rsi_var, ('variance', 'stat')], color=crayons[2], lw=1, alpha=.1, ax=ax[0])
 #n = sns.rugplot(var_df.loc[fmri_var, ('variance', 'stat')], color=crayons[3])
 ax[0].set_xlabel('Variance')
 plt.tight_layout()
-ax[0].legend(['smri', 
-           'dti', 
-           'rsi', 
+ax[0].legend(['macrostructure', 
+           'microstructure', 
+           #'rsi', 
            #'fmri'
           ])
 ax[0].set_title('A')
 
-m = sns.kdeplot(var_df.loc[fmri_cor_var, ('variance', 'stat')], color=crayons[3], shade=True, ax=ax[1])
-n = sns.rugplot(var_df.loc[fmri_cor_var, ('variance', 'stat')], color=crayons[3], lw=1, alpha=.1, ax=ax[1])
-o = sns.kdeplot(var_df.loc[fmri_var_var, ('variance', 'stat')], color=crayons[4], shade=True, ax=ax[1])
-p = sns.rugplot(var_df.loc[fmri_var_var, ('variance', 'stat')], color=crayons[4], lw=1, alpha=.1, ax=ax[1])
-ax[0].set_xlabel('Variance')
+m = sns.kdeplot(var_df.loc[func_var, ('variance', 'stat')], color=crayons[2], shade=True, ax=ax[1])
+o = sns.kdeplot(var_df.loc[conn_var, ('variance', 'stat')], color=crayons[3], shade=True, ax=ax[1])
+n = sns.rugplot(var_df.loc[func_var, ('variance', 'stat')], color=crayons[2], lw=1, alpha=.1, ax=ax[1])
+p = sns.rugplot(var_df.loc[conn_var, ('variance', 'stat')], color=crayons[3], lw=1, alpha=.1, ax=ax[1])
+ax[1].set_xlabel('Variance')
 plt.tight_layout()
-ax[1].legend(['fmri - connectivity',
-              'fmri - BOLD variance'
+ax[1].legend(['function',
+              'functional connectivity'
           ])
 ax[1].set_title('B')
-fig.savefig('../figures/apchange_variance.png', dpi=400)
+fig.savefig('../figures/apchange_variance_concept.png', dpi=400)
 
-
-sex_diff = {}
-for modality in img_modalities.keys():
-    variables = img_modalities[modality].columns
-    sex_diff[modality] = np.sum(var_df.loc[variables][('fligner_sex', 'p')] < 0.01) / len(variables)
-
-print('Proportion of measures from each modality that exhibit significant sex differences in change scores:\n',
-      sex_diff)
 
 
 # ## Visualizing brain heterogeneity across non-brain variables
@@ -366,11 +372,7 @@ var_df[var_df['modality'] == 'fmri'][('variance', 'stat')].sort_values()
 
 devt = ['fligner_age', 
         'fligner_sex',
-        'fligner_puberty_f',
-        'fligner_puberty_m',
-        'fligner_puberty_1',
-        'fligner_puberty_2',
-        'fligner_puberty_3']
+        'fligner_puberty']
 demo =  ['fligner_raceth',
          'fligner_income',
          'fligner_edu',
@@ -379,32 +381,31 @@ demo =  ['fligner_raceth',
         ]
 
 stats = var_df.drop(['variance'], axis=1).xs('stat', level=1, axis=1)
-alphas = var_df.xs(f'a<{alpha}', level=1, axis=1)
-modalities = var_df['modality']
+alphas = var_df.xs(f'a<0.05', level=1, axis=1)
+modalities = var_df['concept']
 
 alphas = alphas.add_suffix('_alpha')
-
 
 demo_alphas = [f'{i}_alpha' for i in demo]
 devt_alphas = [f'{i}_alpha' for i in devt]
 
 mod_demo = pd.concat([stats[demo], modalities], axis=1).melt(value_vars=demo, 
                                                   value_name='Flinger-Killeen Statistic',
-                                                  id_vars='modality').drop('variable', axis=1)
+                                                  id_vars='concept').drop('variable', axis=1)
 alpha_demo = alphas[demo_alphas].melt(value_name='Significant')
 demo_flinger = pd.concat([mod_demo, alpha_demo], axis=1)
 
 mod_devt = pd.concat([stats[devt], modalities], axis=1).melt(value_vars=devt, 
                                                   value_name='Flinger-Killeen Statistic',
-                                                  id_vars='modality')
+                                                  id_vars='concept')
 alpha_devt = alphas[devt_alphas].melt(value_name='Significant').drop('variable', axis=1)
 devt_flinger = pd.concat([mod_devt, alpha_devt], axis=1)
 
 
-fig,ax = plt.subplots(nrows=2, figsize=(16,18))
+fig,ax = plt.subplots(nrows=1, ncols=2, figsize=(20,5), squeeze=True)
 g = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=devt_flinger[devt_flinger['Significant'] == '**'], 
-                  hue='modality',
+                  hue='concept',
                   marker='o',
                   size=7,
                   edgecolor='white',
@@ -412,14 +413,13 @@ g = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   linewidth=0.5,
                   ax=ax[0],
                   palette=crayons,
-                  hue_order=['smri', 
-                           'dti', 
-                           'rsi', 
-                           'fmri']
+                  hue_order=['macrostructure', 
+                           'microstructure', 
+                           'function']
                  )
 k = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=devt_flinger[devt_flinger['Significant'] != '**'], 
-                  hue='modality',
+                  hue='concept',
                   marker='P',
                   size=11,
                   linewidth=0.5,
@@ -427,20 +427,19 @@ k = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   dodge=True,
                   ax=ax[0],
                   palette=crayons,
-                  hue_order=['smri', 
-                           'dti', 
-                           'rsi', 
-                           'fmri']
+                  hue_order=['macrostructure', 
+                           'microstructure', 
+                           'function']
                  )
 g.get_legend().remove()
 g.set_ylabel('Flinger-Killeen Statistic')
-g.set_xlabel('Measure')
-g.set_xticklabels(['Age', 'Sex', 'Puberty (f)', 'Puberty (m)', 'Prepubertal', 'Early\nPuberty', 'Midpubertal'])
-g.set_title('Heteroscedasticity Across Developmental Variables, Per Modality')
+g.set_xlabel('')
+g.set_xticklabels(['Age', 'Sex', 'Puberty'])
+
 
 h = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=demo_flinger[demo_flinger['Significant'] == '**'], 
-                  hue='modality',
+                  hue='concept',
                     marker='o',
                   size=7,
                   linewidth=0.5,
@@ -448,15 +447,14 @@ h = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   dodge=True,
                   ax=ax[1],
                   palette=crayons,
-                  hue_order=['smri', 
-                           'dti', 
-                           'rsi', 
-                           'fmri'],
+                  hue_order=['macrostructure', 
+                           'microstructure', 
+                           'function'],
               
                  )
 j = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=demo_flinger[demo_flinger['Significant'] != '**'], 
-                  hue='modality',
+                  hue='concept',
                     marker='P',
                   size=11,
                   linewidth=0.5,
@@ -464,16 +462,16 @@ j = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   edgecolor='white',
                   ax=ax[1],
                   palette=crayons,
-                  hue_order=['smri', 
-                           'dti', 
-                           'rsi', 
-                           'fmri'],
+                  hue_order=['macrostructure', 
+                           'microstructure', 
+                           'function'],
               
                  )
-h.get_legend().remove()
-h.set_ylabel('Flinger-Killeen Statistic')
-h.set_xlabel('Measure')
-h.set_title('Heteroscedasticity Across Demographic Variables, Per Modality')
+handles, labels = h.get_legend_handles_labels()
+h.legend(handles[:3], labels [:3])
+h.set_ylabel('')
+h.set_xlabel('')
+
 h.set_xticklabels(['Race &\nEthnicity', 
                    'Household\nIncome', 
                    'Parent\nEducation', 
@@ -481,5 +479,4 @@ h.set_xticklabels(['Race &\nEthnicity',
                    #'Scanner\nManufacturer'
                   ])
 fig.show()
-fig.savefig('../figures/heteroscedasticity_modality.png', dpi=400)
-
+fig.savefig('../figures/heteroscedasticity_concept.png', dpi=400)
