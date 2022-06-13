@@ -81,7 +81,7 @@ sns.set(style="white",
         context="talk", 
         font_scale=0.8,
         rc={"axes.facecolor": (0, 0, 0, 0),
-            "font.monospace": 'Courier',
+            "font.monospace": 'Courier New',
             "font.family": 'monospace'})
 crayons = sns.crayon_palette(['Aquamarine', 'Burnt Sienna', 'Jungle Green', 'Fuchsia', 'Lavender'])
 

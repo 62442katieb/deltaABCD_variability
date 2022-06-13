@@ -73,7 +73,7 @@ def plot_surfaces(nifti, surf, cmap, vmax, threshold):
 
 sns.set(style='whitegrid', context='talk')
 plt.rcParams["font.family"] = "monospace"
-plt.rcParams['font.monospace'] = 'Courier'
+plt.rcParams['font.monospace'] = 'Courier New'
 
 
 # In[4]:
