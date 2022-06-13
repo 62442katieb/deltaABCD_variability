@@ -33,8 +33,7 @@ df.drop(list(df.filter(regex='.*_cf12_.*').columns), axis=1, inplace=True)
 no_2yfu = df[df["interview_date.2_year_follow_up_y_arm_1"].isna() == True].index
 df = df.drop(no_2yfu, axis=0)
 
-deltasmri_complete = pd.concat([df.filter(regex='smri.*change_score'), 
-                                df.filter(regex='mrisdp.*change_score')], axis=1).dropna()
+deltasmri_complete = df.filter(regex='smri.*change_score')
 deltarsfmri_complete = df.filter(regex='rsfmri.*change_score').dropna(how='any')
 deltarsi_complete = df.filter(regex='dmri_rsi.*change_score').dropna()
 deltadti_complete = df.filter(regex='dmri_dti.*change_score').dropna()
@@ -350,7 +349,7 @@ ax[1].legend(['function',
               'functional connectivity'
           ])
 ax[1].set_title('B')
-fig.savefig('../figures/apchange_variance_concept.png', dpi=400)
+fig.savefig(f'{PROJ_DIR}/figures/apchange_variance_concept.png', dpi=400)
 
 
 
@@ -474,9 +473,9 @@ h.set_xlabel('')
 
 h.set_xticklabels(['Race &\nEthnicity', 
                    'Household\nIncome', 
-                   'Parent\nEducation', 
-                   'Parent\nMarital Status', 
+                   'Caregiver\nEducation', 
+                   'Caregiver\nMarital\nStatus', 
                    #'Scanner\nManufacturer'
                   ])
 fig.show()
-fig.savefig('../figures/heteroscedasticity_concept.png', dpi=400)
+fig.savefig(f'{PROJ_DIR}/figures/heteroscedasticity_concept.png', dpi=400)
