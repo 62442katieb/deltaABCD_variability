@@ -65,17 +65,17 @@ def plot_surfaces(nifti, surf, cmap, vmax, threshold):
     return figure
 
 # set up colormaps & palettes for plotting later
-morph_pal = sns.cubehelix_palette(start=0.6, rot=-0.6, gamma=1.0, hue=1, light=0.7, dark=0.3)
-morph_cmap = sns.cubehelix_palette(n_colors=4, start=0.6, rot=-0.6, gamma=1.0, hue=0.7, light=1, dark=0.2, 
+morph_pal = sns.cubehelix_palette(n_colors=4, start=0.6, rot=-0.6, gamma=1.0, hue=0.7, light=0.6, dark=0.3)
+morph_cmap = sns.cubehelix_palette(n_colors=4, start=0.6, rot=-0.6, gamma=1.0, hue=0.7, light=0.3, dark=0.2, 
                                    as_cmap=True, reverse=True)
-cell_pal = sns.cubehelix_palette(start=1.7, rot=-0.8, gamma=1.0, hue=1, light=0.7, dark=0.3)
-cell_cmap = sns.cubehelix_palette(n_colors=9, start=1.7, rot=-0.8, gamma=1.0, hue=0.7, light=0.5, dark=0.2, 
+cell_pal = sns.cubehelix_palette(n_colors=9, start=1.7, rot=-0.8, gamma=1.0, hue=0.7, light=0.6, dark=0.3)
+cell_cmap = sns.cubehelix_palette(n_colors=9, start=1.7, rot=-0.8, gamma=1.0, hue=0.7, light=0.3, dark=0.2, 
                                   as_cmap=True, reverse=True)
-func_pal = sns.cubehelix_palette(start=3.0, rot=-0.6, gamma=1.0, hue=1, light=0.7, dark=0.3)
-func_cmap = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hue=0.7, light=0.6, dark=0.2, 
+func_pal = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hue=0.7, light=0.6, dark=0.3)
+func_cmap = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hue=0.7, light=0.3, dark=0.2, 
                                   as_cmap=True, reverse=True)
 big_pal = morph_pal + cell_pal + func_pal
-morph_cell_pal = morph_pal + cell_pal
+
 
 sns.set(style="white", 
         context="talk", 
@@ -464,6 +464,128 @@ for measure in measures:
         elif 'cortical' in measure:
             figure = plot_surfaces(meas_nimg, fsaverage, pals[measure], vmax, 0.01)
             figure.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400, bbox_inches='tight')
+
+# gather variables (network names) for plotting connectivity
+corrs = descriptives.filter(regex='rsfmri_c_ngd.*', axis=0).index
+corrs = [i.split('.')[0] for i in corrs]
+networks = list(np.unique([i.split('_')[-1] for i in corrs]))
+
+corrs = descriptives.filter(regex='rsfmri_c_ngd.*', axis=0).index
+corrs = [i.split('.')[0] for i in corrs]
+networks = list(np.unique([i.split('_')[-1] for i in corrs]))
+
+btwn_fc_src = [i.split('.')[0].split('_')[3] for i in btwn_fc]
+btwn_fc_trgt = [i.split('.')[0].split('_')[-1] for i in btwn_fc]
+
+vmax = 3.5
+
+# okay, now we're plotting between and within network connectivity
+#within-network fc is easy to plot bc there's only one HSK value per network (per fligner_var)
+meas_df = descriptives.loc[wthn_fc]
+meas_vars = [i.split('.')[0] for i in meas_df.index]
+atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
+#print(atlas_fname)
+atlas_nii = nib.load(atlas_fname)
+atlas_arr = atlas_nii.get_fdata()
+plotting_arr = np.zeros(atlas_arr.shape)
+for i in meas_df.index:
+    j = i.split('.')[0]
+    value = nifti_mapping.loc[j]['atlas_value']
+    #print(i, value)
+    if value is np.nan:
+        pass
+    else:
+        plotting_arr[np.where(atlas_arr == value)] = descriptives.at[i,'annualized percent change']
+
+meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, .01)
+figure.savefig(f'{PROJ_DIR}/figures/APCxFCw.png', dpi=400)
+
+fc_scor_var
+scs_varnames = [i.split('.')[0].split('_')[-1] for i in fc_scor_var]
+
+
+# now subcortical-cortical functional connectivity
+sig = []
+meas_df = descriptives.loc[fc_scor_var]
+
+meas_df.loc[fc_scor_var, 'scs'] = scs_varnames
+avgs = pd.DataFrame()
+for scs in np.unique(scs_varnames):
+    temp_df = meas_df[meas_df['scs'] == scs]
+    # calculate average heteroscedasticity of all 
+    # significantly heteroscedastic network connections
+
+    for i in temp_df.index:
+        sig.append(temp_df.loc[i,'annualized percent change'])
+    mean_apc = np.mean(sig)
+    #print(mean_hsk)
+    # grab name of first conn var for this network for plotting
+    avgs.at[temp_df.index[0], 'apc'] = mean_apc
+#print(nsig)
+meas_vars = [i.split('.')[0] for i in avgs.index]
+atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
+#print(atlas_fname)
+atlas_nii = nib.load(atlas_fname)
+atlas_arr = atlas_nii.get_fdata()
+plotting_arr = np.zeros(atlas_arr.shape)
+sig = 0
+for i in avgs.index:
+    j = i.split('.')[0]
+    value = nifti_mapping.loc[j]['atlas_value']
+    #print(i, value)
+    if value is np.nan:
+        pass
+    else:
+        plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'apc']        
+meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
+                     )
+plt.figure(layout='tight')
+q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=.01,
+                       cut_coords=[-20, -10, 0, 10], vmax=vmax*1.1, 
+                       annotate=False, cmap=func_cmap, colorbar=False,
+                       symmetric_cbar=False, axes=ax)
+
+#ax[1].set_visible(False)
+q.savefig(f'{PROJ_DIR}/figures/APCxFCs_scs.png', dpi=400)
+
+# between-network FC is tough bc we have to average all of a networks HSK values
+# but only the significantly HSK connections
+sig = []
+meas_df = descriptives.loc[btwn_fc]
+meas_df.loc[btwn_fc, 'from_ntwk'] = btwn_fc_src
+meas_df.loc[btwn_fc, 'to_ntwk'] = btwn_fc_trgt
+avgs = pd.DataFrame()
+for ntwk in np.unique(btwn_fc_src):
+    temp_df = meas_df[meas_df['from_ntwk'] == ntwk]
+    temp_df2 = meas_df[meas_df['to_ntwk'] == ntwk]
+    temp_df = pd.concat([temp_df, temp_df2], axis=0)
+    # calculate average heteroscedasticity of all 
+    # significantly heteroscedastic network connections
+    for i in temp_df.index:
+        sig.append(temp_df.loc[i,'annualized percent change'])
+    mean_hsk = np.mean(sig)
+    # grab name of first conn var for this network for plotting
+    avgs.at[temp_df.index[0], 'apc'] = mean_hsk
+meas_vars = [i.split('.')[0] for i in avgs.index]
+atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
+#print(atlas_fname)
+atlas_nii = nib.load(atlas_fname)
+atlas_arr = atlas_nii.get_fdata()
+plotting_arr = np.zeros(atlas_arr.shape)
+sig = 0
+for i in avgs.index:
+    j = i.split('.')[0]
+    value = nifti_mapping.loc[j]['atlas_value']
+    #print(i, value)
+    if value is np.nan:
+        pass
+    else:
+        plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'apc']        
+meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 0.01)
+figure.savefig(f'{PROJ_DIR}/figures/APCxFCb.png', dpi=400)
 
 
 morph_cmap = sns.diverging_palette(22, 256.3, s=70, l=50, center="light", n=6, as_cmap=True)

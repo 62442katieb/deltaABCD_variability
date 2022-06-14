@@ -67,48 +67,24 @@ def plot_surfaces(nifti, surf, cmap, vmax, threshold):
                                          axes=ax3)
     return figure
 
-
-# In[3]:
-
-
 sns.set(style='whitegrid', context='talk')
 plt.rcParams["font.family"] = "monospace"
 plt.rcParams['font.monospace'] = 'Courier New'
 
-
-# In[4]:
-
-
 crayons = sns.crayon_palette(['Aquamarine', 'Fuchsia', 
                               'Jungle Green', 'Fern'])
-
-
-# In[5]:
-
 
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/"
 DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-
-# In[6]:
-
-
 df = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data_qcd.csv"), index_col=0, header=0)
-
-
-# In[7]:
-
 
 df.drop(list(df.filter(regex='lesion.*').columns), axis=1, inplace=True)
 df.drop(list(df.filter(regex='.*_cf12_.*').columns), axis=1, inplace=True)
 no_2yfu = df[df["interview_date.2_year_follow_up_y_arm_1"].isna() == True].index
 df = df.drop(no_2yfu, axis=0)
-
-
-# In[8]:
-
 
 deltasmri_complete = pd.concat([df.filter(regex='smri.*change_score'), 
                                 df.filter(regex='mrisdp.*change_score')], axis=1).dropna()
@@ -116,17 +92,9 @@ deltarsfmri_complete = df.filter(regex='rsfmri.*change_score').dropna(how='any')
 deltarsi_complete = df.filter(regex='dmri_rsi.*change_score').dropna()
 deltadti_complete = df.filter(regex='dmri_dti.*change_score').dropna()
 
-
-# In[9]:
-
-
 df[['pds_p_ss_female_category_2.baseline_year_1_arm_1',
     'pds_p_ss_male_category_2.baseline_year_1_arm_1']]
 df['pds_p_ss_category_2.baseline_year_1_arm_1'] = df['pds_p_ss_female_category_2.baseline_year_1_arm_1'].fillna(0) + df['pds_p_ss_male_category_2.baseline_year_1_arm_1'].fillna(0)
-
-
-# In[10]:
-
 
 tests = ['variance', 
          'fligner_sex',
@@ -141,27 +109,16 @@ tests = ['variance',
          #'fligner_scanner'
         ]
 
-
-# In[11]:
-
-
 var_df = pd.read_csv(join(PROJ_DIR, 
                           OUTP_DIR, 
                           'variance_flinger.csv'), 
                      index_col=0, 
                      header=[0,1])
 
-
-# In[12]:
-
-
 img_modalities = {'smri': deltasmri_complete,
                   'fmri': deltarsfmri_complete,
                   'rsi': deltarsi_complete, 
                   'dti': deltadti_complete}
-
-
-# In[13]:
 
 
 # plot the distribution of variances of all structural mri measures
@@ -194,10 +151,6 @@ for var in fc_cort_var:
         btwn_fc.append(var)
         #print(var, 'between-network')
 
-
-# In[14]:
-
-
 puberty = 'pds_p_ss_category_2.baseline_year_1_arm_1'
 race = 'race_ethnicity.baseline_year_1_arm_1'
 income = 'demo_comb_income_v2.baseline_year_1_arm_1'
@@ -215,19 +168,7 @@ marry = "demo_prnt_marital_v2.baseline_year_1_arm_1"
 # 4. Across developmental variables
 # 5. Across demographic variables
 
-# for var in var_df.index:
-#     for modality in img_modalities.keys():
-#         if var in img_modalities[modality]:
-#             var_df.at[var, 'modality'] = modality
-
-# In[46]:
-
-
 var_df.index
-
-
-# In[16]:
-
 
 devt = ['fligner_age', 
         'fligner_sex',
@@ -239,16 +180,8 @@ demo =  ['fligner_raceth',
          #'fligner_scanner'
         ]
 
-
-# In[17]:
-
-
 demo_alphas = [f'{i}_alpha' for i in demo]
 devt_alphas = [f'{i}_alpha' for i in devt]
-
-
-# In[18]:
-
 
 # build a df that categorizes measures (i.e., 'smri', 'cortical volume', 'region')
 for var in var_df.index:
@@ -265,31 +198,22 @@ for var in var_df.index:
             var_df.at[var, 'measure'] = 'vol'
         elif var_num <= 1054 and var_num >= 907:
             var_df.at[var, 'measure'] = 't1wcnt'
-        elif var_num == 604:
-            var_df.at[var, 'measure'] = 'gmvol'
+        #elif var_num == 604:
+            #var_df.at[var, 'measure'] = 'gmvol'
     elif '_' in var:
         var_list = var.split('.')[0].split('_')
         var_df.at[var, 'modality'] = var_list[0]
-        var_df.at[var, 'measure'] = var_list[1]
         var_df.at[var, 'atlas'] = var_list[2]
         var_df.at[var, 'region'] = '_'.join(var_list[3:])
-
-
-# In[47]:
-
+        if 'scs' in var and 'rsi' in var:
+            var_df.at[var, 'measure'] = f'{var_list[1]}gm'
+        else:
+            var_df.at[var, 'measure'] = var_list[1]
 
 var_df['atlas'].unique()
 
-
-# In[19]:
-
-
 var_df = var_df[var_df['measure'] != 't1w']
 var_df = var_df[var_df['measure'] != 't2w']
-
-
-# In[20]:
-
 
 atlases = list(np.unique(list(var_df['atlas'])))
 measures = list(np.unique(list(var_df['measure'])))
@@ -299,20 +223,47 @@ modalities = list(np.unique(list(var_df['modality'])))
 concepts = {'morph': ['thick', 
                       'area', 
                       'vol',
-                      'gmvol',
                       'dtivol'],
             'cell': ['t1wcnt', 
-                     'rsirni', 
-                     'rsirnd',
-                     'rsirnigm', 
-                     'rsirndgm',
                      'dtifa', 
                      'dtimd'
                     'dtitd', 
-                     'dtild'],
+                     'dtild',
+                     'rsirni', 
+                     'rsirnigm', 
+                     'rsirnd',
+                     'rsirndgm',
+                     ],
             'func':['var',
                     'c',
                      'cor']}
+
+row_order = ['cdk',
+             'cortgordon',
+             'fib',
+             'fiberat',
+             'ngd',
+             'scs',
+             'morph', 
+             'vol',
+             'thick', 
+             'area', 
+             'dtivol',
+             'cell', 
+             't1wcnt',
+             'dtifa',
+             'dtimd',
+             'dtitd',
+             'dtild',
+             'rsirni',
+             'rsirnigm',
+             'rsirnd',
+             'rsirndgm',
+             'func', 
+             'var',
+             'within-network fc',
+             'between-network fc', 
+             'cor']
 
 columns = atlases + measures + modalities + list(concepts.keys())
 prop_heterosked = pd.DataFrame(index=tests[1:], 
@@ -323,8 +274,15 @@ for category in tests[1:]:
         temp_df = var_df[var_df['atlas'] == atlas]
         prop_heterosked.at[category, atlas] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
     for measure in measures:
-        temp_df = var_df[var_df['measure'] == measure]
-        prop_heterosked.at[category, measure] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
+        if measure == 'c':
+            temp_df = var_df.loc[wthn_fc]
+            prop_heterosked.at[category, 'within-network fc'] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
+            
+            temp_df = var_df.loc[btwn_fc]
+            prop_heterosked.at[category, 'between-network fc'] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
+        else:
+            temp_df = var_df[var_df['measure'] == measure]
+            prop_heterosked.at[category, measure] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
     for modality in modalities:
         temp_df = var_df[var_df['modality'] == modality]
         prop_heterosked.at[category, modality] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
@@ -337,17 +295,10 @@ for category in tests[1:]:
         prop_heterosked.at[category, concept] = prop
 prop_heterosked = prop_heterosked.T
 prop_heterosked.columns = [i[8:] for i in prop_heterosked.columns]
+prop_heterosked = prop_heterosked.loc[row_order]
 prop_heterosked.dropna(axis=1,how='all').to_csv(join(PROJ_DIR, OUTP_DIR,'heteroscedasticity_atlas_measures.csv'))
 
-
-# In[21]:
-
-
 prop_heterosked.to_csv(join(PROJ_DIR, OUTP_DIR, 'proportion_heteroscedastic_brain_regions.csv'))
-
-
-# In[22]:
-
 
 prop_hsk_demo = pd.Series()
 for demo_var in demo:
@@ -355,25 +306,6 @@ for demo_var in demo:
     #print(var, sum(var_df[demo_var]['a<0.05'] == '**') / len(var_df.index))
     prop_hsk_demo.at[var] = sum(var_df[demo_var]['a<0.05'] == '**') / len(var_df.index)
 prop_hsk_demo.to_csv(join(PROJ_DIR, OUTP_DIR, 'proportion_heteroscedastic_demographics.csv'))
-
-
-# regn_heterosked = pd.DataFrame(index=tests[1:], 
-#                                           columns=regions)
-# for category in tests[1:]:
-#     for region in regions:
-#         temp_df = var_df[var_df['region'] == region]
-#         if len(temp_df.index) > 1:
-#             
-#             num_hsk = sum(temp_df[category]['a<0.05'] == '**')
-#             print(region, num_hsk)
-#             if num_hsk >= 1:
-#                 regn_heterosked.at[category, region] = num_hsk / len(temp_df.index)
-#             else:
-#                 regn_heterosked.at[category, region] = 0
-#         else:
-#             pass
-
-# In[23]:
 
 macro_var = []
 micro_var = []
@@ -545,22 +477,8 @@ for fligner_var in hetero.keys():
                                     value_name='variance',
                                     var_name=variable,
                                     id_vars=var_description.columns)
-    #long_fligner2 = fligner_cov.loc[sig_measures].melt(value_vars=strings, 
-    #                                value_name='coeff_of_var',
-    #                                var_name=variable,
-    #                                id_vars=var_description.columns)
+    
     fligner_df = None
-    #k = sns.displot(
-    #    data=long_fligner2,
-    #    x=variable, y="coeff_of_var", col="concept",
-    #    #col_order=, 
-    #    log_scale=(False, True),
-    #    #col_wrap=4, height=4, aspect=0.9,
-    #    height=6, 
-    #)
-    #k.savefig(join('..', 
-    #               FIGS_DIR, 
-    #              f'heteroscedastic_{variable}_coefficient-of-variation.png'), dpi=500)
     
     k = sns.displot(
         data=long_fligner,
@@ -627,10 +545,6 @@ for fligner_var in hetero.keys():
     fig.savefig(join(PROJ_DIR,
                    FIGS_DIR,
                    f'{variable}-func_variance.png'), dpi=500, bbox_inches='tight')
-
-
-# In[34]:
-
 
 for i in var_df.index:
     if i in btwn_fc:
