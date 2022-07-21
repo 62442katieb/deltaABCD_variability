@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import enlighten
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -51,7 +52,7 @@ tests = ['variance',
          'fligner_edu', 
          'fligner_marital', 
          'fligner_age', 
-         #'fligner_scanner'
+         'fligner_scanner'
         ]
 
 # should I correct alpha for multiple comparisons?
@@ -83,11 +84,9 @@ age = 'interview_age.baseline_year_1_arm_1'
 marry = "demo_prnt_marital_v2.baseline_year_1_arm_1"
 mri = 'mri_info_manufacturer.baseline_year_1_arm_1'
 
-
-img_modalities = {'smri': deltasmri_complete,
-                  'fmri': deltarsfmri_complete,
-                  'rsi': deltarsi_complete, 
-                  'dti': deltadti_complete}
+num_vars = len(df.filter(regex='.*mri.*change_score').columns)
+manager = enlighten.get_manager()
+tocks = manager.counter(total=num_vars, desc='Hsk Progress', unit='variables')
 
 for modality in img_modalities.keys():
     variables = img_modalities[modality].columns
@@ -229,6 +228,7 @@ for modality in img_modalities.keys():
             var_df.at[var, ('fligner_marital', f'a<{alpha}')] = '**'
         else:
             var_df.at[var, ('fligner_marital', f'a<{alpha}')] = 'ns'
+        tocks.update()
 
 
 var_df.dropna(how='all', axis=1, inplace=True)
@@ -369,6 +369,7 @@ for var in var_df.index:
 
 var_df[var_df['modality'] == 'fmri'][('variance', 'stat')].sort_values()
 
+#need to separate scanner into its own thing
 devt = ['fligner_age', 
         'fligner_sex',
         'fligner_puberty']
@@ -378,6 +379,7 @@ demo =  ['fligner_raceth',
          'fligner_marital', 
          #'fligner_scanner'
         ]
+scan = ['fligner_scanner']
 
 stats = var_df.drop(['variance'], axis=1).xs('stat', level=1, axis=1)
 alphas = var_df.xs(f'a<0.05', level=1, axis=1)
@@ -387,6 +389,7 @@ alphas = alphas.add_suffix('_alpha')
 
 demo_alphas = [f'{i}_alpha' for i in demo]
 devt_alphas = [f'{i}_alpha' for i in devt]
+scan_alphas = [f'{i}_alpha' for i in scan]
 
 mod_demo = pd.concat([stats[demo], modalities], axis=1).melt(value_vars=demo, 
                                                   value_name='Flinger-Killeen Statistic',
@@ -400,8 +403,23 @@ mod_devt = pd.concat([stats[devt], modalities], axis=1).melt(value_vars=devt,
 alpha_devt = alphas[devt_alphas].melt(value_name='Significant').drop('variable', axis=1)
 devt_flinger = pd.concat([mod_devt, alpha_devt], axis=1)
 
+mod_scan = pd.concat([stats[scan], modalities], axis=1).melt(value_vars=devt, 
+                                                  value_name='Flinger-Killeen Statistic',
+                                                  id_vars='concept')
+alpha_scan = alphas[scan_alphas].melt(value_name='Significant').drop('variable', axis=1)
+scan_flinger = pd.concat([mod_scan, alpha_scan], axis=1)
 
-fig,ax = plt.subplots(nrows=1, ncols=2, figsize=(20,5), squeeze=True)
+# need to remake this with a third columns for scanner heteroscedasticity.
+# and redo the spacing between columns with a gridspec
+fig,ax = plt.subplots(figsize=(20,5), squeeze=True)
+
+gs = GridSpec(1, 8)
+
+ax0 = fig.add_subplot(gs[0:3])
+ax1 = fig.add_subplot(gs[3:6])
+ax2 = fig.add_subplot(gs[7])
+plt.tight_layout(w_pad=-1, h_pad=-1)
+
 g = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=devt_flinger[devt_flinger['Significant'] == '**'], 
                   hue='concept',
@@ -477,5 +495,38 @@ h.set_xticklabels(['Race &\nEthnicity',
                    'Caregiver\nMarital\nStatus', 
                    #'Scanner\nManufacturer'
                   ])
+
+l = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
+                  data=scan_flinger[scan_flinger['Significant'] == '**'], 
+                  hue='concept',
+                  marker='o',
+                  size=7,
+                  edgecolor='white',
+                  dodge=True,
+                  linewidth=0.5,
+                  ax=ax[2],
+                  palette=crayons,
+                  hue_order=['macrostructure', 
+                           'microstructure', 
+                           'function']
+                 )
+k = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
+                  data=scan_flinger[scan_flinger['Significant'] != '**'], 
+                  hue='concept',
+                  marker='P',
+                  size=11,
+                  linewidth=0.5,
+                  edgecolor='white',
+                  dodge=True,
+                  ax=ax[2],
+                  palette=crayons,
+                  hue_order=['macrostructure', 
+                           'microstructure', 
+                           'function']
+                 )
+g.get_legend().remove()
+g.set_ylabel('Flinger-Killeen Statistic')
+g.set_xlabel('')
+g.set_xticklabels(['MRI\nManufacturer'])
 fig.show()
 fig.savefig(f'{PROJ_DIR}/figures/heteroscedasticity_concept.png', dpi=400)
