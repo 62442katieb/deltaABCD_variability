@@ -411,7 +411,7 @@ scan_flinger = pd.concat([mod_scan, alpha_scan], axis=1)
 
 # need to remake this with a third columns for scanner heteroscedasticity.
 # and redo the spacing between columns with a gridspec
-fig = plt.subplots(figsize=(25,6), squeeze=True)
+fig = plt.figure(figsize=(25,6))
 
 gs = GridSpec(1, 8)
 
