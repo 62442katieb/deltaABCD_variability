@@ -106,7 +106,7 @@ tests = ['variance',
          'fligner_edu', 
          'fligner_marital', 
          'fligner_age', 
-         #'fligner_scanner'
+         'fligner_scanner'
         ]
 
 var_df = pd.read_csv(join(PROJ_DIR, 
@@ -159,6 +159,7 @@ age = 'interview_age.baseline_year_1_arm_1'
 sex = 'sex.baseline_year_1_arm_1'
 mri = 'mri_info_manufacturer.baseline_year_1_arm_1'
 marry = "demo_prnt_marital_v2.baseline_year_1_arm_1"
+mri = "mri_info_manufacturer.baseline_year_1_arm_1"
 
 
 # ## Visualizing brain heterogeneity across non-brain variables
@@ -177,7 +178,7 @@ demo =  ['fligner_raceth',
          'fligner_income',
          'fligner_edu',
          'fligner_marital', 
-         #'fligner_scanner'
+         'fligner_scanner'
         ]
 
 demo_alphas = [f'{i}_alpha' for i in demo]
@@ -300,12 +301,13 @@ prop_heterosked.dropna(axis=1,how='all').to_csv(join(PROJ_DIR, OUTP_DIR,'heteros
 
 prop_heterosked.to_csv(join(PROJ_DIR, OUTP_DIR, 'proportion_heteroscedastic_brain_regions.csv'))
 
+all_var = demo + devt
 prop_hsk_demo = pd.Series()
-for demo_var in demo:
-    var = demo_var.split('_')[1]
+for var in all_var:
+    v = var.split('_')[1]
     #print(var, sum(var_df[demo_var]['a<0.05'] == '**') / len(var_df.index))
-    prop_hsk_demo.at[var] = sum(var_df[demo_var]['a<0.05'] == '**') / len(var_df.index)
-prop_hsk_demo.to_csv(join(PROJ_DIR, OUTP_DIR, 'proportion_heteroscedastic_demographics.csv'))
+    prop_hsk_demo.at[v] = sum(var_df[var]['a<0.05'] == '**') / len(var_df.index)
+prop_hsk_demo.to_csv(join(PROJ_DIR, OUTP_DIR, 'proportion_heteroscedastic_devtdemo.csv'))
 
 macro_var = []
 micro_var = []
@@ -358,12 +360,12 @@ hetero = {'fligner_income':{
                     'var': income,
                     'levels': [(0,6), (7,8), (9,10)],
                     'strings': ['<$75k', '$75k-100k', '>$100k']},
-               #'fligner_scanner':{
-               #    'var': mri,
-               #    'levels': ['SIEMENS', 
-               #            'GE MEDICAL SYSTEMS', 
-               #            'Philips Medical Systems'],
-               #    'strings': ['Siemens', 'GE', 'Philips']},
+               'fligner_scanner':{
+                   'var': scanner,
+                   'levels': ['SIEMENS', 
+                           'GE MEDICAL SYSTEMS', 
+                           'Philips Medical Systems'],
+                   'strings': ['Siemens', 'GE', 'Philips']},
                'fligner_edu': {
                    'var': edu, 
                    'levels': [(0,14), (15,17), 18, (19,22)],
@@ -401,12 +403,12 @@ for fligner_var in hetero.keys():
     print(levels, strings)
     
     sig_measures = var_df[var_df[(fligner_var, 'a<0.05')] == '**'].index
-    top_50 = var_df[(fligner_var, 'stat')].sort_values()[-50:].index
-    highest_heterosced = var_description.loc[top_50].describe()
-    bot_50 = var_df[(fligner_var, 'stat')].sort_values()[:50].index
-    lowest_heterosced = var_description.loc[bot_50].describe()
-    print('HIGHEST-----\n', highest_heterosced)
-    print('LOWEST-----\n', lowest_heterosced)
+    #top_50 = var_df[(fligner_var, 'stat')].sort_values()[-50:].index
+    #highest_heterosced = var_description.loc[top_50].describe()
+    #bot_50 = var_df[(fligner_var, 'stat')].sort_values()[:50].index
+    #lowest_heterosced = var_description.loc[bot_50].describe()
+    #print('HIGHEST-----\n', highest_heterosced)
+    #print('LOWEST-----\n', lowest_heterosced)
     
     if type(levels[0]) == int or type(levels[0]) == str or type(levels[0]) == float:
         fligner_df = df[df[var] == levels[0]]
