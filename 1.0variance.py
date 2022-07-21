@@ -524,9 +524,9 @@ k = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                            'microstructure', 
                            'function']
                  )
-g.get_legend().remove()
-g.set_ylabel('Flinger-Killeen Statistic')
-g.set_xlabel('')
-g.set_xticklabels(['MRI\nManufacturer'])
+l.get_legend().remove()
+l.set_ylabel('Flinger-Killeen Statistic')
+l.set_xlabel('')
+l.set_xticklabels(['MRI\nManufacturer'])
 fig.show()
 fig.savefig(f'{PROJ_DIR}/figures/heteroscedasticity_concept.png', dpi=400)
