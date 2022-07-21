@@ -360,7 +360,6 @@ fig.savefig(f'{PROJ_DIR}/figures/apchange_variance_concept.png', dpi=400)
 # 4. Across developmental variables
 # 5. Across demographic variables
 
-
 for var in var_df.index:
     for modality in img_modalities.keys():
         if var in img_modalities[modality]:
@@ -403,7 +402,7 @@ mod_devt = pd.concat([stats[devt], modalities], axis=1).melt(value_vars=devt,
 alpha_devt = alphas[devt_alphas].melt(value_name='Significant').drop('variable', axis=1)
 devt_flinger = pd.concat([mod_devt, alpha_devt], axis=1)
 
-mod_scan = pd.concat([stats[scan], modalities], axis=1).melt(value_vars=devt, 
+mod_scan = pd.concat([stats[scan], modalities], axis=1).melt(value_vars=scan, 
                                                   value_name='Flinger-Killeen Statistic',
                                                   id_vars='concept')
 alpha_scan = alphas[scan_alphas].melt(value_name='Significant').drop('variable', axis=1)
