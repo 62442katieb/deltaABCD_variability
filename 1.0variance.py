@@ -416,9 +416,9 @@ fig = plt.figure(figsize=(25,6))
 gs = GridSpec(1, 8)
 
 ax0 = fig.add_subplot(gs[0:3])
-ax1 = fig.add_subplot(gs[3:6])
+ax1 = fig.add_subplot(gs[3:7])
 ax2 = fig.add_subplot(gs[7])
-plt.tight_layout(w_pad=1, h_pad=-1)
+plt.tight_layout(w_pad=1, h_pad=1)
 
 g = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=devt_flinger[devt_flinger['Significant'] == '**'], 
@@ -525,7 +525,7 @@ k = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                            'function']
                  )
 l.get_legend().remove()
-l.set_ylabel('Flinger-Killeen Statistic')
+l.set_ylabel('')
 l.set_xlabel('')
 l.set_xticklabels(['MRI\nManufacturer'])
 fig.show()
