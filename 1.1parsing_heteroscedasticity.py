@@ -159,7 +159,6 @@ age = 'interview_age.baseline_year_1_arm_1'
 sex = 'sex.baseline_year_1_arm_1'
 mri = 'mri_info_manufacturer.baseline_year_1_arm_1'
 marry = "demo_prnt_marital_v2.baseline_year_1_arm_1"
-mri = "mri_info_manufacturer.baseline_year_1_arm_1"
 
 
 # ## Visualizing brain heterogeneity across non-brain variables
@@ -361,7 +360,7 @@ hetero = {'fligner_income':{
                     'levels': [(0,6), (7,8), (9,10)],
                     'strings': ['<$75k', '$75k-100k', '>$100k']},
                'fligner_scanner':{
-                   'var': scanner,
+                   'var': mri,
                    'levels': ['SIEMENS', 
                            'GE MEDICAL SYSTEMS', 
                            'Philips Medical Systems'],
