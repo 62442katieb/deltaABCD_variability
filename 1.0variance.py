@@ -411,14 +411,14 @@ scan_flinger = pd.concat([mod_scan, alpha_scan], axis=1)
 
 # need to remake this with a third columns for scanner heteroscedasticity.
 # and redo the spacing between columns with a gridspec
-fig = plt.subplots(figsize=(20,5), squeeze=True)
+fig = plt.subplots(figsize=(25,6), squeeze=True)
 
 gs = GridSpec(1, 8)
 
 ax0 = fig.add_subplot(gs[0:3])
 ax1 = fig.add_subplot(gs[3:6])
 ax2 = fig.add_subplot(gs[7])
-plt.tight_layout(w_pad=-1, h_pad=-1)
+plt.tight_layout(w_pad=1, h_pad=-1)
 
 g = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=devt_flinger[devt_flinger['Significant'] == '**'], 
