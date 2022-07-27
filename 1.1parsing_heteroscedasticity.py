@@ -6,6 +6,7 @@ import pandas as pd
 import seaborn as sns
 import nibabel as nib
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from os.path import join
 from matplotlib.gridspec import GridSpec
@@ -136,7 +137,6 @@ fmri_var_var = img_modalities['fmri'].filter(regex='_var_.*').columns
 
 #morph_var = df[df['concept'] == 'macrostructure'].index
 #cell_var = df[df['concept'] == 'microstructure'].index
-func_var = list(fmri_var_var) 
 conn_var = list(fc_cort_var) + list(fc_scor_var)
 
 btwn_fc = []
@@ -265,6 +265,28 @@ row_order = ['cdk',
              'between-network fc', 
              'cor']
 
+row_order2 = ['all', 
+             'macro', 
+             'vol',
+             'thick', 
+             'area', 
+             'dtivol',
+             'micro', 
+             't1wcnt',
+             'dtifa',
+             'dtimd',
+             'dtitd',
+             'dtild',
+             'rsirni',
+             'rsirnigm',
+             'rsirnd',
+             'rsirndgm',
+             'func', 
+             'var',
+             'within-network fc',
+             'between-network fc', 
+             'subcortical-network fc']
+
 columns = atlases + measures + modalities + list(concepts.keys())
 prop_heterosked = pd.DataFrame(index=tests[1:], 
                                           columns=columns)
@@ -348,11 +370,19 @@ for var in devt:
     temp_df = pd.Series(var_df[(var,'stat')], name=var)
     hsk_sig_devt = pd.concat([hsk_sig_devt, temp_df], axis=1)
 
-func_var = list(btwn_fc) + list(wthn_fc) + list(fc_scor_var)
+func_var = list(btwn_fc) + list(wthn_fc) + list(fc_scor_var) + list(fmri_var_var) 
 
-
+all_vars = func_var + macro_var + micro_var
 # # Parsing variance across heteroscedastic categories
 # 
+
+for i in var_df.index:
+    if i in btwn_fc:
+        var_df.at[i, 'measure'] = 'between-network fc'
+    elif i in wthn_fc:
+        var_df.at[i, 'measure'] = 'within-network fc'
+    elif i in fc_scor_var:
+        var_df.at[i, 'measure'] = 'subcortical-network fc'
 
 
 hetero = {'fligner_income':{
@@ -399,7 +429,7 @@ for fligner_var in hetero.keys():
     var = hetero[fligner_var]['var']
     levels = hetero[fligner_var]['levels']
     strings = hetero[fligner_var]['strings']
-    print(levels, strings)
+    #print(levels, strings)
     
     sig_measures = var_df[var_df[(fligner_var, 'a<0.05')] == '**'].index
     #top_50 = var_df[(fligner_var, 'stat')].sort_values()[-50:].index
@@ -415,26 +445,25 @@ for fligner_var in hetero.keys():
         it = levels[0]
         fligner_df = df[df[var].between(it[0], it[1])]
     fligner_df = pd.Series(fligner_df[var_df.index].var(), name=str(strings[0]))
-    print(levels[0])
+    #print(levels[0])
 
     for i in range(0, len(levels[1:])):
         level = levels[i+1]
         string = strings[i+1]
-        print(string)
+        #print(string)
         if type(level) == int or type(level) == str or type(level) == float:
             temp_df = df[df[var] == level]
-            print(len(temp_df.index))
+            #print(len(temp_df.index))
         elif type(level) == tuple:
             temp_df = df[df[var].between(level[0], level[1])]
-            print(len(temp_df.index))
-        print(level)
+            #print(len(temp_df.index))
+        #print(level)
         temp_df = pd.Series(temp_df[var_df.index].var(), name=string)
         fligner_df = pd.concat([temp_df, fligner_df], axis=1)
     #fligner_df = fligner_df.dropna(thresh=len(levels) - 1)
     #top_50_df = fligner_df.loc[top_50]
     #not_present = list(set(levels) - set(fligner_df.columns))
-    stats = ['stat', 'pval']
-    #columns = pd.MultiIndex.from_product([stats, concepts + 'all'])
+    
     mann_whitney_u = pd.DataFrame()
     for string in strings:
         dat = fligner_df[string].dropna()
@@ -442,27 +471,34 @@ for fligner_var in hetero.keys():
             dat1 = fligner_df[string1].dropna()
             if string != string1:
                 if len(dat.index) > 0 and len(dat1.index) > 0:
+                    column = f'{string} > {string1}'
                     res = mannwhitneyu(dat, dat1, alternative='greater')
-                    mann_whitney_u.at[f'{string} > {string1}', ('all', 'stat')] = res.statistic
-                    mann_whitney_u.at[f'{string} > {string1}', ('all', 'pval')] = res.pvalue
+                    #mann_whitney_u.at[f'{string} > {string1}', ('all', 'stat')] = res.statistic
+                    mann_whitney_u.at['all', column] = res.pvalue
 
                     # run mann-whitney for each biological concept (macro/microstructure & function)
                     res = mannwhitneyu(dat.loc[func_var], dat1.loc[func_var], alternative='greater')
-                    mann_whitney_u.at[f'{string} > {string1}', ('func', 'stat')] = res.statistic
-                    mann_whitney_u.at[f'{string} > {string1}', ('func', 'pval')] = res.pvalue
+                    #mann_whitney_u.at[f'{string} > {string1}', ('func', 'stat')] = res.statistic
+                    mann_whitney_u.at['func', column] = res.pvalue
 
                     res = mannwhitneyu(dat.loc[macro_var], dat1.loc[macro_var], alternative='greater')
-                    mann_whitney_u.at[f'{string} > {string1}', ('macro', 'stat')] = res.statistic
-                    mann_whitney_u.at[f'{string} > {string1}', ('macro', 'pval')] = res.pvalue
+                    #mann_whitney_u.at[f'{string} > {string1}', ('macro', 'stat')] = res.statistic
+                    mann_whitney_u.at['macro', column] = res.pvalue
+                    
                     res = mannwhitneyu(dat.loc[micro_var], dat1.loc[micro_var], alternative='greater')
-                    mann_whitney_u.at[f'{string} > {string1}', ('micro', 'stat')] = res.statistic
-                    mann_whitney_u.at[f'{string} > {string1}', ('micro', 'pval')] = res.pvalue
+                    #mann_whitney_u.at[f'{string} > {string1}', ('micro', 'stat')] = res.statistic
+                    mann_whitney_u.at['micro', column] = res.pvalue
+                    for measure in var_df['measure'].unique():
+                        variables = var_df[var_df['measure'] == measure].index
+                        res = mannwhitneyu(dat.loc[variables], dat1.loc[variables], alternative='greater')
+                        mann_whitney_u.at[measure, column] = res.pvalue
                 else:
-                    mann_whitney_u.at[f'{string} > {string1}', ('all', 'stat')] = np.nan
-                    mann_whitney_u.at[f'{string} > {string1}', ('all', 'pval')] = np.nan
+                    mann_whitney_u.at['all', column] = np.nan
+                    mann_whitney_u.at['all', column] = np.nan
             else:
                 pass
-    mann_whitney_u.to_csv(join(PROJ_DIR, OUTP_DIR,f'mann_whitney_{variable}-variance_diff.csv'))
+    mann_whitney_u = mann_whitney_u.loc[row_order2]
+    mann_whitney_u.to_csv(join(PROJ_DIR, OUTP_DIR,f'mann_whitney-{variable}-variance_diff.csv'))
     #convert from variance to coefficient of variation (sdev / mean)
     heteroskedasticity = pd.Series(var_df[(fligner_var, 'stat')], 
                                    name='heteroscedasticity')
@@ -546,14 +582,6 @@ for fligner_var in hetero.keys():
     fig.savefig(join(PROJ_DIR,
                    FIGS_DIR,
                    f'{variable}-func_variance.png'), dpi=500, bbox_inches='tight')
-
-for i in var_df.index:
-    if i in btwn_fc:
-        var_df.at[i, 'measure'] = 'between-network fc'
-    elif i in wthn_fc:
-        var_df.at[i, 'measure'] = 'within-network fc'
-    elif i in fc_scor_var:
-        var_df.at[i, 'measure'] = 'subcortical-network fc'
 
 # let's visualize this variability!
 destrieux = datasets.fetch_atlas_destrieux_2009()
@@ -714,7 +742,8 @@ tract_measures = {'tract-volume': 'dmri_dtivol_fiberat_.*',
             'tract-TD': 'dmri_dtitd_fiberat_.*', 
             'tract-RND': 'dmri_rsirnd_fib_.*',
             'tract-RNI': 'dmri_rsirni_fib_.*'}
-vmax = 40
+vmax_other = 40
+vmax_scanner = 800
 #cmap = 'viridis'
 
 conn_measures = {'cortical-network-connectivity': 'rsfmri_c_ngd_.*',
@@ -777,6 +806,10 @@ for var in fc_cort_var:
 
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
+    if fligner == 'scanner':
+        vmax = vmax_scanner
+    else:
+        vmax = vmax_other
     for measure in measures:
         print(measure)
         meas_df = var_df.filter(regex=measures[measure], axis=0)
@@ -894,7 +927,10 @@ btwn_fc_trgt = [i.split('.')[0].split('_')[-1] for i in btwn_fc]
 # okay, now we're plotting between and within network connectivity
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
-    
+    if fligner == 'scanner':
+        vmax = vmax_scanner
+    else:
+        vmax = vmax_other
     #within-network fc is easy to plot bc there's only one HSK value per network (per fligner_var)
     meas_df = var_df.loc[wthn_fc]
     meas_vars = [i.split('.')[0] for i in meas_df.index]
@@ -968,6 +1004,10 @@ scs_varnames = [i.split('.')[0].split('_')[-1] for i in fc_scor_var]
 
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
+    if fligner == 'scanner':
+        vmax = vmax_scanner
+    else:
+        vmax = vmax_other
     sig = []
     meas_df = var_df.loc[fc_scor_var]
     
@@ -1017,33 +1057,31 @@ for fligner_var in list(hetero.keys()):
     #ax[1].set_visible(False)
     q.savefig(f'{PROJ_DIR}/figures/{fligner}xFCs_fk_scs.png', dpi=400)
 
+vmaxes = [vmax_scanner, vmax_other]
+for vmax in vmaxes:
+    fig = plt.figure()
+    ax = fig.add_axes([0.05, 0.80, 0.9, 0.1])
 
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+    cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
+                                cmap=func_cmap, 
+                                values=range(-int(vmax*1.1),int(vmax*1.1)), 
+                                )
+    ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
 
-fig = plt.figure()
-ax = fig.add_axes([0.05, 0.80, 0.9, 0.1])
+    plt.savefig(f'{PROJ_DIR}/figures/func-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
 
-cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
-                               cmap=func_cmap, 
-                               values=range(-int(vmax*1.1),int(vmax*1.1)), 
-                              )
-ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
+    cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
+                                cmap=cell_cmap, 
+                                values=range(-int(vmax*1.1),int(vmax*1.1)), 
+                                )
+    ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
 
-plt.savefig(f'{PROJ_DIR}/figures/func-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
+    plt.savefig(f'{PROJ_DIR}/figures/cell-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
+    cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
+                                cmap=morph_cmap, 
+                                values=range(-int(vmax*1.1),int(vmax*1.1)), 
+                                )
+    ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
 
-cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
-                               cmap=cell_cmap, 
-                               values=range(-int(vmax*1.1),int(vmax*1.1)), 
-                              )
-ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
-
-plt.savefig(f'{PROJ_DIR}/figures/cell-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
-cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
-                               cmap=morph_cmap, 
-                               values=range(-int(vmax*1.1),int(vmax*1.1)), 
-                              )
-ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
-
-plt.savefig(f'{PROJ_DIR}/figures/morph-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
+    plt.savefig(f'{PROJ_DIR}/figures/morph-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
 

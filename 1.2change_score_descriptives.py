@@ -4,6 +4,7 @@ import seaborn as sns
 import nibabel as nib
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.gridspec import GridSpec
 
 from os.path import join
 
@@ -75,7 +76,7 @@ func_pal = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hue
 func_cmap = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hue=0.7, light=0.3, dark=0.2, 
                                   as_cmap=True, reverse=True)
 big_pal = morph_pal + cell_pal + func_pal
-
+morph_cell_pal = morph_pal + cell_pal
 
 sns.set(style="white", 
         context="talk", 
@@ -207,6 +208,11 @@ for var in imaging_apd:
             elif 'rsirnd' in var:
                 descriptives.at[var, 'measure'] = 'rsirndgm'
 
+# Calculate mean and variance APdelta for each measure, 
+# separately for each level of each categorical variable
+# add into supplement with significance stars for differences in _variance_
+
+
 # remove all non-brain or non-desikan-killany variables
 drop = ['dtx', 'meanmotion',
        'subthreshnvols', 'subtcignvols', 'ntpoints']
@@ -314,18 +320,15 @@ g.despine(bottom=True, left=True)
 g.savefig(f'../{FIGS_DIR}/apr_function.png', dpi=400)
 
 # calculate descriptives
-desc_summ = pd.DataFrame(index=measures, columns=['mean', 'sdev', '95%CI'])
+desc_summ = pd.DataFrame(index=measures, columns=['mean', 'sdev', '(Q1, Q3)'])
 for measure in measures:
     temp_df = descriptives[descriptives['measure'] == measure]
     mean = np.mean(temp_df['annualized percent change'])
     desc_summ.at[measure, 'mean'] = np.round(mean,2)
     sdev = np.mean(temp_df['sdev'])
     desc_summ.at[measure, 'sdev'] = np.round(sdev,2)
-    dof = len(temp_df.index)-1 
-    confidence = 0.95
-    t_crit = np.abs(t.ppf((1-confidence)/2,dof))
-    CI = (np.round(mean - sdev *t_crit / np.sqrt(dof + 1), 2), np.round(mean + sdev * t_crit / np.sqrt(dof + 1),2)) 
-    desc_summ.at[measure, '95%CI'] = CI
+    desc_summ.at[measure, '(Q1, Q3)'] = (np.round(np.quantile(temp_df['annualized percent change'], 0.25),2), 
+                                         np.round(np.quantile(temp_df['annualized percent change'], 0.75),2))
 desc_summ.to_csv(join(PROJ_DIR, OUTP_DIR, 'apchange_descriptives.csv'))
 
 # read in mapping from tabular data to nifti parcellations
