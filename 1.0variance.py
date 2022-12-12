@@ -7,11 +7,12 @@ import pandas as pd
 import seaborn as sns
 import nibabel as nib
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
+
 
 from os.path import join
-
 from scipy.stats import fligner
+from matplotlib.gridspec import GridSpec
+from utils import jili_sidak_mc
 
 sns.set(style='whitegrid', context='talk')
 plt.rcParams["font.family"] = "monospace"
@@ -57,8 +58,9 @@ tests = ['variance',
         ]
 
 # should I correct alpha for multiple comparisons?
-alpha = 0.05
-values = ['stat', 'p', 'diff', 'greater', f'a<{alpha}']
+alpha, _ = jili_sidak_mc(df.filter(regex='.*mri.*change_score'), 0.05)
+
+values = ['stat', 'p', 'diff', 'greater', f'sig']
 columns = pd.MultiIndex.from_product([tests, values])
 
 var_df = pd.DataFrame(columns=columns)
@@ -104,9 +106,9 @@ for modality in img_modalities.keys():
         var_df.at[var, ('fligner_sex', 'diff')] = np.mean(f) - np.mean(m)
         var_df.at[var, ('fligner_sex', 'greater')] = 'f'
         if test[1] < alpha:
-            var_df.at[var, ('fligner_sex', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_sex', f'sig')] = '**'
         else:
-            var_df.at[var, ('fligner_sex', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_sex', f'sig')] = 'ns'
         
         # compare variance between pubertal stages at baseline
         # do not re-bin, unequal group sizes will have to be okay
@@ -118,9 +120,9 @@ for modality in img_modalities.keys():
         var_df.at[var, ('fligner_puberty', 'stat')] = test[0]
         var_df.at[var, ('fligner_puberty', 'p')] = test[1]
         if test[1] < alpha:
-            var_df.at[var, ('fligner_puberty', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_puberty', f'sig')] = '**'
         else:
-            var_df.at[var, ('fligner_puberty', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_puberty', f'sig')] = 'ns'
         
         var_dict = {'1': np.mean(one), 
                     '2': np.mean(two), 
@@ -144,9 +146,9 @@ for modality in img_modalities.keys():
         var_df.at[var, ('fligner_raceth', 'stat')] = test[0]
         var_df.at[var, ('fligner_raceth', 'p')] = test[1]
         if test[1] < alpha:
-            var_df.at[var, ('fligner_raceth', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_raceth', f'sig')] = '**'
         else:
-            var_df.at[var, ('fligner_raceth', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_raceth', f'sig')] = 'ns'
         
         # compare variance across income
         # re-bin for approximately equal group sizes
@@ -158,9 +160,9 @@ for modality in img_modalities.keys():
         var_df.at[var, ('fligner_income', 'stat')] = test[0]
         var_df.at[var, ('fligner_income', 'p')] = test[1]
         if test[1] < alpha:
-            var_df.at[var, ('fligner_income', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_income', f'sig')] = '**'
         else:
-            var_df.at[var, ('fligner_income', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_income', f'sig')] = 'ns'
         
         # compare variance across education
         # re-bin for approximately equal group sizes
@@ -173,9 +175,9 @@ for modality in img_modalities.keys():
         var_df.at[var, ('fligner_edu', 'stat')] = test[0]
         var_df.at[var, ('fligner_edu', 'p')] = test[1]
         if test[1] < alpha:
-            var_df.at[var, ('fligner_edu', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_edu', f'sig')] = '**'
         else:
-            var_df.at[var, ('fligner_edu', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_edu', f'sig')] = 'ns'
         
         # compare variance across age, binned by n0th percentiles
         # age_bins are calculated above
@@ -188,9 +190,9 @@ for modality in img_modalities.keys():
         var_df.at[var, ('fligner_age', 'stat')] = test[0]
         var_df.at[var, ('fligner_age', 'p')] = test[1]
         if test[1] < alpha:
-            var_df.at[var, ('fligner_age', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_age', f'sig')] = '**'
         else:
-            var_df.at[var, ('fligner_age', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_age', f'sig')] = 'ns'
         
          # compare variance across scanner manufacturers
          # not for the main brain change variability paper
@@ -202,9 +204,9 @@ for modality in img_modalities.keys():
         var_df.at[var, ('fligner_scanner', 'stat')] = test[0]
         var_df.at[var, ('fligner_scanner', 'p')] = test[1]
         if test[1] < alpha:
-            var_df.at[var, ('fligner_scanner', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_scanner', f'sig')] = '**'
         else:
-            var_df.at[var, ('fligner_scanner', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_scanner', f'sig')] = 'ns'
         
         # compare variance across parent marital status
         # re-bin for group sizes
@@ -226,9 +228,9 @@ for modality in img_modalities.keys():
         var_df.at[var, ('fligner_marital', 'stat')] = test[0]
         var_df.at[var, ('fligner_marital', 'p')] = test[1]
         if test[1] < alpha:
-            var_df.at[var, ('fligner_marital', f'a<{alpha}')] = '**'
+            var_df.at[var, ('fligner_marital', f'sig')] = '**'
         else:
-            var_df.at[var, ('fligner_marital', f'a<{alpha}')] = 'ns'
+            var_df.at[var, ('fligner_marital', f'sig')] = 'ns'
         tocks.update()
 
 
@@ -236,7 +238,7 @@ var_df.dropna(how='all', axis=1, inplace=True)
 
 # calculate what proportion of measures show significant heteroscedasticity
 # just count('**') / # measures
-var_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'variance_flinger.csv'))
+var_df.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_flinger-alpha<{alpha}.csv'))
 
 concepts = {'morph': ['thick', 
                       'area', 
@@ -382,7 +384,7 @@ demo =  ['fligner_raceth',
 scan = ['fligner_scanner']
 
 stats = var_df.drop(['variance'], axis=1).xs('stat', level=1, axis=1)
-alphas = var_df.xs(f'a<0.05', level=1, axis=1)
+alphas = var_df.xs('sig', level=1, axis=1)
 modalities = var_df['concept']
 
 alphas = alphas.add_suffix('_alpha')
