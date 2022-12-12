@@ -14,59 +14,7 @@ from matplotlib.gridspec import GridSpec
 from scipy.stats import fligner, mannwhitneyu
 from nilearn import plotting, datasets, surface
 
-def plot_surfaces(nifti, surf, cmap, vmax, threshold):
-    '''
-    Plots of medial and lateral left and right surface views from nifti volume
-    '''
-    
-    texture_l = surface.vol_to_surf(nifti, surf.pial_left, interpolation='nearest')
-    texture_r = surface.vol_to_surf(nifti, surf.pial_right, interpolation='nearest')
-    
-    fig = plt.figure(figsize=(12,4))
-    gs = GridSpec(1, 4)
-
-    ax0 = fig.add_subplot(gs[0], projection='3d')
-    ax1 = fig.add_subplot(gs[1], projection='3d')
-    ax2 = fig.add_subplot(gs[2], projection='3d')
-    ax3 = fig.add_subplot(gs[3], projection='3d')
-    plt.tight_layout(w_pad=-1, h_pad=-1)
-    figure = plotting.plot_surf_stat_map(surf.pial_left, 
-                                         texture_l, 
-                                         symmetric_cbar=False, 
-                                         threshold=threshold,
-                                         cmap=cmap, 
-                                         view='lateral', 
-                                         colorbar=False, 
-                                         vmax=vmax, 
-                                         axes=ax0)
-    figure = plotting.plot_surf_stat_map(surf.pial_left, 
-                                         texture_l, 
-                                         symmetric_cbar=False, 
-                                         threshold=threshold,     
-                                         cmap=cmap, 
-                                         view='medial', 
-                                         colorbar=False, 
-                                         vmax=vmax, 
-                                         axes=ax1)
-    figure = plotting.plot_surf_stat_map(surf.pial_right, 
-                                         texture_r, 
-                                         symmetric_cbar=False, 
-                                         threshold=threshold,
-                                         cmap=cmap, 
-                                         view='lateral', 
-                                         colorbar=False, 
-                                         vmax=vmax, 
-                                         axes=ax2)
-    figure = plotting.plot_surf_stat_map(surf.pial_right, 
-                                         texture_r, 
-                                         symmetric_cbar=False, 
-                                         threshold=threshold,     
-                                         cmap=cmap, 
-                                         view='medial', 
-                                         colorbar=False, 
-                                         vmax=vmax, 
-                                         axes=ax3)
-    return figure
+from utils import jili_sidak_mc, plot_surfaces, assign_region_names
 
 sns.set(style='whitegrid', context='talk')
 plt.rcParams["font.family"] = "monospace"
@@ -112,7 +60,7 @@ tests = ['variance',
 
 var_df = pd.read_csv(join(PROJ_DIR, 
                           OUTP_DIR, 
-                          'variance_flinger.csv'), 
+                          'variance_flinger_alpha<.csv'), 
                      index_col=0, 
                      header=[0,1])
 
@@ -294,26 +242,26 @@ for category in tests[1:]:
     #print(category)
     for atlas in atlases:
         temp_df = var_df[var_df['atlas'] == atlas]
-        prop_heterosked.at[category, atlas] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
+        prop_heterosked.at[category, atlas] = sum(temp_df[category]['sig'] == '**') / len(temp_df.index)
     for measure in measures:
         if measure == 'c':
             temp_df = var_df.loc[wthn_fc]
-            prop_heterosked.at[category, 'within-network fc'] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
+            prop_heterosked.at[category, 'within-network fc'] = sum(temp_df[category]['sig'] == '**') / len(temp_df.index)
             
             temp_df = var_df.loc[btwn_fc]
-            prop_heterosked.at[category, 'between-network fc'] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
+            prop_heterosked.at[category, 'between-network fc'] = sum(temp_df[category]['sig'] == '**') / len(temp_df.index)
         else:
             temp_df = var_df[var_df['measure'] == measure]
-            prop_heterosked.at[category, measure] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
+            prop_heterosked.at[category, measure] = sum(temp_df[category]['sig'] == '**') / len(temp_df.index)
     for modality in modalities:
         temp_df = var_df[var_df['modality'] == modality]
-        prop_heterosked.at[category, modality] = sum(temp_df[category]['a<0.05'] == '**') / len(temp_df.index)
+        prop_heterosked.at[category, modality] = sum(temp_df[category]['sig'] == '**') / len(temp_df.index)
     for concept in concepts.keys():
         con_df = var_df[var_df['measure'] == concepts[concept][0]]
         for measure in concepts[concept][1:]:
             temp_df = var_df[var_df['measure'] == measure]
             con_df = pd.concat([con_df, temp_df], axis=0)
-        prop = sum(con_df[category]['a<0.05'] == '**') / len(con_df.index)
+        prop = sum(con_df[category]['sig'] == '**') / len(con_df.index)
         prop_heterosked.at[category, concept] = prop
 prop_heterosked = prop_heterosked.T
 prop_heterosked.columns = [i[8:] for i in prop_heterosked.columns]
@@ -326,8 +274,8 @@ all_var = demo + devt
 prop_hsk_demo = pd.Series()
 for var in all_var:
     v = var.split('_')[1]
-    #print(var, sum(var_df[demo_var]['a<0.05'] == '**') / len(var_df.index))
-    prop_hsk_demo.at[v] = sum(var_df[var]['a<0.05'] == '**') / len(var_df.index)
+    #print(var, sum(var_df[demo_var]['sig'] == '**') / len(var_df.index))
+    prop_hsk_demo.at[v] = sum(var_df[var]['sig'] == '**') / len(var_df.index)
 prop_hsk_demo.to_csv(join(PROJ_DIR, OUTP_DIR, 'proportion_heteroscedastic_devtdemo.csv'))
 
 macro_var = []
@@ -431,7 +379,7 @@ for fligner_var in hetero.keys():
     strings = hetero[fligner_var]['strings']
     #print(levels, strings)
     
-    sig_measures = var_df[var_df[(fligner_var, 'a<0.05')] == '**'].index
+    sig_measures = var_df[var_df[(fligner_var, 'sig')] == '**'].index
     #top_50 = var_df[(fligner_var, 'stat')].sort_values()[-50:].index
     #highest_heterosced = var_description.loc[top_50].describe()
     #bot_50 = var_df[(fligner_var, 'stat')].sort_values()[:50].index
@@ -532,56 +480,7 @@ for fligner_var in hetero.keys():
     func_pal = sns.cubehelix_palette(n_colors=n_colors, start=3.0, rot=-0.6, 
                                      gamma=1.0, hue=0.7, light=0.6, dark=0.4)
     
-    fig,ax = plt.subplots()
-    #plt.tight_layout(w_pad=1)
-    g = sns.boxenplot(x=variable, y="variance", hue=variable,
-                   data=long_fligner[long_fligner['concept'] == 'macrostructure'], 
-                       linewidth=1, palette=morph_pal, ax=ax)
-    #ax.set(yscale="log", #ylim=(1,10000)
-    #      )
-    ax.legend().set_visible(False)
-    ax.set_title('macrostructure')
-    fig.savefig(join(PROJ_DIR,
-                   FIGS_DIR,
-                   f'{variable}-macro_variance.png'), dpi=500, bbox_inches='tight')
-    fig,ax = plt.subplots()
-    #plt.tight_layout(w_pad=1)
-    g = sns.boxenplot(x=variable, y="variance", hue=variable,
-                   data=long_fligner[long_fligner['concept'] == 'microstructure'], 
-                       linewidth=1, palette=cell_pal, ax=ax)
-    #ax.set(yscale="log", #ylim=(1,10000)
-    #      )
-    ax.legend().set_visible(False)
-    ax.set_title('microstructure')
-    fig.savefig(join(PROJ_DIR,
-                   FIGS_DIR,
-                   f'{variable}-micro_variance.png'), dpi=500, bbox_inches='tight')
-    #fig,ax = plt.subplots()
-    #plt.tight_layout(w_pad=1)
-    #g = sns.boxenplot(x=variable, y="variance", hue=variable,
-    #               data=long_fligner[long_fligner['concept'] == 'function'], 
-    #                   linewidth=1, palette=palette, ax=ax)
-    #ax.set(yscale="log", #ylim=(1,10000)
-    #      )
-    #ax.legend().set_visible(False)
-    #ax.set_title('function')
-    #fig.savefig(join('..',
-    #               FIGS_DIR,
-    #               f'{variable}-fxn_variance.png'), dpi=500, bbox_inches='tight')
-    fig,ax = plt.subplots()
-    #plt.tight_layout(w_pad=5)
     
-    g = sns.boxenplot(x=variable, y="variance", hue=variable,
-                   data=long_fligner[long_fligner['concept'] == 'function'], 
-                       linewidth=1, palette=func_pal, ax=ax)
-    #ax.set(yscale="log", #ylim=(1,10000)
-    #      )
-    #ax.legend(bbox_to_anchor=(1.04,1), loc="upper left")
-    ax.legend().set_visible(False)
-    ax.set_title('function')
-    fig.savefig(join(PROJ_DIR,
-                   FIGS_DIR,
-                   f'{variable}-func_variance.png'), dpi=500, bbox_inches='tight')
 
 # let's visualize this variability!
 destrieux = datasets.fetch_atlas_destrieux_2009()
@@ -831,7 +730,7 @@ for fligner_var in list(hetero.keys()):
                 if value is np.nan:
                     pass
                 else:
-                    if var_df.at[i,(fligner_var, 'a<0.05')] == '**':
+                    if var_df.at[i,(fligner_var, 'sig')] == '**':
                         sig += 1
                         plotting_arr[np.where(atlas_arr == value)] = var_df.at[i,(fligner_var, 'stat')]
                     else:
@@ -868,7 +767,7 @@ for fligner_var in list(hetero.keys()):
                         tract_nii = nib.load(tract_fname)
                         tract_arr = tract_nii.get_fdata()
                         #print(np.unique(tract_arr))
-                        if var_df.at[f'{var}.change_score',(fligner_var, 'a<0.05')] == '**':
+                        if var_df.at[f'{var}.change_score',(fligner_var, 'sig')] == '**':
                             tract_arr *= var_df.at[f'{var}.change_score',(fligner_var, 'stat')]
                         else:
                             tract_arr *= 0
@@ -880,11 +779,9 @@ for fligner_var in list(hetero.keys()):
             meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
             plt.figure(layout='tight')
             #fig,ax = plt.subplots(ncols=2, gridspec_kw=grid_kw, figsize=(24,4))
-            q = plotting.plot_anat(meas_nimg, display_mode='z',  threshold=1,
-                                cut_coords=[35,50,65,85], 
-                                black_bg=False,
+            q = plotting.plot_glass_brain(meas_nimg, display_mode='z',  threshold=1,
                                     vmax=vmax*1.1, 
-                                vmin=-vmax*1.1,
+                                    vmin=-vmax*1.1,
                                     annotate=False, cmap=pals[measure], colorbar=False,
                                     #axes=ax[0]
                                 )
@@ -947,7 +844,7 @@ for fligner_var in list(hetero.keys()):
         if value is np.nan:
             pass
         else:
-            if var_df.at[i,(fligner_var, 'a<0.05')] == '**':
+            if var_df.at[i,(fligner_var, 'sig')] == '**':
                 sig += 1
                 plotting_arr[np.where(atlas_arr == value)] = var_df.at[i,(fligner_var, 'stat')]
             else:
@@ -972,7 +869,7 @@ for fligner_var in list(hetero.keys()):
         # calculate average heteroscedasticity of all 
         # significantly heteroscedastic network connections
         for i in temp_df.index:
-            if temp_df.loc[i, (fligner_var, 'a<0.05')] == '**':
+            if temp_df.loc[i, (fligner_var, 'sig')] == '**':
                 sig.append(temp_df.loc[i,(fligner_var, 'stat')])
             else:
                 pass
@@ -1020,7 +917,7 @@ for fligner_var in list(hetero.keys()):
         # significantly heteroscedastic network connections
         
         for i in temp_df.index:
-            if temp_df.loc[i, (fligner_var, 'a<0.05')] == '**':
+            if temp_df.loc[i, (fligner_var, 'sig')] == '**':
                 sig.append(temp_df.loc[i,(fligner_var, 'stat')])
                 nsig += 1
             else:
