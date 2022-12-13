@@ -60,7 +60,7 @@ tests = ['variance',
 
 var_df = pd.read_csv(join(PROJ_DIR, 
                           OUTP_DIR, 
-                          'variance_flinger_alpha<.csv'), 
+                          'variance_flinger-alpha<7.441394990670425e-05.csv'), 
                      index_col=0, 
                      header=[0,1])
 
@@ -165,7 +165,7 @@ var_df = var_df[var_df['measure'] != 't2w']
 
 atlases = list(np.unique(list(var_df['atlas'])))
 measures = list(np.unique(list(var_df['measure'])))
-#regions = list(var_df['region'].unique())
+
 modalities = list(np.unique(list(var_df['modality'])))
 
 concepts = {'morph': ['thick', 
@@ -372,7 +372,7 @@ hetero = {'fligner_income':{
 concepts = var_df['concept'].dropna().unique()
 
 for fligner_var in hetero.keys():
-    print('\n\n',fligner_var)
+    #print('\n\n',fligner_var)
     variable = fligner_var.split('_')[-1]
     var = hetero[fligner_var]['var']
     levels = hetero[fligner_var]['levels']
@@ -633,7 +633,14 @@ measures = {'cortical-thickness': 'smri_thick_cdk_*',
             'subcortical-RNI': 'dmri_rsirni_scs_.*',
             'cortical-RND': 'dmri_rsirndgm_.*',
             'cortical-RNI': 'dmri_rsirnigm_.*',
-            'cortical-BOLD-variance': 'rsfmri_var_cdk_.*'}
+            'cortical-BOLD-variance': 'rsfmri_var_cdk_.*',
+            'tract-volume': 'dmri_dtivol_fiberat_.*', 
+            'tract-FA': 'dmri_dtifa_fiberat_.*', 
+            'tract-MD': 'dmri_dtimd_fiberat_.*',
+            'tract-LD': 'dmri_dtild_fiberat_.*', 
+            'tract-TD': 'dmri_dtitd_fiberat_.*', 
+            'tract-RND': 'dmri_rsirnd_fib_.*',
+            'tract-RNI': 'dmri_rsirni_fib_.*'}
 tract_measures = {'tract-volume': 'dmri_dtivol_fiberat_.*', 
             'tract-FA': 'dmri_dtifa_fiberat_.*', 
             'tract-MD': 'dmri_dtimd_fiberat_.*',
@@ -705,52 +712,16 @@ for var in fc_cort_var:
 
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
+    print(fligner)
     if fligner == 'scanner':
         vmax = vmax_scanner
     else:
         vmax = vmax_other
     for measure in measures:
-        print(measure)
+        print(f'\t{measure}')
         meas_df = var_df.filter(regex=measures[measure], axis=0)
-        #print(len(meas_df.index))
-        meas_vars = [i.split('.')[0] for i in meas_df.index]
-        atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
-        #print(atlas_fname)
-        atlas_nii = nib.load(atlas_fname)
-        atlas_arr = atlas_nii.get_fdata()
-        plotting_arr = np.zeros(atlas_arr.shape)
-        sig = 0
-        for i in meas_df.index:
-            if 'cdk_total' in i:
-                pass
-            else:
-                j = i.split('.')[0]
-                value = nifti_mapping.loc[j]['atlas_value']
-                #print(i, value)
-                if value is np.nan:
-                    pass
-                else:
-                    if var_df.at[i,(fligner_var, 'sig')] == '**':
-                        sig += 1
-                        plotting_arr[np.where(atlas_arr == value)] = var_df.at[i,(fligner_var, 'stat')]
-                    else:
-                        plotting_arr[np.where(atlas_arr == value)] = 0
-        print('plotting...', f'{sig} out of {len(meas_df.index)} heteroskedastic regions\n avg val: {np.mean(plotting_arr)}')
-        meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
-        if 'subcortical' in measure:
-            grid_kw = dict(width_ratios=[3,1])
+        if 'tract' in measure:
             
-            fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
-                                 )
-            plt.figure(layout='tight')
-            q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=1,
-                                   cut_coords=[-20, -10, 0, 10], vmax=vmax*1.1, 
-                                   annotate=False, cmap=pals[measure], colorbar=False,
-                                   symmetric_cbar=False, axes=ax)
-
-            #ax[1].set_visible(False)
-            q.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk_scs.png', dpi=400)
-        elif measure in tract_measures.keys():
             fibers = nifti_mapping.filter(regex=tract_measures[measure], axis=0).index
             var = fibers[0]
             tract_fname = nifti_mapping.loc[var]['atlas_fname']
@@ -777,38 +748,82 @@ for fligner_var in list(hetero.keys()):
                 else:
                     pass
             meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
+            
+            fig2,ax2 = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
+                                    )
             plt.figure(layout='tight')
-            #fig,ax = plt.subplots(ncols=2, gridspec_kw=grid_kw, figsize=(24,4))
-            q = plotting.plot_glass_brain(meas_nimg, display_mode='z',  threshold=1,
-                                    vmax=vmax*1.1, 
-                                    vmin=-vmax*1.1,
+            q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=1,
+                                    cut_coords=[-20, 0, 18, 40], vmax=vmax*1.1, 
                                     annotate=False, cmap=pals[measure], colorbar=False,
-                                    #axes=ax[0]
-                                )
-            q.close()
-            q.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400)
-            q = None
-        elif 'cortical' in measure:
-            figure = plot_surfaces(meas_nimg, fsaverage, pals[measure], vmax, 1)
-            #texture_l = surface.vol_to_surf(meas_nimg, fsaverage.pial_left, interpolation='nearest')
-            #texture_r = surface.vol_to_surf(meas_nimg, fsaverage.pial_right, interpolation='nearest')
+                                    symmetric_cbar=False, axes=ax2)
+            #q.add_edges(meas_nimg)
+            fig2.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400, bbox_inches='tight')
+            plt.close(fig2)
+        else:
+            #print(len(meas_df.index))
+            meas_vars = [i.split('.')[0] for i in meas_df.index]
+            atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
+            #print(atlas_fname)
+            atlas_nii = nib.load(atlas_fname)
+            atlas_arr = atlas_nii.get_fdata()
+            plotting_arr = np.zeros(atlas_arr.shape)
+            sig = 0
+            for i in meas_df.index:
+                if 'cdk_total' in i:
+                    pass
+                else:
+                    j = i.split('.')[0]
+                    value = nifti_mapping.loc[j]['atlas_value']
+                    #print(i, value)
+                    if value is np.nan:
+                        pass
+                    else:
+                        if var_df.at[i,(fligner_var, 'sig')] == '**':
+                            sig += 1
+                            plotting_arr[np.where(atlas_arr == value)] = var_df.at[i,(fligner_var, 'stat')]
+                        else:
+                            plotting_arr[np.where(atlas_arr == value)] = 0
+            
+            print('\t\tplotting...', f'{sig} out of {len(meas_df.index)} heteroskedastic regions\n\t\tavg val: {np.mean(plotting_arr)}')
+            meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+            if 'subcortical' in measure:
+                grid_kw = dict(width_ratios=[3,1])
+                
+                fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
+                                    )
+                plt.figure(layout='tight')
+                v = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=1,
+                                    cut_coords=[-20, -10, 0, 10], vmax=vmax*1.1, 
+                                    annotate=False, cmap=pals[measure], colorbar=False,
+                                    symmetric_cbar=False, axes=ax)
 
-            #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
-                                                 #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
-            #plt.tight_layout(pad=2)
-            #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftmed.png', dpi=400)
-            #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
-                                                 #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
-            #plt.tight_layout(pad=2)
-            #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftlat.png', dpi=400)
-            #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
-                                                 #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
-            #plt.tight_layout(pad=2)
-            #figure.savefig(f'../figures/{measure}x{fligner}_fk_rightlat.png', dpi=400)
-            #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
-                                                 #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
-            #plt.tight_layout(pad=2)
-            figure.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400)
+                #ax[1].set_visible(False)
+                fig.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk_scs.png', dpi=400, bbox_inches='tight')
+                plt.close(fig)
+            
+            elif 'cortical' in measure:
+                figure = plot_surfaces(meas_nimg, fsaverage, pals[measure], vmax, 1)
+                #texture_l = surface.vol_to_surf(meas_nimg, fsaverage.pial_left, interpolation='nearest')
+                #texture_r = surface.vol_to_surf(meas_nimg, fsaverage.pial_right, interpolation='nearest')
+
+                #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
+                                                    #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
+                #plt.tight_layout(pad=2)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftmed.png', dpi=400)
+                #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
+                                                    #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
+                #plt.tight_layout(pad=2)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftlat.png', dpi=400)
+                #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
+                                                    #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
+                #plt.tight_layout(pad=2)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_rightlat.png', dpi=400)
+                #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
+                                                    #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
+                #plt.tight_layout(pad=2)
+                figure.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400)
+                plt.close()
+                
 
 corrs = var_df.filter(regex='rsfmri_c_ngd.*', axis=0).index
 corrs = [i.split('.')[0] for i in corrs]
@@ -824,6 +839,7 @@ btwn_fc_trgt = [i.split('.')[0].split('_')[-1] for i in btwn_fc]
 # okay, now we're plotting between and within network connectivity
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
+    print(fligner)
     if fligner == 'scanner':
         vmax = vmax_scanner
     else:
@@ -849,10 +865,12 @@ for fligner_var in list(hetero.keys()):
                 plotting_arr[np.where(atlas_arr == value)] = var_df.at[i,(fligner_var, 'stat')]
             else:
                 plotting_arr[np.where(atlas_arr == value)] = 0
-    print('plotting...', f'{sig} out of {len(meas_df.index)} heteroskedastic regions')
+    
+    print('\t\tplotting...', f'{sig} out of {len(meas_df.index)} heteroskedastic regions')
     meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
     figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 1)
     figure.savefig(f'{PROJ_DIR}/figures/{fligner}xFCw_fk.png', dpi=400)
+    plt.close()
     
     # between-network FC is tough bc we have to average all of a networks HSK values
     # but only the significantly HSK connections
@@ -894,6 +912,8 @@ for fligner_var in list(hetero.keys()):
     meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
     figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 1)
     figure.savefig(f'{PROJ_DIR}/figures/{fligner}xFCb_fk.png', dpi=400)
+    plt.close()
+
 
 fc_scor_var
 scs_varnames = [i.split('.')[0].split('_')[-1] for i in fc_scor_var]
@@ -950,9 +970,10 @@ for fligner_var in list(hetero.keys()):
                            cut_coords=[-20, -10, 0, 10], vmax=vmax*1.1, 
                            annotate=False, cmap=func_cmap, colorbar=False,
                            symmetric_cbar=False, axes=ax)
-
+    #q.add_edges(meas_nimg)
     #ax[1].set_visible(False)
-    q.savefig(f'{PROJ_DIR}/figures/{fligner}xFCs_fk_scs.png', dpi=400)
+    q.savefig(f'{PROJ_DIR}/figures/{fligner}xFCs_fk_scs.png', dpi=400, bbox_inches='tight')
+    plt.close()
 
 vmaxes = [vmax_scanner, vmax_other]
 for vmax in vmaxes:
@@ -981,4 +1002,5 @@ for vmax in vmaxes:
     ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
 
     plt.savefig(f'{PROJ_DIR}/figures/morph-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
+    plt.close()
 
