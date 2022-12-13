@@ -4,66 +4,13 @@ import seaborn as sns
 import nibabel as nib
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from matplotlib.gridspec import GridSpec
+#from matplotlib.gridspec import GridSpec
 
 from os.path import join
 
-from scipy.stats import fligner, t
+#from scipy.stats import fligner, t
 from nilearn import plotting, datasets, surface
-
-def plot_surfaces(nifti, surf, cmap, vmax, threshold):
-    '''
-    Plots of medial and lateral left and right surface views from nifti volume
-    '''
-    
-    texture_l = surface.vol_to_surf(nifti, surf.pial_left, interpolation='nearest')
-    texture_r = surface.vol_to_surf(nifti, surf.pial_right, interpolation='nearest')
-    
-    fig = plt.figure(figsize=(12,4))
-    gs = GridSpec(1, 4)
-
-    ax0 = fig.add_subplot(gs[0], projection='3d')
-    ax1 = fig.add_subplot(gs[1], projection='3d')
-    ax2 = fig.add_subplot(gs[2], projection='3d')
-    ax3 = fig.add_subplot(gs[3], projection='3d')
-    plt.tight_layout(w_pad=-1, h_pad=-1)
-    figure = plotting.plot_surf_stat_map(surf.pial_left, 
-                                         texture_l, 
-                                         symmetric_cbar=False, 
-                                         threshold=threshold,
-                                         cmap=cmap, 
-                                         view='lateral', 
-                                         colorbar=False, 
-                                         vmax=vmax, 
-                                         axes=ax0)
-    figure = plotting.plot_surf_stat_map(surf.pial_left, 
-                                         texture_l, 
-                                         symmetric_cbar=False, 
-                                         threshold=threshold,     
-                                         cmap=cmap, 
-                                         view='medial', 
-                                         colorbar=False, 
-                                         vmax=vmax, 
-                                         axes=ax1)
-    figure = plotting.plot_surf_stat_map(surf.pial_right, 
-                                         texture_r, 
-                                         symmetric_cbar=False, 
-                                         threshold=threshold,
-                                         cmap=cmap, 
-                                         view='lateral', 
-                                         colorbar=False, 
-                                         vmax=vmax, 
-                                         axes=ax2)
-    figure = plotting.plot_surf_stat_map(surf.pial_right, 
-                                         texture_r, 
-                                         symmetric_cbar=False, 
-                                         threshold=threshold,     
-                                         cmap=cmap, 
-                                         view='medial', 
-                                         colorbar=False, 
-                                         vmax=vmax, 
-                                         axes=ax3)
-    return figure
+from utils import plot_surfaces
 
 # set up colormaps & palettes for plotting later
 morph_pal = sns.cubehelix_palette(n_colors=4, start=0.6, rot=-0.6, gamma=1.0, hue=0.7, light=0.6, dark=0.3)
@@ -433,15 +380,15 @@ for measure in measures:
         meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
         #plt.figure(layout='tight')
         #fig,ax = plt.subplots(ncols=2, gridspec_kw=grid_kw, figsize=(24,4))
-        q = plotting.plot_anat(meas_nimg, display_mode='z',  threshold=0.01,
-                            cut_coords=[35,50,65,85], 
-                            black_bg=False,
+        q = plotting.plot_glass_brain(meas_nimg, display_mode='lzry',  #threshold=0.01,
+                            #cut_coords=[35,50,65,85], 
+                            #black_bg=False,
                                 vmax=vmax*1.1, 
                                 vmin=-vmax*1.1,
                                 annotate=False, cmap=pals[measure], colorbar=False,
                                 #axes=ax[0]
                             )
-        q.close()
+        #q.add_edges(meas_nimg)
         q.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400)
         q = None
     else:
@@ -516,7 +463,7 @@ meas_df.loc[fc_scor_var, 'scs'] = scs_varnames
 avgs = pd.DataFrame()
 for scs in np.unique(scs_varnames):
     temp_df = meas_df[meas_df['scs'] == scs]
-    # calculate average heteroscedasticity of all 
+    # calculate average change of all 
     # significantly heteroscedastic network connections
 
     for i in temp_df.index:
