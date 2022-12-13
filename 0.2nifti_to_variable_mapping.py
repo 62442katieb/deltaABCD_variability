@@ -1,31 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import nibabel as nib
 import matplotlib.pyplot as plt
-import nibabel.freesurfer.mghformat as mgh
+#import nibabel.freesurfer.mghformat as mgh
 
-from glob import glob
+#from glob import glob
 from os.path import join, exists
-from nilearn import plotting, datasets, image
-
-
-# In[2]:
-
+from nilearn import datasets
 
 sns.set(style='whitegrid', context='talk')
 plt.rcParams["font.family"] = "monospace"
 plt.rcParams['font.monospace'] = 'Courier New'
-
-
-# In[3]:
-
 
 ABCD_DIR = "/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/Data/release4.0"
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/"
@@ -34,23 +23,11 @@ FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 RESR_DIR = "resources/"
 
-
-# In[4]:
-
-
 data_dictionary = pd.read_csv(join(ABCD_DIR, 'generate_dataset/data_element_names.csv'), 
                               header=0, 
                               index_col=0)
 
-
-# In[5]:
-
-
 data = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data_qcd.csv"), index_col=0, header=0)
-
-
-# In[6]:
-
 
 smri_vars = pd.concat([data.filter(regex='smri.*change_score'), 
                                 data.filter(regex='mrisdp.*change_score')], axis=1).dropna(how='all').columns
@@ -58,24 +35,12 @@ rsfmri_vars = data.filter(regex='rsfmri.*change_score').dropna(how='all').column
 rsi_vars = data.filter(regex='dmri_rsi.*change_score').dropna(how='all').columns
 dti_vars = data.filter(regex='dmri_dti.*change_score').dropna(how='all').columns
 
-
-# In[7]:
-
-
 smri_vars = [v.split('.')[0] for v in smri_vars]
 rsfmri_vars = [v.split('.')[0] for v in rsfmri_vars]
 rsi_vars = [v.split('.')[0] for v in rsi_vars]
 dti_vars = [v.split('.')[0] for v in dti_vars]
 
-
-# In[8]:
-
-
 imaging_vars = list(smri_vars) + list(rsfmri_vars) + list(rsi_vars) + list(dti_vars)
-
-
-# In[9]:
-
 
 mapping = pd.DataFrame(columns=['modality', 
                                 'abcd_structure',
@@ -85,10 +50,6 @@ mapping = pd.DataFrame(columns=['modality',
                                 'atlas_value',
                                 'atlas_fname'])
 
-
-# In[10]:
-
-
 destrieux = datasets.fetch_atlas_surf_destrieux()
 destrieux_vol = datasets.fetch_atlas_destrieux_2009()
 desikan = datasets.fetch_neurovault_ids(image_ids=(23262, ))
@@ -96,21 +57,9 @@ gordon_og = '/Users/katherine.b/Dropbox/Mac/Downloads/Parcels 2/Parcels_MNI_222.
 gordon_xl = '/Users/katherine.b/Dropbox/Mac/Downloads/Parcels 2/Parcels.xlsx'
 subcort = datasets.fetch_atlas_harvard_oxford('sub-maxprob-thr50-2mm')
 
-
-# In[11]:
-
-
 scs_nifti = subcort.maps
 
-
-# In[12]:
-
-
 nib.save(scs_nifti, join(PROJ_DIR, RESR_DIR, 'harvox-subcortical-maxprob-thr50-2mm'))
-
-
-# In[13]:
-
 
 for i in imaging_vars:
     if i in smri_vars:
@@ -140,10 +89,6 @@ for i in imaging_vars:
         mapping.at[i, 'atlas'] = 'Fuzzy 12'
     elif 'fib' in i:
         mapping.at[i, 'atlas'] = 'Fiber Atlas'
-
-
-# In[14]:
-
 
 l_and_r_destrieux = destrieux.labels * 2
 for i in range(0, len(l_and_r_destrieux)):
@@ -184,19 +129,11 @@ for i in range(0, len(l_and_r_destrieux)):
         mapping.at[f'mrisdp_{906 + i - 3}','atlas_description'] = l_and_r_destrieux[i]
         mapping.at[f'mrisdp_{906 + i - 3}','atlas_value'] = i
 
-
-# In[15]:
-
-
 desikan_labels = pd.read_csv(join(PROJ_DIR, DATA_DIR, 'desikan_labels.txt'), 
                              sep='\t', 
                              header=0,
                              usecols=['value']
                             )
-
-
-# In[16]:
-
 
 cdk_area = mapping.filter(regex='smri_area.*_cdk_.*', axis=0).index
 cdk_thick = mapping.filter(regex='smri_thick.*_cdk_.*', axis=0).index
@@ -204,10 +141,6 @@ cdk_t1wcnt = mapping.filter(regex='smri_t1wcnt.*_cdk_.*', axis=0).index
 cdk_tvar = mapping.filter(regex='rsfmri_var_cdk_.*', axis=0).index
 cdk_rnd = mapping.filter(regex='dmri_rsirndgm_cdk.*', axis=0).index
 cdk_rni = mapping.filter(regex='dmri_rsirnigm_cdk.*', axis=0).index
-
-
-# In[17]:
-
 
 for i in range(0, len(desikan_labels.values)):
     mapping.at[cdk_area[i],'atlas_description'] = desikan_labels.iloc[i]['value']
@@ -222,10 +155,6 @@ for i in range(0, len(desikan_labels.values)):
     mapping.at[cdk_rnd[i],'atlas_value'] = desikan_labels.index[i]
     mapping.at[cdk_rni[i],'atlas_description'] = desikan_labels.iloc[i]['value']
     mapping.at[cdk_rni[i],'atlas_value'] = desikan_labels.index[i]
-
-
-# In[18]:
-
 
 scs_1 = ['x',
          'x',
@@ -250,20 +179,12 @@ scs_1 = ['x',
         "amygdalarh",
         "aar"]
 
-
-# In[19]:
-
-
 subcort_map = {}
 for i in range(0, len(scs_1)):
     if scs_1[i] == 'x':
         pass
     else:
         subcort_map[scs_1[i]] = [subcort.labels[i], i]
-
-
-# In[20]:
-
 
 gordon_nii = nib.load(gordon_og)
 gordon_arr = gordon_nii.get_fdata()
@@ -306,15 +227,7 @@ for i in rsfcntwks:
     value = gordon_mapping[gordon_mapping['abcd_label'] == abcd_ntwk]['ntwk_label'].unique()[0]
     mapping.loc[i, 'atlas_value'] = value
 
-
-# In[21]:
-
-
 all_meas = [i.split('_')[-1] for i in list(mapping.index)]
-
-
-# In[22]:
-
 
 scs_fc = {'aalh': ['Left Accumbens', 11], 
           'aarh': ['Right Accumbens', 21], 
@@ -334,16 +247,8 @@ scs_fc = {'aalh': ['Left Accumbens', 11],
           'thplh': ['Left Thalamus', 4],
           'thprh': ['Right Thalamus', 15]}
 
-
-# In[23]:
-
-
 rsi_scs_vars = mapping.filter(regex=f'.*_rsi.*_scs_.*', axis=0).index
 rsi_scs = [i.split('_')[-1] for i in rsi_scs_vars]
-
-
-# In[24]:
-
 
 rsi_scs_map = {'aalh': ['Left Accumbens', 11], 
                'aarh': ['Right Accumbens', 21],
@@ -380,10 +285,6 @@ rsi_scs_map = {'aalh': ['Left Accumbens', 11],
                'vdclh': ['Left Ventricle', np.nan], 
                'vdcrh': ['Right Ventricle', np.nan]}
 
-
-# In[25]:
-
-
 # assign values to subcortical variables
 scs_vars = list(mapping.filter(regex='.*_scs_.*', axis=0).index)
 for key in scs_vars:
@@ -416,23 +317,12 @@ for key in scs_vars:
             mapping.at[key,'atlas_description'] = subcort_map[scs_key][0]
             mapping.at[key,'atlas_value'] = subcort_map[scs_key][1]
 
-
-# In[26]:
-
-
 len(mapping.filter(regex=f'dmri_rsi.*_scs_.*', axis=0).index) - len(mapping.filter(regex=f'dmri_rsi.*_scs_.*', axis=0).index.unique())
-
-
-# In[27]:
-
 
 # gordon parcellation
 gordon_labels = pd.read_excel(join(PROJ_DIR, 'resources', 'gordon', 'Parcels.xlsx'),
                               header=0, 
                               index_col=0)
-
-
-# In[28]:
 
 
 cortgordon = mapping.filter(regex='.*_cortgordon', axis=0).index
@@ -442,133 +332,6 @@ for var in cortgordon:
     mapping.at[var, 'atlas_description'] = gordon_labels.loc[value]['Community']
 
 
-# region_names = {'aal': ('Accumbens', 'L'), 
-#                 'aalh': ('Accumbens', 'L'), 
-#                 'aar': ('Accumbens', 'R'), 
-#                 'aarh': ('Accumbens', 'R'), 
-#                 'ablh': ('Accumbens', 'L'), 
-#                 'abrh' ('Accumbens', 'R'),
-#                 'ad': ('Auditory Network', 'B'), 
-#                 'aglh': ('Amygdala', 'L'), 
-#                 'agrh': ('Amygdala', 'R'), 
-#                 'amygdalalh': ('Amugdala', 'L'), 
-#                 'amygdalarh': ('Amygdala', 'R'), 
-#                 'aomtmlh': (),
-#                 'aomtmrh': (), 
-#                 'atrlh', 
-#                 'atrrh', 
-#                 'banksstslh': ('Banks of Superior Temporal Sulcus', 'L'), 
-#                 'banksstsrh': ('Banks of Superior Temporal Sulcus', 'R'),
-#                 'brainstem': ('Brainstem', 'B'), 
-#                 'bs': ('Brainstem', 'B'), 
-#                 'bstem': ('Brainstem', 'B'), 
-#                 'ca': ('Cinguloparietal Network', 'B'), 
-#                 'caudatelh': ('Caudate', 'L'), 
-#                 'caudaterh': ('Caudate', 'R'),
-#                 'cbclh': ('Cerebellar Cortex', 'L'), 
-#                 'cbcrh': ('Cerebellar Cortex', 'R'), 
-#                 'cbwmlh': ('Cerebellar White Matter', 'L'), 
-#                 'cbwmrh': ('Cerebellar White Matter', 'R'), 
-#                 'cc': ('Corpus Callosum', 'B'), 
-#                 'cdacatelh': ('Anterior Cingulate, Caudal', 'L'),
-#                 'cdacaterh': ('Anterior Cingulate, Caudal', 'R'), 
-#                 'cdaclatelh': ('Anterior Cingulate, Caudal', 'L'), 
-#                 'cdaclaterh': ('Anterior Cingulate, Caudal', 'R'), 
-#                 'cdelh': ('Caudate', 'L'), 
-#                 'cderh': ('Caudate', 'R'), 
-#                 'cdlh': ('Caudate', 'L'),
-#                 'cdmdflh': ('Middle Frontal Gyrus, Caudal', 'L'), 
-#                 'cdmdfrh': ('Middle Frontal Gyrus, Caudal', 'R'), 
-#                 'cdmdfrlh': ('Middle Frontal Gyrus, Caudal', 'L'), 
-#                 'cdmdfrrh': ('Middle Frontal Gyrus, Caudal', 'R'), 
-#                 'cdrh': ('Caudate', 'R'), 
-#                 'cgc': ('Cingulo-Opercular Network', 'B'),
-#                 'cgclh': ('Cingulate Cingulum', 'L'), 
-#                 'cgcrh': ('Cingulate Cingulum', 'R'), 
-#                 'cghlh': ('Parahippocampal Cingulum', 'L'), 
-#                 'cghrh': ('Parahippocampal Cingulum', 'R'),  
-#                 'crbcortexlh': ('Cerebellar Cortex', 'L'),
-#                 'crbcortexrh': ('Cerebellar Cortex', 'R'), 
-#                 'crbwmatterlh': ('Cerebellar White Matter', 'L'), 
-#                 'crbwmatterrh': ('Cerebellar White Matter', 'L'), 
-#                 'crcxlh': ('Cerebellar Cortex', 'L'), 
-#                 'crcxrh': ('Cerebellar Cortex', 'R'),
-#                 'cstlh': ('Corticospinal Tract', 'L'), 
-#                 'cstrh': ('Corticospinal Tract', 'R'), 
-#                 'cuneuslh': ('Cuneus', 'L'), 
-#                 'cuneusrh': ('Cuneus', 'R'), 
-#                 'cwmlh': ('Cerebral White Matter', 'L'), 
-#                 'cwmrh': ('Cerebral White Matter', 'L'), 
-#                 'dla': ('Dorsal Attention Network', 'B'),
-#                 'dlprefrlh': ('Dorsal Prefrontal Cortex', 'L'), 
-#                 'dlprefrrh': ('Dorsal Prefrontal Cortex', 'R'), 
-#                 'dmfrlh': ('Dorsomedial Frontal Cortex', 'L'), 
-#                 'dmfrrh': ('Dorsomedial Frontal Cortex', 'R'), 
-#                 'dt': ('Default Mode Network', 'B'), 
-#                 'ehinallh': ('Entorhinal Cortex', 'L'),
-#                 'ehinalrh': ('Entorhinal Cortex', 'R'), 
-#                 'entorhinallh': ('Entorhinal Cortex', 'L'), 
-#                 'entorhinalrh': ('Entorhinal Cortex', 'R'), 
-#                 'fflh': ('Fusiform Gyrus', 'L'), 
-#                 'ffrh': ('Fusiform Gyrus', 'R'), 
-#                 'fmaj': ('Fornix Major', 'B'),
-#                 'fmin': ('Fornix Minor', 'B'), 
-#                 'fo': ('Frontoparietal Network', 'B'), 
-#                 'fpolelh': ('Frontal Pole', 'L'), 
-#                 'fpolerh': ('Frontal Pole', 'R'), 
-#                 'frpolelh': ('Frontal Pole', 'L'), 
-#                 'frpolerh': ('Frontal Pole', 'R'),
-#                 'fscslh': ('Superior Corticostriate Tract (Frontal)', 'L'), 
-#                 'fscsrh': ('Superior Corticostriate Tract (Frontal)', 'R'), 
-#                 'fusiformlh': ('Fusiform Gyrus', 'L'), 
-#                 'fusiformrh': ('Fusiform Gyrus', 'R'), 
-#                 'fxcutlh': ('Fornix (excluding Fimbria)', 'L'),
-#                 'fxcutrh': ('Fornix (excluding Fimbria)', 'R'), 
-#                 'fxlh': ('Fornix', 'L'), 
-#                 'fxrh': ('Fornix', 'R'), 
-#                 'hclh': ('Hippocampus', 'L'),
-#                 'hcrh': ('Hippocampus', 'R'), 
-#                 'hplh': ('Hippocampus', 'L'), 
-#                 'hprh': ('Hippocampus', 'R'), 
-#                 'hpuslh': ('Hippocampus', 'L'), 
-#                 'hpusrh': ('Hippocampus', 'R'), 
-#                 'ifolh': ('Inferior Fronto-occipital Fasciculus', 'L'), 
-#                 'iforh': ('Inferior Fronto-occipital Fasciculus', 'R'),
-#                 'ifpalh': ('Inferior Parietal', 'L'), 
-#                 'ifparh': ('Inferior Parietal', 'R'), 
-#                 'ifpllh': ('Inferior Parietal', 'L'), 
-#                 'ifplrh': ('Inferior Parietal', 'R'), 
-#                 'ifsfclh', 
-#                 'ifsfcrh',
-#        'iftlh', 'iftmlh', 'iftmrh', 'iftrh', 'ihcatelh', 'ihcaterh',
-#        'ihclatelh', 'ihclaterh', 'ilflh', 'ilfrh', 'ilvlh', 'ilvrh',
-#        'insulalh', 'insularh', 'intracranialv', 'linguallh', 'lingualrh',
-#        'lobfrlh', 'lobfrrh', 'loboflh', 'lobofrh', 'loccipitallh',
-#        'loccipitalrh', 'locclh', 'loccrh', 'lvrh', 'mdtlh', 'mdtmlh',
-#        'mdtmrh', 'mdtrh', 'mobfrlh', 'mobfrrh', 'moboflh', 'mobofrh', 'n',
-#        'obfrlh', 'obfrrh', 'occlh', 'occrh', 'pallidumlh', 'pallidumrh',
-#        'paracentrallh', 'paracentralrh', 'paracnlh', 'paracnrh',
-#        'parahpallh', 'parahpalrh', 'parsobalislh', 'parsobalisrh',
-#        'parsobislh', 'parsobisrh', 'parsopclh', 'parsopcrh', 'parsopllh',
-#        'parsoplrh', 'parstgrislh', 'parstgrisrh', 'parstularislh',
-#        'parstularisrh', 'pclh', 'pcrh', 'pericclh', 'periccrh', 'pllh',
-#        'plrh', 'postcentrallh', 'postcentralrh', 'postcnlh', 'postcnrh',
-#        'precentrallh', 'precentralrh', 'precnlh', 'precnrh',
-#        'precuneuslh', 'precuneusrh', 'psclatelh', 'psclaterh', 'pscslh',
-#        'pscsrh', 'pslflh', 'pslfrh', 'ptcatelh', 'ptcaterh', 'ptlh',
-#        'ptoltmlh', 'ptoltmrh', 'ptrh', 'putamenlh', 'putamenrh',
-#        'rlaclatelh', 'rlaclaterh', 'rlmdflh', 'rlmdfrh', 'rracatelh',
-#        'rracaterh', 'rrmdfrlh', 'rrmdfrrh', 'rspltp', 'sa', 'scslh',
-#        'scsrh', 'sifclh', 'sifcrh', 'slflh', 'slfrh', 'smh', 'smlh',
-#        'smm', 'smrh', 'spetallh', 'spetalrh', 'suflh', 'sufrh', 'sufrlh',
-#        'sufrrh', 'supllh', 'suplrh', 'sutlh', 'sutmlh', 'sutmrh', 'sutrh',
-#        'thplh', 'thprh', 'tmpolelh', 'tmpolerh', 'total', 'tplh',
-#        'tpolelh', 'tpolerh', 'tprh', 'trvtmlh', 'trvtmrh', 'tslflh',
-#        'tslfrh', 'tvtlh', 'tvtrh', 'unclh', 'uncrh', 'vdclh', 'vdcrh',
-#        'vedclh', 'vedcrh', 'ventraldclh', 'ventraldcrh', 'vs', 'vta',
-#        'vtdclh', 'vtdcrh'}
-
-# In[29]:
 
 
 # skipping fuzzy12 because the atlases are only available upon email request
@@ -580,15 +343,7 @@ fiber_key = pd.read_csv(join(FIBER_DIR, 'documentation', 'DTI_Fiber_Legend.csv')
                         header=0, 
                         index_col=0)
 
-
-# In[30]:
-
-
 fiber_key['FiberName'] = [name.lower() for name in fiber_key['FiberName']]
-
-
-# In[31]:
-
 
 for var in mapping.filter(regex='.*_fiber', axis=0).index:
     tract_name = var.split('_')[-1]
@@ -601,11 +356,7 @@ for var in mapping.filter(regex='.*_fiber', axis=0).index:
         index = fiber_key[fiber_key['FiberName'] == f'{hemisphere}_{tract}'].index
         mapping.at[var, 'atlas_description'] = fiber_key.loc[index]['LongFiberName']
         mapping.at[var, 'atlas_value'] = int(index.values)
-        mapping.at[var, 'atlas_fname'] = join(atlastrack_rois, f'fiber_{int(index.values)}_count_countatlas.nii.gz')
-
-
-# In[32]:
-
+        mapping.at[var, 'atlas_fname'] = join(atlastrack_rois, f'fiber_{int(index.values)}_mni.nii.gz')
 
 for var in mapping.filter(regex='rsi.*_fib.*', axis=0).index:
     tract_name = var.split('_')[-1]
@@ -618,17 +369,9 @@ for var in mapping.filter(regex='rsi.*_fib.*', axis=0).index:
         index = fiber_key[fiber_key['FiberName'] == f'{hemisphere}_{tract}'].index
         mapping.at[var, 'atlas_description'] = fiber_key.loc[index]['LongFiberName']
         mapping.at[var, 'atlas_value'] = int(index.values)
-        mapping.at[var, 'atlas_fname'] = join(atlastrack_rois, f'fiber_{int(index.values)}_count_countatlas.nii.gz')
-
-
-# In[39]:
-
+        mapping.at[var, 'atlas_fname'] = join(atlastrack_rois, f'fiber_{int(index.values)}_mni.nii.gz')
 
 mapping.filter(regex='.*_fiber', axis=0)
-
-
-# In[34]:
-
 
 vol_mapping = {'smri_vol_cdk_banksstslh.change_score': 1001.0,
     'smri_vol_cdk_cdacatelh.change_score': 1002.0,
@@ -699,35 +442,8 @@ vol_mapping = {'smri_vol_cdk_banksstslh.change_score': 1001.0,
     'smri_vol_cdk_trvtmrh.change_score': 2034.0,
     'smri_vol_cdk_insularh.change_score': 2035.0,}
 
-
-# In[35]:
-
-
 for var in vol_mapping.keys():
     variable = var.split('.')[0]
     mapping.at[variable,'atlas_value'] = vol_mapping[var]
 
-
-# In[36]:
-
-
 mapping.to_csv(join(PROJ_DIR, DATA_DIR, 'variable_to_nifti_mapping.csv'))
-
-
-# In[37]:
-
-
-mapping
-
-
-# In[38]:
-
-
-mapping.loc['dmri_rsirnd_scs_vdcrh']
-
-
-# In[ ]:
-
-
-
-
