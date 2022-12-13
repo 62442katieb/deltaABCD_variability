@@ -972,8 +972,8 @@ for fligner_var in list(hetero.keys()):
                            symmetric_cbar=False, axes=ax)
     #q.add_edges(meas_nimg)
     #ax[1].set_visible(False)
-    q.savefig(f'{PROJ_DIR}/figures/{fligner}xFCs_fk_scs.png', dpi=400, bbox_inches='tight')
-    plt.close()
+    fig.savefig(f'{PROJ_DIR}/figures/{fligner}xFCs_fk_scs.png', dpi=400, bbox_inches='tight')
+    plt.close(fig)
 
 vmaxes = [vmax_scanner, vmax_other]
 for vmax in vmaxes:
