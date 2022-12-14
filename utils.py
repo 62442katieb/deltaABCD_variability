@@ -434,26 +434,30 @@ def assign_region_names(df, missing=False):
                     'mtlh': ('Middle Temporal Gyrus', 'L'),
                     'mtrh': ('Middle Temporal Gyrus', 'R'),}
     missing = []
-    for i in df.index: 
-        if '_scs_' in df.loc[i]['region']:
-            temp = df.loc[i]['region'].split('_scs_')
-            region_name = f'{region_names[temp[0]][0]}, {region_names[temp[1]][0]}'
-            hemisphere = region_names[temp[1]][1]
-            df.at[i, 'long_region'] = region_name
-            df.at[i, 'hemisphere'] = hemisphere
-        elif '_ngd_' in df.loc[i]['region']:
-            temp = df.loc[i]['region'].split('_ngd_')
-            region_name = f'{region_names[temp[0]][0]}, {region_names[temp[1]][0]}'
-            hemisphere = region_names[temp[1]][1]
-            df.at[i, 'long_region'] = region_name
-            df.at[i, 'hemisphere'] = hemisphere
-        elif df.loc[i]['region'] not in region_names.keys():
-            missing.append(df.loc[i]['region'])
+    for i in df.index:
+        if '.' in str(i):
+            i = i.split('.')[0]
         else:
-            long_region = region_names[df.loc[i]['region']]
+            pass
+        temp = i.split('_')
+        region = '_'.join(temp[3:])
+        if '_scs_' in region:
+            temp = region.split('_scs_')
+            region_name = f'{region_names[temp[0]][0]}, {region_names[temp[1]][0]}'
+            hemisphere = region_names[temp[1]][1]
+            df.at[i, 'long_region'] = region_name
+            df.at[i, 'hemisphere'] = hemisphere
+        elif '_ngd_' in region:
+            temp = region.split('_ngd_')
+            region_name = f'{region_names[temp[0]][0]}, {region_names[temp[1]][0]}'
+            hemisphere = region_names[temp[1]][1]
+            df.at[i, 'long_region'] = region_name
+            df.at[i, 'hemisphere'] = hemisphere
+        elif region not in region_names.keys():
+            missing.append(region)
+        else:
+            long_region = region_names[region]
             df.at[i, 'long_region'] = long_region[0]
             df.at[i, 'hemisphere'] = long_region[1]
-    if missing == True:
-        return df, missing
-    else:
-        return df
+    print(f'{len(missing)} regions are missing from the dictionary and, thus, not named.')
+    return df
