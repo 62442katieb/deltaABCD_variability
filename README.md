@@ -1,4 +1,4 @@
-# deltaABCD_clustering
+# deltaABCD_variability
 
 [![DOI](https://zenodo.org/badge/406529480.svg)](https://zenodo.org/badge/latestdoi/406529480)
 
