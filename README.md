@@ -1,6 +1,8 @@
 # deltaABCD_clustering
 
 [![DOI](https://zenodo.org/badge/406529480.svg)](https://zenodo.org/badge/latestdoi/406529480)
+
+
 This work represents the analyses behind [_Profiling intra- and inter-individual differences in child and adolescent brain development_](https://doi.org/10.1101/2022.12.19.521089), studying variability in brain changes, both within and between individuals, during the transition to adolescence using data from the Adolescent Brain Cognitive Development (ABCD) Study.
 ## Order of operations
 For the most part, the scripts are numbered in the order they were run:
