@@ -19,7 +19,7 @@ plt.rcParams["font.family"] = "monospace"
 plt.rcParams['font.monospace'] = 'Courier New'
 
 
-PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/"
+PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_vbgmm/"
 DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
