@@ -11,7 +11,7 @@ from os.path import join, exists
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingGridSearchCV, train_test_split
 from sklearn.mixture import BayesianGaussianMixture
-from sklearn.linear_model import LinearRegression
+#from sklearn.linear_model import LinearRegression
 
 
 sns.set(style='whitegrid', context='paper')
@@ -24,7 +24,7 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-imputed_cdk = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "data_qcd_mice-cdk.csv")), 
+imputed_cdk = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "data_qcd_knn-cdk.csv")), 
                           index_col='subjectkey', 
                           header=0)
 #imputed_dcg = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "destrieux+gordon_MICEimputed_data.csv")), 
@@ -71,7 +71,7 @@ estimator = BayesianGaussianMixture(
 # hyper parameter tuning
 iterations = 100
 manager = enlighten.get_manager()
-tocks = manager.counter(total=iterations, * len(atlases.keys()),
+tocks = manager.counter(total=iterations * len(atlases.keys()) * len(scanners),
                         desc='Number of Iterations', 
                         unit='iter')
 max_comp = {}
@@ -95,6 +95,7 @@ for atlas in atlases.keys():
                     pass
             data = data.loc[all_subj]
             data.drop('rel_family_id.baseline_year_1_arm_1', axis=1, inplace=True)
+            print(data.isna().sum())
 
             # need train test split
             search = HalvingGridSearchCV(estimator, 
