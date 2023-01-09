@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 
 from os.path import join, exists
+from datetime import datetime
 from matplotlib import colors
 from pyampute.exploration.md_patterns import mdPatterns
 from pyampute.exploration.mcar_statistical_tests import MCARTest
@@ -24,12 +25,12 @@ from impyute.util import preprocess
 # these two are from https://github.com/RianneSchouten/pyampute/blob/master/pyampute/exploration/md_patterns.py
 # but they were throwing weird errors so I decided to fix them myself
 def _calculate_patterns(
-        self, X: pd.DataFrame, count_or_proportion: str = "count"
+        X: pd.DataFrame, count_or_proportion: str = "count"
     ) -> pd.DataFrame:
     """Extracts all unique missing data patterns in an incomplete dataset and transforms into a pandas DataFrame"""
 
     # mask
-    mask = X.isnull()
+    mask = X.isna()
 
     # count number of missing values per column
     colsums = mask.sum()
@@ -67,18 +68,18 @@ def _calculate_patterns(
             group_values.iloc[-1, -1] / (X.shape[0] * X.shape[1])
         ).round(2)
 
-    self.md_patterns = group_values
-    self.md_patterns.index = (
+    md_patterns = group_values
+    md_patterns.index = (
         ["rows_no_missing"]
-        + list(self.md_patterns.index[1:-1])
+        + list(md_patterns.index[1:-1])
         + ["n_missing_values_per_col"]
     )
-    return self.md_patterns
+    return md_patterns
 
-def _make_plot(self):
+def _make_plot(md_patterns):
     """"Creates visualization of missing data patterns"""
 
-    group_values = self.md_patterns
+    group_values = md_patterns
 
     heat_values = group_values.iloc[
         0 : (group_values.shape[0] - 1), 1 : group_values.shape[1] - 1
@@ -233,6 +234,13 @@ deltarsfmri_complete = df.filter(regex='rsfmri.*change_score').dropna(how='any')
 deltarsi_complete = df.filter(regex='dmri_rsi.*change_score').dropna()
 deltadti_complete = df.filter(regex='dmri_dti.*change_score').dropna()
 
+qc_vars = pd.concat([df.filter(regex='imgincl_.*mri.*'), df.filter(regex='mri_info_manufacturer.*')], axis=1)
+#print(qc_vars.columns)
+
+df = df.drop(df.filter(regex='.*mri_.*arm_1').columns, axis=1)
+#print(df.columns)
+df = pd.concat([df, qc_vars], axis=1)
+
 # subset by atlas for smri and rsfmri (variance) data
 smri_atlas = {'cdk': [], 
               'mrisdp': [],
@@ -286,30 +294,29 @@ minimal = [f'{x}.baseline_year_1_arm_1' for x in minimal_miss ] + [f'{x}.2_year_
 miss_df = df[minimal]
 
 patterning = mdPatterns()
-patterns = mdPatterns.get_patterns(miss_df.values, 'proportion')
+patterns = _calculate_patterns(miss_df, 'proportion')
 patterns.to_csv(join(PROJ_DIR, 'data', 'missing_patterns.csv'))
 
-fig, ax = plt.subplot()
-g = sns.heatmap(patterns, ax=ax)
+fig = _make_plot(patterns)
 fig.savefig(join(PROJ_DIR, 'figures', 'missing_patterns.png'), dpi=400)
 
 # perform Little's test 
-little = MCARTest(method='little')
-little_test = little.little_mcar_test(df)
-print(f'Little\'s test for MCAR pvalues = {little_test}')
+#little = MCARTest(method='little')
+#little_test = little.little_mcar_test(df)
+#print(f'Little\'s test for MCAR pvalues = {little_test}')
 
-little_pairs = MCARTest(method='ttest')
-little_ttests = little_pairs.mcar_t_tests(df)
-little_ttests.to_csv(join(PROJ_DIR, 'data', f'littles_ttests_omnibusp={little_test}.csv'))
+#little_pairs = MCARTest(method='ttest')
+#little_ttests = little_pairs.mcar_t_tests(df)
+#little_ttests.to_csv(join(PROJ_DIR, 'data', f'littles_ttests.csv'))
 
-if little_test >= 0.05:
-    mcar = True
-not_mcar_vars = []
-for variable in less_than_tenth_missing:
-    if variable in cdk_columns and little_ttests[variable].max() > 0.05:
-        not_mcar_vars.append(variable)
+#if little_test >= 0.05:
+#    mcar = True
+#not_mcar_vars = []
+#for variable in less_than_tenth_missing:
+#   if variable in cdk_columns and little_ttests[variable].max() > 0.05:
+#        not_mcar_vars.append(variable)
 
-print(not_mcar_vars)
+#print(f'{len(not_mcar_vars) / len(cdk_columns) * 100}% of brain changes are not mcar')
 #dcg_columns = smri_atlas['mrisdp'] + rsfmri_atlas['cortgordon'] + list(deltarsi_complete.columns) + list(deltadti_complete.columns) + subcort
 #dcg_data = df.filter(dcg_columns)
 
@@ -320,7 +327,8 @@ print(not_mcar_vars)
 
 # there's a preprint that says imputing before CV is fine.
 # https://doi.org/10.48550/arXiv.2010.00718
-cdk_data_complete = mice(cdk_data[not_mcar_vars].values)
+print('time for mice!\t', print(datetime.now))
+cdk_data_complete = mice(cdk_data.iloc[:200].values)
 #dcg_data_complete = mice(dcg_data.values)
 
 imputed_cdk = pd.DataFrame(data=cdk_data_complete, 
@@ -336,7 +344,9 @@ imputed_cdk.describe()
 
 other_vars = list(set(df.columns) - set(imputed_cdk.columns))
 big_df = pd.concat([df[other_vars], imputed_cdk], axis=1)
+big_nomice = pd.concat([df[other_vars], cdk_data], axis=1)
 big_df.to_csv(join(PROJ_DIR, 'data', 'data_qcd_mice-cdk.csv'))
+big_nomice.to_csv(join(PROJ_DIR, 'data', 'data_qcd_NOmice-cdk.csv'))
 
 imputed_cdk.to_csv(join(join(PROJ_DIR, 'data', "data_cdk-mice.csv")))
 #imputed_dcg.to_csv(join(join(PROJ_DIR, DATA_DIR, "destrieux+gordon_MICEimputed_data.csv")))

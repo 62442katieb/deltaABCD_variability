@@ -24,15 +24,27 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-imputed_cdk = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "desikankillany_MICEimputed_data.csv")), 
+imputed_cdk = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "data_qcd_mice-cdk.csv")), 
                           index_col='subjectkey', 
                           header=0)
-imputed_dcg = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "destrieux+gordon_MICEimputed_data.csv")), 
-                          index_col='subjectkey', 
-                          header=0)
+#imputed_dcg = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "destrieux+gordon_MICEimputed_data.csv")), 
+#                          index_col='subjectkey', 
+#                          header=0)
+
+scanners = ["SIEMENS", "GE MEDICAL SYSTEMS", "Philips Medical Systems"]
+
+scanner_ppts = {}
+for scanner in scanners:
+    scanner_ppts[scanner] = imputed_cdk[imputed_cdk['mri_info_manufacturer.baseline_year_1_arm_1'] == scanner].index
+
+imaging_cols = list(imputed_cdk.filter(regex='.*mri.*change_score').columns)
+imaging_cols.append('rel_family_id.baseline_year_1_arm_1', )
+
+
 
 atlases = {'desikankillany': imputed_cdk,
-           'destrieux+gordon': imputed_dcg}
+           #'destrieux+gordon': imputed_dcg
+        }
 
 parameter_grid = {
     'weight_concentration_prior_type': [
@@ -59,22 +71,22 @@ estimator = BayesianGaussianMixture(
 # hyper parameter tuning
 iterations = 100
 manager = enlighten.get_manager()
-tocks = manager.counter(total=iterations, * len(atlases.keys(),
+tocks = manager.counter(total=iterations, * len(atlases.keys()),
                         desc='Number of Iterations', 
                         unit='iter')
 max_comp = {}
 for atlas in atlases.keys():
-    if atlas == 'desikankillany':
-        pass
-    else:
+    for scanner in scanners:
         big_results = pd.DataFrame()
         best_params = pd.DataFrame()
         n_comps = 0
+        ppts = scanner_ppts[scanner]
+        data = atlases[atlas]
+        data = data.loc[ppts][imaging_cols]
         for i in range(0,iterations):
-            data = atlases[atlas]
             all_subj = data.index.to_list()
-            for id_ in data['rel_family_id']:
-                siblings = data[data['rel_family_id'] == id_].index.to_list()
+            for id_ in data['rel_family_id.baseline_year_1_arm_1']:
+                siblings = data[data['rel_family_id.baseline_year_1_arm_1'] == id_].index.to_list()
                 if len(siblings) > 1:
                     keep = np.random.choice(siblings)
                     siblings.remove(keep)
@@ -82,7 +94,7 @@ for atlas in atlases.keys():
                 else:
                     pass
             data = data.loc[all_subj]
-            data.drop('rel_family_id', axis=1, inplace=True)
+            data.drop('rel_family_id.baseline_year_1_arm_1', axis=1, inplace=True)
 
             # need train test split
             search = HalvingGridSearchCV(estimator, 
@@ -104,127 +116,96 @@ for atlas in atlases.keys():
             results["params_str"] = results.params.apply(str)
             
             big_results = pd.concat([big_results, results], axis=0)
-            big_results.to_csv(join(PROJ_DIR, 
-                                OUTP_DIR, 
-                                f'bgmm_{atlas}_cv-results0.csv'))
+            
             best_params = pd.concat([best_params, parameters], axis=1)
-            best_params.to_csv(join(PROJ_DIR,
-                                    OUTP_DIR,
-                                    f'bgmm_{atlas}_best-models0.csv'))
             tocks.update()
-        max_comp[atlas] = n_comps
+        big_results.to_csv(join(PROJ_DIR, 
+                                OUTP_DIR, 
+                                f'bgmm_{atlas}-{scanner}_cv-results0.csv'))
+        best_params.to_csv(join(PROJ_DIR,
+                                OUTP_DIR,
+                                f'bgmm_{atlas}-{scanner}_best-models0.csv'))
+        max_comp[(atlas, scanner)] = n_comps
 
 
-indices = range(0, 14
-                #max_comp['destrieux+gordon']
-                )
-gdn_indices = [str(i) for i in indices]
+#indices = range(0, 14
+#                #max_comp['destrieux+gordon']
+#                )
+#gdn_indices = [str(i) for i in indices]
 
 indices = range(0, 14
                 #max_comp['desikankillany']
                 )
 cdk_indices = [str(i) for i in indices]
 
+for atlas in atlases:
+    scanner_models = {}
+    fig,ax = plt.subplots(nrows=3, ncols=len(scanners.keys()), figsize=(7,10))
+    plt.tight_layout(pad=4)
+    i = 0
+    for scanner in scanners:
+        temp = pd.read_csv(join(PROJ_DIR,
+                                    OUTP_DIR,
+                                    f'bgmm_{atlas}-{scanner}_best-models0.csv'), index_col=0, header=0)
+        
+        temp = temp.T
+        #gdn_models = gdn_models.T
+        #change datatype of test_score
+        temp['test_score'] = temp['test_score'].astype(float)
+        #gdn_models['test_score'] = gdn_models['test_score'].astype(float)
+        temp['n_components'] = temp['n_components'].astype(int)
+        #gdn_models['n_components'] = gdn_models['n_components'].astype(int)
+        temp['n_components_nonzero'] = temp['n_components'].astype(int)
+        #gdn_models['n_components_nonzero'] = gdn_models['n_components'].astype(int)
 
-cdk_models = pd.read_csv(join(PROJ_DIR, 
-                            OUTP_DIR, 
-                            f'bgmm_desikankillany_best-models.csv'), 
-                     index_col=0, 
-                     header=0)
-gdn_models = pd.read_csv(join(PROJ_DIR, 
-                            OUTP_DIR, 
-                            f'bgmm_destrieux+gordon_best-models.csv'), 
-                     index_col=0, 
-                     header=0)
+        nonzero_components = np.sum(temp[cdk_indices].fillna(0).astype(int) > 1, axis=1)
+        temp['n_components_nonzero'] = nonzero_components
 
-cdk_models = cdk_models.T
-gdn_models = gdn_models.T
-#change datatype of test_score
-cdk_models['test_score'] = cdk_models['test_score'].astype(float)
-gdn_models['test_score'] = gdn_models['test_score'].astype(float)
-cdk_models['n_components'] = cdk_models['n_components'].astype(int)
-gdn_models['n_components'] = gdn_models['n_components'].astype(int)
-cdk_models['n_components_nonzero'] = cdk_models['n_components'].astype(int)
-gdn_models['n_components_nonzero'] = gdn_models['n_components'].astype(int)
+        #nonzero_components = np.sum(gdn_models[gdn_indices].fillna(0).astype(int) > 1, axis=1)
+        #gdn_models['n_components_nonzero'] = nonzero_components
 
-nonzero_components = np.sum(cdk_models[cdk_indices].fillna(0).astype(int) > 1, axis=1)
-cdk_models['n_components_nonzero'] = nonzero_components
+        temp['weight_concentration_prior'] = temp['weight_concentration_prior'].astype(float)
+        #gdn_models['weight_concentration_prior'] = gdn_models['weight_concentration_prior'].astype(float)
+        scanner_models[scanner] = temp
 
-nonzero_components = np.sum(gdn_models[gdn_indices].fillna(0).astype(int) > 1, axis=1)
-gdn_models['n_components_nonzero'] = nonzero_components
+    
+        #how often was each # components the best option
+        sns.histplot(x='n_components_nonzero',
+                    data=temp.sort_values('n_components'), 
+                    ax=ax[0][0])
+        ax[0][i].set_title(scanner)
+        ax[0][i].set_xlabel('Non-Empty Components')
+        ax[0][i].set_ylabel('Frequency')
 
-cdk_models['weight_concentration_prior'] = cdk_models['weight_concentration_prior'].astype(float)
-gdn_models['weight_concentration_prior'] = gdn_models['weight_concentration_prior'].astype(float)
+        #what were the scores of each # components, does it depend on covariance type?
+        sns.scatterplot(x='n_components',
+                    y='test_score',
+                    hue='covariance_type',
+                    data=temp.sort_values('n_components'),
+                        palette='Pastel1', 
+                    ax=ax[1][0])
+        ax[1][i].set_title(f'Number of Components')
+        ax[1][i].set_xlabel('Components')
+        ax[1][i].set_ylabel('Log Likelihood')
+        ylabels = [f'{int(y)}' for y in ax[1][i].get_yticks()]
+        ax[1][i].set_yticklabels(ylabels)
+        ax[1][i].get_legend().remove()
 
+        #what weight concentration prior settings had best scores
+        sns.scatterplot(x='weight_concentration_prior',
+                    y='test_score',
+                    hue='weight_concentration_prior_type',
+                    data=temp,
+                        palette='Pastel2',
+                    ax=ax[2][0])
+        ax[2][i].set_title(f'Weight Concentration Prior')
+        ax[2][i].set_xlabel('Prior')
+        ax[2][i].set_ylabel('Log Likelihood')
+        ylabels = [f'{int(y)}' for y in ax[2][i].get_yticks()]
+        ax[2][i].set_yticklabels(ylabels)
+        ax[2][i].get_legend().remove()
 
-fig,ax = plt.subplots(nrows=3, ncols=2, figsize=(7,7))
-plt.tight_layout(pad=4)
-#how often was each # components the best option
-sns.histplot(x='n_components_nonzero',
-              data=cdk_models.sort_values('n_components'), 
-              ax=ax[0][0])
-ax[0][0].set_title(f'Desikan & Killany')
-ax[0][0].set_xlabel('Non-Empty Components')
-ax[0][0].set_ylabel('Frequency')
+        i += 1
 
-#what were the scores of each # components, does it depend on covariance type?
-sns.scatterplot(x='n_components',
-              y='test_score',
-              hue='covariance_type',
-              data=cdk_models.sort_values('n_components'),
-                palette='Pastel1', 
-              ax=ax[1][0])
-ax[1][0].set_title(f'Number of Components')
-ax[1][0].set_xlabel('Components')
-ax[1][0].set_ylabel('Log Likelihood')
-ylabels = [f'{int(y)}' for y in ax[1][0].get_yticks()]
-ax[1][0].set_yticklabels(ylabels)
-ax[1][0].get_legend().remove()
-
-#what weight concentration prior settings had best scores
-sns.scatterplot(x='weight_concentration_prior',
-              y='test_score',
-              hue='weight_concentration_prior_type',
-              data=cdk_models,
-                palette='Pastel2',
-              ax=ax[2][0])
-ax[2][0].set_title(f'Weight Concentration Prior')
-ax[2][0].set_xlabel('Prior')
-ax[2][0].set_ylabel('Log Likelihood')
-ylabels = [f'{int(y)}' for y in ax[2][0].get_yticks()]
-ax[2][0].set_yticklabels(ylabels)
-ax[2][0].get_legend().remove()
-
-sns.histplot(x='n_components_nonzero',
-              data=gdn_models.sort_values('n_components'), 
-              ax=ax[0][1])
-ax[0][1].set_title(f'Destrieux, Gordon')
-ax[0][1].set_xlabel('Non-Empty Components')
-ax[0][1].set_ylabel('Score (test)')
-sns.scatterplot(x='n_components',
-              y='test_score',
-              hue='covariance_type',
-                palette='Pastel1',
-              data=gdn_models.sort_values('n_components'), 
-              ax=ax[1][1])
-ax[1][1].set_title(f'Number of Components')
-ax[1][1].set_xlabel('Components')
-ax[1][1].set_ylabel('Score (test)')
-ylabels = [f'{int(y)}' for y in ax[1][1].get_yticks()]
-ax[1][1].set_yticklabels(ylabels)
-ax[1][1].legend(bbox_to_anchor=(1.04,1), loc="upper left")
-sns.scatterplot(x='weight_concentration_prior',
-              y='test_score',
-              hue='weight_concentration_prior_type',
-              data=gdn_models, 
-                palette='Pastel2',
-              ax=ax[2][1])
-ax[2][1].set_title(f'Weight Concentration Prior')
-ax[2][1].set_xlabel('Prior')
-ax[2][1].set_ylabel('Score (test)')
-ylabels = [f'{int(y)}' for y in ax[2][1].get_yticks()]
-ax[2][1].set_yticklabels(ylabels)
-ax[2][1].legend(bbox_to_anchor=(1.04,1), loc="upper left")
-
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'bgmm_best-models.png'),
-            dpi=500, bbox_inches='tight')
+    fig.savefig(join(PROJ_DIR, FIGS_DIR, f'bgmm_{atlas}_best-models.png'),
+                dpi=500, bbox_inches='tight')
