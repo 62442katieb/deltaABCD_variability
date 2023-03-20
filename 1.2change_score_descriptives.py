@@ -8,9 +8,9 @@ import matplotlib as mpl
 
 from os.path import join
 
-#from scipy.stats import fligner, t
+from scipy.ndimage import binary_erosion
 from nilearn import plotting, datasets, surface
-from utils import plot_surfaces
+from utils import plot_surfaces, assign_region_names
 
 # set up colormaps & palettes for plotting later
 morph_pal = sns.cubehelix_palette(n_colors=4, start=0.6, rot=-0.6, gamma=1.0, hue=0.7, light=0.6, dark=0.3)
@@ -267,7 +267,7 @@ g.despine(bottom=True, left=True)
 g.savefig(f'../{FIGS_DIR}/apr_function.png', dpi=400)
 
 # calculate descriptives
-desc_summ = pd.DataFrame(index=measures, columns=['mean', 'sdev', '(Q1, Q3)'])
+desc_summ = pd.DataFrame(index=measures, columns=['mean', 'sdev', '(Q1, Q3)', '(min, max)'])
 for measure in measures:
     temp_df = descriptives[descriptives['measure'] == measure]
     mean = np.mean(temp_df['annualized percent change'])
@@ -276,7 +276,12 @@ for measure in measures:
     desc_summ.at[measure, 'sdev'] = np.round(sdev,2)
     desc_summ.at[measure, '(Q1, Q3)'] = (np.round(np.quantile(temp_df['annualized percent change'], 0.25),2), 
                                          np.round(np.quantile(temp_df['annualized percent change'], 0.75),2))
+    desc_summ.at[measure, '(min, max)'] = (np.round(np.min(temp_df['annualized percent change']),2), 
+                                         np.round(np.max(temp_df['annualized percent change']),2))
 desc_summ.to_csv(join(PROJ_DIR, OUTP_DIR, 'apchange_descriptives.csv'))
+
+descriptives2 = assign_region_names(descriptives)
+descriptives2.to_csv(join(PROJ_DIR, OUTP_DIR, 'apchange_descriptives_regions.csv'))
 
 # read in mapping from tabular data to nifti parcellations
 nifti_mapping = pd.read_csv(join(PROJ_DIR, 
@@ -286,35 +291,44 @@ nifti_mapping = pd.read_csv(join(PROJ_DIR,
                             index_col=0)
 
 # list of measures to plot
-measures = {'cortical-thickness': 'smri_thick_cdk_*change_score',
-            'cortical-gwcontrast': 'smri_t1wcnt_cdk_*change_score',
-            'cortical-area': 'smri_area_cdk_.*change_score',
-            'cortical-volume': 'smri_vol_cdk_.*change_score', 
-            'subcortical-volume': 'smri_vol_scs_.*change_score', 
-            'subcortical-RND': 'dmri_rsirnd_scs_.*change_score',
-            'subcortical-RNI': 'dmri_rsirni_scs_.*change_score',
-            'cortical-RND': 'dmri_rsirndgm_.*change_score',
-            'cortical-RNI': 'dmri_rsirnigm_.*change_score',
-            'cortical-BOLD-variance': 'rsfmri_var_cdk_.*change_score',
-            'tract-volume': 'dmri_dtivol_fiberat_.*change_score', 
-            'tract-FA': 'dmri_dtifa_fiberat_.*change_score', 
-            'tract-MD': 'dmri_dtimd_fiberat_.*change_score',
-            'tract-LD': 'dmri_dtild_fiberat_.*change_score', 
-            'tract-TD': 'dmri_dtitd_fiberat_.*change_score', 
-            'tract-RND': 'dmri_rsirnd_fib_.*change_score',
-            'tract-RNI': 'dmri_rsirni_fib_.*change_score'}
+measures = {'tract-volume': 'dmri_dtivol_fiberat_.*', 
+            'tract-FA': 'dmri_dtifa_fiberat_.*', 
+            'tract-MD': 'dmri_dtimd_fiberat_.*',
+            'tract-LD': 'dmri_dtild_fiberat_.*', 
+            'tract-TD': 'dmri_dtitd_fiberat_.*', 
+            'tract-RND': 'dmri_rsirnd_fib_.*',
+            'tract-RNI': 'dmri_rsirni_fib_.*',
+            'cortical-thickness': 'smri_thick_cdk_*',
+            'cortical-gwcontrast': 'smri_t1wcnt_cdk_*',
+            'cortical-area': 'smri_area_cdk_.*',
+            'cortical-volume': 'smri_vol_cdk_.*', 
+            'subcortical-volume': 'smri_vol_scs_.*', 
+            'subcortical-RND': 'dmri_rsirnd_scs_.*',
+            'subcortical-RNI': 'dmri_rsirni_scs_.*',
+            'cortical-RND': 'dmri_rsirndgm_.*',
+            'cortical-RNI': 'dmri_rsirnigm_.*',
+            'cortical-BOLD-variance': 'rsfmri_var_cdk_.*',
+            }
+tract_measures = {'tract-volume': 'dmri_dtivol_fiberat_.*', 
+            'tract-FA': 'dmri_dtifa_fiberat_.*', 
+            'tract-MD': 'dmri_dtimd_fiberat_.*',
+            'tract-LD': 'dmri_dtild_fiberat_.*', 
+            'tract-TD': 'dmri_dtitd_fiberat_.*', 
+            'tract-RND': 'dmri_rsirnd_fib_.*',
+            'tract-RNI': 'dmri_rsirni_fib_.*'}
 
-conn_measures = {'cortical-network-connectivity': 'rsfmri_c_ngd_.*change_score',
-            'subcortical-network-connectivity': 'rsfmri_cor_ngd_.*_scs_.*change_score',}
+
+conn_measures = {'cortical-network-connectivity': 'rsfmri_c_ngd_.*',
+            'subcortical-network-connectivity': 'rsfmri_cor_ngd_.*_scs_.*',}
 
 fsaverage = datasets.fetch_surf_fsaverage()
 
-morph_cmap = sns.diverging_palette(22, 256.3, s=70, l=50, center="light", as_cmap=True)
+morph_cmap = sns.diverging_palette(12, 256.3, s=70, l=50, center="light", as_cmap=True)
 func_cmap = sns.diverging_palette(343, 140.9, s=70, l=50, center="light", as_cmap=True)
-cell_cmap = sns.diverging_palette(71, 294.3, s=70, l=50, center="light", as_cmap=True)
-morph_pal = sns.diverging_palette(22, 256.3, s=70, l=50, center="light", as_cmap=False)
+cell_cmap = sns.diverging_palette(31, 294.3, s=70, l=50, center="light", as_cmap=True)
+morph_pal = sns.diverging_palette(12, 256.3, s=70, l=50, center="light", as_cmap=False)
 func_pal = sns.diverging_palette(343, 140.9, s=70, l=50, center="light", as_cmap=False)
-cell_pal = sns.diverging_palette(71.0, 294.3, s=70, l=50, center="light", as_cmap=False)
+cell_pal = sns.diverging_palette(31.0, 294.3, s=70, l=50, center="light", as_cmap=False)
 sns.palplot(morph_pal + func_pal + cell_pal)
 
 pals = {'cortical-thickness': morph_cmap,
@@ -338,60 +352,68 @@ pals = {'cortical-thickness': morph_cmap,
             'subcortical-network-connectivity': func_cmap}
 
 # let's plot APC on brains pls
-for measure in measures:
+for measure in measures.keys():
+    #print(measure, measures[measure])
     if 'BOLD' in measure:
         vmax = 3.5
     else: 
         vmax = 1.5
-    print(measure)
+    #print(measure)
     meas_df = descriptives.filter(regex=measures[measure], axis=0)
     meas_vars = [i.split('.')[0] for i in meas_df.index]
-    #print(nifti_mapping.loc[meas_vars]['atlas_fname'])
-    atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
-    print(atlas_fname)
-    atlas_nii = nib.load(atlas_fname)
-    atlas_arr = atlas_nii.get_fdata()
-    plotting_arr = np.zeros(atlas_arr.shape)
     if 'tract' in measure:
         fibers = nifti_mapping.filter(regex=measures[measure], axis=0).index
         var = fibers[0]
+        #print(var)
         tract_fname = nifti_mapping.loc[var]['atlas_fname']
         tract_nii = nib.load(tract_fname)
         tract_arr = tract_nii.get_fdata()
+        tract_arr = binary_erosion(tract_arr, iterations=10).astype(tract_arr.dtype)
         #print(np.unique(tract_arr))
-        avg = descriptives.at[f'{var}.change_score', 'annualized percent change']
-        tract_arr *= avg
+        tract_arr *= meas_df.at[f'{var}.change_score', 'annualized percent change']
         all_tracts_arr = np.zeros(tract_arr.shape)
         all_tracts_arr += tract_arr
-        for var in fibers[1:]:    
-            tract_fname = nifti_mapping.loc[var]['atlas_fname']
+        for fiber in fibers[1:]:    
+            tract_fname = nifti_mapping.loc[fiber]['atlas_fname']
             if type(tract_fname) is str:
                 try:
                     tract_nii = nib.load(tract_fname)
                     tract_arr = tract_nii.get_fdata()
                     #print(np.unique(tract_arr))
-                    avg = descriptives.at[f'{var}.change_score', 'annualized percent change']
-                    tract_arr *= avg
+                    
+                    tract_arr *= meas_df.at[f'{fiber}.change_score', 'annualized percent change']
                     all_tracts_arr += tract_arr
                 except Exception as e:
                     pass
             else:
                 pass
         meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
-        #plt.figure(layout='tight')
+        plt.figure(layout='tight')
         #fig,ax = plt.subplots(ncols=2, gridspec_kw=grid_kw, figsize=(24,4))
-        q = plotting.plot_glass_brain(meas_nimg, display_mode='lzry',  #threshold=0.01,
-                            #cut_coords=[35,50,65,85], 
-                            #black_bg=False,
-                                vmax=vmax*1.1, 
-                                vmin=-vmax*1.1,
-                                annotate=False, cmap=pals[measure], colorbar=False,
-                                #axes=ax[0]
-                            )
-        #q.add_edges(meas_nimg)
+        q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=0.01,
+                               cut_coords=[-10,3,18,40], 
+                               black_bg=False,
+                                   vmax=vmax*1.1, 
+                                   annotate=True, cmap=pals[measure], colorbar=False,
+                                   #axes=ax[0]
+                              )
         q.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400)
-        q = None
+        r = plotting.plot_glass_brain(meas_nimg, display_mode='lyrz',  threshold=.01,
+                               #cut_coords=[35,50,65,85], 
+                               black_bg=False, alpha=0.4,
+                                   vmax=vmax*1.1, 
+                                   annotate=False, cmap=pals[measure], colorbar=False,
+                                   #axes=ax[0]
+                              )
+        #ax[1].set_visible(False)
+        r.savefig(f'{PROJ_DIR}/figures/APC_{measure}-glass.png', dpi=400)
     else:
+        #print(nifti_mapping.loc[meas_vars]['atlas_fname'])
+        atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
+        print(atlas_fname)
+        atlas_nii = nib.load(atlas_fname)
+        atlas_arr = atlas_nii.get_fdata()
+        plotting_arr = np.zeros(atlas_arr.shape)
         for i in meas_df.index:
             j = i.split('.')[0]
             value = nifti_mapping.loc[j]['atlas_value']
@@ -410,10 +432,12 @@ for measure in measures:
                                    annotate=False, cmap=pals[measure], colorbar=False,
                                    symmetric_cbar=False, axes=ax)
 
-            q.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400)
+            fig.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400, bbox_inches='tight')
+            plt.close(fig)
         elif 'cortical' in measure:
             figure = plot_surfaces(meas_nimg, fsaverage, pals[measure], vmax, 0.01)
             figure.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400, bbox_inches='tight')
+            plt.close(figure)
 
 # gather variables (network names) for plotting connectivity
 corrs = descriptives.filter(regex='rsfmri_c_ngd.*', axis=0).index
@@ -451,7 +475,6 @@ meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
 figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, .01)
 figure.savefig(f'{PROJ_DIR}/figures/APCxFCw.png', dpi=400)
 
-fc_scor_var
 scs_varnames = [i.split('.')[0].split('_')[-1] for i in fc_scor_var]
 
 
@@ -491,14 +514,15 @@ for i in avgs.index:
 meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
 fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
                      )
-plt.figure(layout='tight')
+#plt.figure(layout='tight')
 q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=.01,
                        cut_coords=[-20, -10, 0, 10], vmax=vmax*1.1, 
                        annotate=False, cmap=func_cmap, colorbar=False,
                        symmetric_cbar=False, axes=ax)
 
 #ax[1].set_visible(False)
-q.savefig(f'{PROJ_DIR}/figures/APCxFCs_scs.png', dpi=400)
+fig.savefig(f'{PROJ_DIR}/figures/APCxFCs_scs.png', dpi=400, bbox_inches='tight')
+plt.close(fig)
 
 # between-network FC is tough bc we have to average all of a networks HSK values
 # but only the significantly HSK connections

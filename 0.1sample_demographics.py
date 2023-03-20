@@ -4,18 +4,29 @@
 import pandas as pd
 import numpy as np
 import scipy.stats as sstats 
-
-#from statsmodels.stats import contingency_tables
+from statsmodels.stats import contingency_tables
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 from os.path import exists, join
+
 
 PROJ_DIR = '/Volumes/Projects_Herting/LABDOCS/Personnel/Katie/deltaABCD_clustering'
 DATA_DIR = 'data'
 OUT_DIR = 'output'
 FIG_DIR = 'figures'
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, 'data.csv'), 
+
+df = pd.read_csv(join(PROJ_DIR, DATA_DIR, 'data_qcd.csv'), 
                  header=0, 
                  index_col='subjectkey')
+
+
+for site in df['site_id_l.baseline_year_1_arm_1'].unique():
+    temp = df[df['site_id_l.baseline_year_1_arm_1'] == site]
+    print(len(temp['mri_info_manufacturer.baseline_year_1_arm_1'].unique()))
+for site in df['site_id_l.2_year_follow_up_y_arm_1'].unique():
+    temp = df[df['site_id_l.2_year_follow_up_y_arm_1'] == site]
+    print(len(temp['mri_info_manufacturer.2_year_follow_up_y_arm_1'].unique()))
+
 
 demographics = [#"demo_prnt_ethn_v2",
                 "demo_prnt_marital_v2",
@@ -52,6 +63,9 @@ mri_qc = [
     "interview_date"
 ]
 
+for site in df['site_id_l.2_year_follow_up_y_arm_1'].unique():
+    temp = df[df['site_id_l.2_year_follow_up_y_arm_1'] == site]
+    print(len(temp['mri_info_manufacturer.2_year_follow_up_y_arm_1'].unique()))
 
 demo_and_qc = []
 for var in demographics + mri_qc:
@@ -61,22 +75,109 @@ for var in demographics + mri_qc:
     else:
         pass
 
-demo_df = df[demo_and_qc]
-df = None
 
-qc_df = pd.read_csv(join(PROJ_DIR, DATA_DIR, 'data_qcd.csv'), 
-                 header=0, 
-                 index_col='subjectkey')
-qc_ppts = qc_df.dropna(how='all').index
-qc_df = None
+demo_and_qc
+demo_df = df[demo_and_qc]
+
+#site_baseline = pd.get_dummies(demo_df, 'site_id_l.baseline_year_1_arm_1')
+#site_2yfu = pd.get_dummies(demo_df, 'site_id_l.2_year_follow_up_y_arm_1')
+
+#demo_df = pd.concat([demo_df, site_baseline, site_2yfu], axis=1)
+
+scanner_dummies = pd.get_dummies(demo_df['mri_info_manufacturer.baseline_year_1_arm_1'])
+scanner_dummies['SIEMENS'] = scanner_dummies['SIEMENS'] * 2
+scanner_dummies['GE MEDICAL SYSTEMS'] = scanner_dummies['GE MEDICAL SYSTEMS'] * 3
+scanner = scanner_dummies.sum(axis=1)
+scanner.name = 'scanner'
+sex_dummies = pd.get_dummies(demo_df['sex.baseline_year_1_arm_1'])
+#site_dummies = pd.get_dummies(demo_df['site_id_l.baseline_year_1_arm_1'])
+puberty = df[['pds_p_ss_female_category_2.baseline_year_1_arm_1',
+              'pds_p_ss_male_category_2.baseline_year_1_arm_1']].sum(axis=1)
+puberty.name = 'puberty'
+
+collinearity_vars = ['demo_prnt_marital_v2.baseline_year_1_arm_1',
+    'demo_prnt_ed_v2.baseline_year_1_arm_1',
+    'demo_comb_income_v2.baseline_year_1_arm_1',
+    'race_ethnicity.baseline_year_1_arm_1',
+    'interview_age.baseline_year_1_arm_1',
+ ]
+
+
+coll_df = pd.concat([demo_df[collinearity_vars], scanner, sex_dummies, puberty], axis=1)
+#coll_df = coll_df.astype(int)
+
+df = None
 
 
 no_2yfu = demo_df[demo_df["interview_date.2_year_follow_up_y_arm_1"].isna() == True].index
 lost_N = len(no_2yfu)
 total_N = len(demo_df.index)
 
-y2fu_df = demo_df.loc[qc_ppts]
+y2fu_df = demo_df.drop(no_2yfu, axis=0)
 
+# check collinearity between variables
+
+for i in range(0, len(coll_df.columns)):
+    vif = variance_inflation_factor(coll_df.dropna().values, i)
+    print(coll_df.columns[i], vif)
+coll_df.to_csv(join(PROJ_DIR, OUT_DIR, 'vif_age-sex-puberty.csv'))
+
+# now separately for just age, sex, and puberty
+print('\n\nPaper 1 variables:\n')
+paper1_vars = ['F', 'interview_age.baseline_year_1_arm_1', 'puberty']
+for i in range(0, 3):
+    vif = variance_inflation_factor(coll_df[paper1_vars].dropna().values, i)
+    print(paper1_vars[i], np.round(vif, 2))
+
+meas = ['stat', 'p']
+index = pd.MultiIndex.from_product([meas, coll_df.columns])
+correlations = pd.DataFrame(columns=coll_df.columns, index=index)
+
+for var in coll_df.columns:
+    for var1 in coll_df.columns:
+        temp = coll_df[[var, var1]].dropna()
+        if var != var1:
+            if len(np.unique(temp[var])) <= 2:
+                if len(np.unique(temp[var1])) > 2:
+                    if len(np.unique(temp[var1])) <= 10:
+                        r,p = sstats.spearmanr(temp[var], temp[var1])
+                        print(f'Spearman r for {var} and {var1}:\n\t\t\t\t\t', r,p)
+                        correlations.at[(var, 'stat'), var1] = r
+                        correlations.at[(var, 'p'), var1] = p
+                    else:
+                        r,p = sstats.pointbiserialr(temp[var], temp[var1])
+                        correlations.at[(var, 'stat'), var1] = r
+                        correlations.at[(var, 'p'), var1] = p
+                        print(f'Point biserial r for {var} and {var1}:\n\t\t\t\t\t', 
+                              np.round(r, 3), np.round(p, 5))
+                else:
+                    chi2 = sstats.contingency.chi2_contingency(temp[[var,var1]].values)
+                    print(f'Chi^2 for {var} and {var1}:\n\t\t\t\t\t', 
+                          np.round(chi2[0], 3), np.round(chi2[1], 5))
+                    correlations.at[(var, 'stat'), var1] = chi2[0]
+                    correlations.at[(var, 'p'), var1] = chi2[1]
+            else:
+                
+                if len(np.unique(temp[var1])) > 10:
+                    r,p = sstats.pearsonr(temp[var1], temp[var])
+                    correlations.at[(var, 'stat'), var1] = r
+                    correlations.at[(var, 'p'), var1] = p
+                    print(f'Prodcuct moment correlation for {var} and {var1}:\n\t\t\t\t\t', 
+                          np.round(r, 3), np.round(p, 5))
+                elif len(np.unique(temp[var1])) < 2:
+                    r,p = sstats.pointbiserialr(temp[var], temp[var1])
+                    print(f'Point biserial r for {var} and {var1}:\n\t\t\t\t\t', 
+                          np.round(r, 3), np.round(p, 5))
+                    correlations.at[(var, 'stat'), var1] = r
+                    correlations.at[(var, 'p'), var1] = p
+                else:
+                    r,p = sstats.spearmanr(temp[var].astype(int), temp[var1].astype(int))
+                    print(f'Spearman r for {var} and {var1}:\n\t\t\t\t\t', r,p)
+                    correlations.at[(var, 'stat'), var1] = r
+                    correlations.at[(var, 'p'), var1] = p
+
+correlations.dropna(how='all').T.to_csv(join(PROJ_DIR, OUT_DIR, 'pairwise_correlations_devt+demo.csv'))
+#correlations.dropna(how='all').
 print(f"Of the total {total_N} participants at baseline, {lost_N} (or {np.round((lost_N / total_N) *100, 2)}%) did not have a 2-year follow-up imaging appointment and were, thus, excluded from further analyses.")
 
 table = pd.DataFrame(index=['N', 

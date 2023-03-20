@@ -60,7 +60,7 @@ tests = ['variance',
 
 var_df = pd.read_csv(join(PROJ_DIR, 
                           OUTP_DIR, 
-                          'variance_flinger-alpha<7.441394990670425e-05.csv'), 
+                          'variance_flinger-alpha<0.0.csv'), 
                      index_col=0, 
                      header=[0,1])
 

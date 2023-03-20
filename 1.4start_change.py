@@ -10,7 +10,7 @@ from os.path import join
 from pingouin import partial_corr
 from scipy.stats import fligner, t, spearmanr, pearsonr
 from nilearn import plotting#, datasets, surface
-from utils import assign_region_names, jili_sidak_mc, plot_surfaces
+from utils import assign_region_names, jili_sidak_mc
 
 
 morph_pal = sns.cubehelix_palette(n_colors=4, start=0.6, rot=-0.6, gamma=1.0, hue=0.9, light=0.6, dark=0.3)
@@ -195,7 +195,16 @@ for var in imaging_apd:
                                 ('Corr: Age, APC', 'measure')] = 'rsirndgm'
 correlations.dropna(how='all', axis=1, inplace=True)
 
+correlations.columns = correlations.columns.to_flat_index()
 
+
+correlations.rename({('Corr: Age, APC', 'measure'): 'measure',
+                     ('Corr: Age, APC', 'concept'): 'concept',
+                     ('PCorr: Baseline, APC', 'r'): 'Partial correlation: baseline, APΔ',
+                     ('PCorr: Age, APC', 'r'): 'Partial correlation: age, APΔ'}, axis=1, inplace=True)
+
+
+correlations = assign_region_names(correlations)
 long_names = {'var': 'BOLD Variance',
               'between-network fc': 'Between FC',
               'within-network fc': 'Within FC',
@@ -221,15 +230,6 @@ row_order = ['GM Volume', 'Cortical Thickness', 'Cortical Area', 'WM Volume',
 
 
 correlations.replace(long_names, inplace=True)
-correlations.columns = correlations.columns.to_flat_index()
-
-
-correlations.rename({('Corr: Age, APC', 'measure'): 'measure',
-                     ('Corr: Age, APC', 'concept'): 'concept',
-                     ('PCorr: Baseline, APC', 'r'): 'Partial correlation: baseline, APΔ',
-                     ('PCorr: Age, APC', 'r'): 'Partial correlation: age, APΔ'}, axis=1, inplace=True)
-
-correlations = assign_region_names(correlations, missing=False)
 
 correlations.to_csv(join(PROJ_DIR, OUTP_DIR,'start_change_region_names.csv'))
 

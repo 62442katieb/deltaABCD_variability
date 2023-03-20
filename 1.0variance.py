@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from os.path import join
 from scipy.stats import fligner
 from matplotlib.gridspec import GridSpec
-from utils import jili_sidak_mc
+from utils import jili_sidak_mc, assign_region_names
 
 sns.set(style='whitegrid', context='talk')
 plt.rcParams["font.family"] = "monospace"
@@ -56,6 +56,8 @@ tests = ['variance',
          'fligner_age', 
          'fligner_scanner'
         ]
+
+
 
 # should I correct alpha for multiple comparisons?
 alpha, _ = jili_sidak_mc(df.filter(regex='.*mri.*change_score'), 0.05)
@@ -129,6 +131,7 @@ for modality in img_modalities.keys():
                     '3': np.mean(three)}
         max_key = max(var_dict, key=var_dict.get)
         min_val = min(var_dict.values())
+        #LEAST TO MOST
         sorted_keys = {k: v for k, v in sorted(var_dict.items(), key=lambda item: item[1])}
         var_df.at[var, ('fligner_puberty', 'diff')] = var_dict[max_key] - min_val
         var_df.at[var, ('fligner_puberty', 'greater')] = [list(sorted_keys.keys())]
@@ -238,7 +241,9 @@ var_df.dropna(how='all', axis=1, inplace=True)
 
 # calculate what proportion of measures show significant heteroscedasticity
 # just count('**') / # measures
-var_df.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_flinger-alpha<{alpha}.csv'))
+var_df.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_flinger-alpha<{np.round(alpha, 2)}.csv'))
+new_var_df = assign_region_names(var_df)
+var_df.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_flinger-alpha<{np.round(alpha, 2)}-regions.csv'))
 
 concepts = {'morph': ['thick', 
                       'area', 
@@ -257,32 +262,6 @@ concepts = {'morph': ['thick',
             'func':['var',
                     'c',
                      'cor']}
-
-for var in var_df.index:
-    #print(var)
-    if 'mrisdp' in var:
-        var_num = int(var.split('.')[0].split('_')[-1])
-        var_df.at[var, 'modality'] = 'smri'
-        var_df.at[var, 'atlas'] = 'dtx'
-        if var_num <= 148:
-            var_df.at[var, 'measure'] = 'thick'
-        elif var_num <= 450 and var_num >= 303:
-            var_df.at[var, 'measure'] = 'area'
-        elif var_num < 604 and var_num >= 450:
-            var_df.at[var, 'measure'] = 'vol'
-        elif var_num <= 1054 and var_num >= 907:
-            var_df.at[var, 'measure'] = 't1wcnt'
-        elif var_num == 604:
-            var_df.at[var, 'measure'] = 'gmvol'
-    elif '_' in var:
-        var_list = var.split('.')[0].split('_')
-        var_df.at[var, 'modality'] = var_list[0]
-        var_df.at[var, 'measure'] = var_list[1]
-        var_df.at[var, 'atlas'] = var_list[2]
-        var_df.at[var, 'region'] = '_'.join(var_list[3:])
-
-var_df = var_df[var_df['measure'] != 't1w']
-var_df = var_df[var_df['measure'] != 't2w']
 
 for i in var_df.index:
     measure = var_df.loc[i]['measure']
@@ -363,10 +342,8 @@ fig.savefig(f'{PROJ_DIR}/figures/apchange_variance_concept.png', dpi=400)
 # 4. Across developmental variables
 # 5. Across demographic variables
 
-for var in var_df.index:
-    for modality in img_modalities.keys():
-        if var in img_modalities[modality]:
-            var_df.at[var, 'modality'] = modality
+## SECOND COPY PASTA ##
+# add region names
 
 
 var_df[var_df['modality'] == 'fmri'][('variance', 'stat')].sort_values()
@@ -487,7 +464,7 @@ j = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
               
                  )
 handles, labels = h.get_legend_handles_labels()
-h.legend(handles[:3], labels [:3])
+h.legend(handles[:3], labels [:3], bbox_to_anchor=(0.5, -0.15), ncol=3)
 h.set_ylabel('')
 h.set_xlabel('')
 
