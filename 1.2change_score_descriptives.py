@@ -388,6 +388,7 @@ for measure in measures.keys():
             else:
                 pass
         meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
+        meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_{measure}.nii')
         plt.figure(layout='tight')
         #fig,ax = plt.subplots(ncols=2, gridspec_kw=grid_kw, figsize=(24,4))
         q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=0.01,
@@ -424,6 +425,7 @@ for measure in measures.keys():
                 avg = descriptives.at[i, 'annualized percent change']
                 plotting_arr[np.where(atlas_arr == value)] = avg
         meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+        meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_{measure}.nii')
         if 'subcortical' in measure:
             fig,ax = plt.subplots()
             #plt.figure(layout='tight')
@@ -472,6 +474,7 @@ for i in meas_df.index:
         plotting_arr[np.where(atlas_arr == value)] = descriptives.at[i,'annualized percent change']
 
 meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_FCw.nii')
 figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, .01)
 figure.savefig(f'{PROJ_DIR}/figures/APCxFCw.png', dpi=400)
 
@@ -512,6 +515,7 @@ for i in avgs.index:
     else:
         plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'apc']        
 meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_FCscs.nii')
 fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
                      )
 #plt.figure(layout='tight')
@@ -531,7 +535,13 @@ meas_df = descriptives.loc[btwn_fc]
 meas_df.loc[btwn_fc, 'from_ntwk'] = btwn_fc_src
 meas_df.loc[btwn_fc, 'to_ntwk'] = btwn_fc_trgt
 avgs = pd.DataFrame()
-for ntwk in np.unique(btwn_fc_src):
+
+# visual network is never the "source" network
+# because duplicate recirpocal connections
+# are not included in the dataset
+ntwks = btwn_fc_src + ['vs']
+
+for ntwk in ntwks:
     temp_df = meas_df[meas_df['from_ntwk'] == ntwk]
     temp_df2 = meas_df[meas_df['to_ntwk'] == ntwk]
     temp_df = pd.concat([temp_df, temp_df2], axis=0)
@@ -549,8 +559,14 @@ atlas_nii = nib.load(atlas_fname)
 atlas_arr = atlas_nii.get_fdata()
 plotting_arr = np.zeros(atlas_arr.shape)
 sig = 0
+
 for i in avgs.index:
-    j = i.split('.')[0]
+    if not 'vs.' in i:
+        j = i.split('.')[0]
+    elif not 'vta' in i:
+        j = 'rsfmri_c_ngd_vs_ngd_vs'
+    else: 
+        j = i.split('.')[0]
     value = nifti_mapping.loc[j]['atlas_value']
     #print(i, value)
     if value is np.nan:
@@ -558,6 +574,7 @@ for i in avgs.index:
     else:
         plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'apc']        
 meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_FCb.nii')
 figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 0.01)
 figure.savefig(f'{PROJ_DIR}/figures/APCxFCb.png', dpi=400)
 

@@ -78,6 +78,24 @@ age_bins = [ages[0], q1, q2, q3, ages[-1]]
 df[['pds_p_ss_female_category_2.baseline_year_1_arm_1',
     'pds_p_ss_male_category_2.baseline_year_1_arm_1']]
 df['pds_p_ss_category_2.baseline_year_1_arm_1'] = df['pds_p_ss_female_category_2.baseline_year_1_arm_1'].fillna(0) + df['pds_p_ss_male_category_2.baseline_year_1_arm_1'].fillna(0)
+df['pds_p_ss_category_2.baseline_year_1_arm_1'].replace({0:np.nan}, inplace=True)
+
+# added plots of pubertal stage by age for
+# all ppts, afab ppts, and amab ppts
+# per reviewer request
+fig,ax = plt.subplots(figsize=(7,5))
+g = sns.kdeplot(x='interview_age.baseline_year_1_arm_1', 
+                hue='pds_p_ss_category_2.baseline_year_1_arm_1', 
+                #hue='sex.baseline_year_1_arm_1', 
+                 data=df, ax=ax, fill=True, multiple='stack', palette='husl')
+sns.move_legend(g, "center left", bbox_to_anchor=(1.0, 0.5))
+g.get_legend().set_title('Pubertal Stage')
+g.set_xlabel('Age (months)')
+g.set_ylabel('Density')
+g.set_xlim(left=100, right=140)
+fig.savefig(join(PROJ_DIR,
+                   FIGS_DIR,
+                   'puberty_x_age-dist.png'), dpi=500, bbox_inches='tight')
 
 # name the pubertal & demographic variables (baseline)
 sex = 'sex.baseline_year_1_arm_1'

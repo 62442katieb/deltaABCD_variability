@@ -333,28 +333,28 @@ for i in var_df.index:
         var_df.at[i, 'measure'] = 'subcortical-network fc'
 
 
-hetero = {'fligner_income':{
-                    'var': income,
-                    'levels': [(0,6), (7,8), (9,10)],
-                    'strings': ['<$75k', '$75k-100k', '>$100k']},
-               'fligner_scanner':{
-                   'var': mri,
-                   'levels': ['SIEMENS', 
-                           'GE MEDICAL SYSTEMS', 
-                           'Philips Medical Systems'],
-                   'strings': ['Siemens', 'GE', 'Philips']},
-               'fligner_edu': {
-                   'var': edu, 
-                   'levels': [(0,14), (15,17), 18, (19,22)],
-                   'strings': ['HS/GED', 'AA/Some', 'Bach', 'Grad']}, 
-               'fligner_raceth': {
-                   'var': race,
-                   'levels': [1,2,3,(4,5)], 
-                   'strings': ['White', 'Black', 'Hispanic', 'Asian/Oth.']},
-               'fligner_marital': {
-                   'var': marry, 
-                   'levels': [1,(2,5)], 
-                   'strings': ['Married', 'Not Married']},
+hetero = {#'fligner_income':{
+          #          'var': income,
+          #          'levels': [(0,6), (7,8), (9,10)],
+          #          'strings': ['<$75k', '$75k-100k', '>$100k']},
+          #     'fligner_scanner':{
+          #         'var': mri,
+          #         'levels': ['SIEMENS', 
+          #                 'GE MEDICAL SYSTEMS', 
+          #                 'Philips Medical Systems'],
+          #         'strings': ['Siemens', 'GE', 'Philips']},
+          #     'fligner_edu': {
+          #         'var': edu, 
+          #         'levels': [(0,14), (15,17), 18, (19,22)],
+          #         'strings': ['HS/GED', 'AA/Some', 'Bach', 'Grad']}, 
+          #     'fligner_raceth': {
+          #         'var': race,
+          #         'levels': [1,2,3,(4,5)], 
+          #         'strings': ['White', 'Black', 'Hispanic', 'Asian/Oth.']},
+          #     'fligner_marital': {
+          #         'var': marry, 
+          #         'levels': [1,(2,5)], 
+          #         'strings': ['Married', 'Not Married']},
           'fligner_age':{
                     'var': age,
                     'levels': [(107.,112.), (113.,119.), (120.,125.), (126.,133.)],
@@ -370,6 +370,80 @@ hetero = {'fligner_income':{
                }
 
 concepts = var_df['concept'].dropna().unique()
+
+# added plots of brain variance by measure 
+#(i.e., across participants, point per region)
+# per pubertal stage - per reviewer request
+
+long_names = {'thick': 'cortical thickness', 
+                      'area': 'cortical area', 
+                      'vol': 'gray matter volume',
+                      'gmvol': 'gray matter volume',
+                      'dtivol': 'white matter volume',
+            't1wcnt': 't1-t2 contrast', 
+                     'rsirni': 'isotropic intracellular diffusion (WM)', 
+                     'rsirnd': 'directional intracellular diffusion (WM)',
+                     'rsirnigm': 'isotropic intracellular diffusion (GM)', 
+                     'rsirndgm': 'directional intracellular diffusion (GM)',
+                     'dtifa': 'fractional anisotropy', 
+                     'dtimd': 'mean diffusivity',
+                    'dtitd': 'transverse diffusivity', 
+                     'dtild': 'longitudinal diffusivity',
+            'var': 'bold variance',
+                    'c': 'network connectivity',
+                     'cor': 'subcortical-to-network connectivity',
+              'within-network fc': 'within-network fc',
+              'between-network fc': 'between-network fc',
+             'subcortical-network fc': 'subcortical-network fc'}
+puberty_variance = pd.DataFrame(index=var_df.index, 
+                                columns=['pre', 'early', 'mid', 
+                                         'pre*', 'early*', 'mid*',
+                                         'late†', 'measure', 'modality'])
+
+ppts1 = df[df[puberty] == 1.].index
+ppts2 = df[df[puberty] == 2.].index
+ppts3 = df[df[puberty] == 3.].index
+ppts4 = df[df[puberty] == 4.].index
+for measure in var_df['measure'].unique():
+    # calculate the variance in each stage of puberty per region
+    # and then plot it
+    sig_hsk = var_df[var_df[('fligner_puberty','sig')] == '**'].index
+    for region in var_df[var_df['measure'] == measure].index:
+        puberty_variance.at[region, 'measure'] = long_names[measure]
+        puberty_variance.at[region, 'modality'] = var_df.loc[region]['modality'][0]
+        if region in sig_hsk:
+            puberty_variance.at[region, 'pre*'] = np.var(df.loc[ppts1][region])
+            puberty_variance.at[region, 'early*'] = np.var(df.loc[ppts2][region])
+            puberty_variance.at[region, 'mid*'] = np.var(df.loc[ppts3][region])
+        else:
+            puberty_variance.at[region, 'pre'] = np.var(df.loc[ppts1][region])
+            puberty_variance.at[region, 'early'] = np.var(df.loc[ppts2][region])
+            puberty_variance.at[region, 'mid'] = np.var(df.loc[ppts3][region])
+        puberty_variance.at[region, 'late†'] = np.var(df.loc[ppts4][region])
+        
+colorbrewer_dark = sns.color_palette(['#1b9e77', '#d95f02', '#7570b3', '#e7298a'])
+
+for measure in puberty_variance['measure'].unique():
+    melt = pd.melt(puberty_variance[puberty_variance['measure'] == measure], value_vars=['pre', 'early', 'mid', 'late†'])
+    melt_sig = pd.melt(puberty_variance[puberty_variance['measure'] == measure], value_vars=['pre*', 'early*', 'mid*'])
+    fig,ax = plt.subplots() 
+    h = sns.pointplot(x='value', y='variable', data=melt_sig, ax=ax, join=False,  
+                      markers='x', hue='variable', dodge=.1, ci=None, palette=colorbrewer_dark)
+    h = sns.stripplot(x='value', y='variable', data=melt_sig, ax=ax, dodge=False, alpha=0.75, palette=colorbrewer_dark)
+    g = sns.stripplot(x='value', y='variable', data=melt, ax=ax, dodge=False, alpha=0.2, palette=colorbrewer_dark)
+    g.set_xlabel('Variance')
+    g.set_ylabel('Pubertal Stage')
+    g.set_title(measure.title())
+    g.get_legend().remove()
+    mean1 = np.mean(puberty_variance[puberty_variance['measure'] == measure]['pre*'])
+    mean2 = np.mean(puberty_variance[puberty_variance['measure'] == measure]['early*'])
+    mean3 = np.mean(puberty_variance[puberty_variance['measure'] == measure]['mid*'])
+    ax.axvline(mean1, lw=2, ls='--', color='#1b9e77', alpha=0.75)
+    ax.axvline(mean2, lw=2, ls='--', color='#d95f02', alpha=0.75)
+    ax.axvline(mean3, lw=2, ls='--', color='#7570b3', alpha=0.75)
+    fig.savefig(join(PROJ_DIR,
+                   FIGS_DIR,
+                   f'puberty-{measure}_variance.png'), dpi=500, bbox_inches='tight')       
 
 for fligner_var in hetero.keys():
     #print('\n\n',fligner_var)
@@ -531,13 +605,13 @@ for i in range(0, len(subcort.labels)):
         abcd_to_harvox.at[i, 'Restricted Normalized Isotropic Diffusion'] = f'dmri_rsirni_scs_{scs_1[i]}'
 
 morph_pal = sns.cubehelix_palette(start=0.6, rot=-0.6, gamma=1.0, hue=1, light=0.7, dark=0.3)
-morph_cmap = sns.cubehelix_palette(n_colors=4, start=0.6, rot=-0.6, gamma=1.0, hue=0.7, light=1, dark=0.2, 
+morph_cmap = sns.cubehelix_palette(n_colors=4, start=0.6, rot=-0.6, gamma=1.0, hue=1, light=0.9, dark=0.4, 
                                    as_cmap=True, reverse=True)
 cell_pal = sns.cubehelix_palette(start=1.7, rot=-0.8, gamma=1.0, hue=1, light=0.7, dark=0.3)
-cell_cmap = sns.cubehelix_palette(n_colors=7, start=1.7, rot=-0.8, gamma=1.0, hue=0.7, light=0.5, dark=0.2, 
+cell_cmap = sns.cubehelix_palette(n_colors=7, start=1.7, rot=-0.8, gamma=1.0, hue=1, light=0.9, dark=0.4, 
                                   as_cmap=True, reverse=True)
 func_pal = sns.cubehelix_palette(start=3.0, rot=-0.6, gamma=1.0, hue=1, light=0.7, dark=0.3)
-func_cmap = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hue=0.7, light=0.6, dark=0.2, 
+func_cmap = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hue=1, light=0.8, dark=0.4, 
                                   as_cmap=True, reverse=True)
 big_pal = morph_pal + cell_pal + func_pal
 sns.palplot(big_pal)
@@ -648,17 +722,17 @@ tract_measures = {'tract-volume': 'dmri_dtivol_fiberat_.*',
             'tract-TD': 'dmri_dtitd_fiberat_.*', 
             'tract-RND': 'dmri_rsirnd_fib_.*',
             'tract-RNI': 'dmri_rsirni_fib_.*'}
-vmax_other = 40
-vmax_scanner = 800
+vmax_other = 30
+#vmax_scanner = 800
 #cmap = 'viridis'
 
 conn_measures = {'cortical-network-connectivity': 'rsfmri_c_ngd_.*',
             'subcortical-network-connectivity': 'rsfmri_cor_ngd_.*_scs_.*',}
 
-morph_cmap = sns.diverging_palette(250, 256.3, s=80, l=55, center="dark", as_cmap=True)
-func_cmap = sns.diverging_palette(250, 140.9, s=80, l=55, center="dark", as_cmap=True)
-cell_cmap = sns.diverging_palette(250, 294.3, s=80, l=55, center="dark", as_cmap=True)
-cell_pal = sns.diverging_palette(250, 294.3, s=80, l=55, center="dark", as_cmap=False)
+morph_cmap = sns.diverging_palette(250, 256.3, s=90, l=60, center="dark", as_cmap=True)
+func_cmap = sns.diverging_palette(250, 140.9, s=90, l=60, center="dark", as_cmap=True)
+cell_cmap = sns.diverging_palette(250, 294.3, s=90, l=60, center="dark", as_cmap=True)
+#cell_pal = sns.diverging_palette(250, 294.3, s=80, l=55, center="dark", as_cmap=False)
 
 pals = {'cortical-thickness': morph_cmap,
         'cortical-gwcontrast': cell_cmap,
@@ -679,6 +753,7 @@ pals = {'cortical-thickness': morph_cmap,
             'tract-RNI': cell_cmap,
         'cortical-network-connectivity': func_cmap,
             'subcortical-network-connectivity': func_cmap}
+
 
 # plot the distribution of variances of all structural mri measures
 smri_var = img_modalities['smri'].columns
@@ -713,22 +788,25 @@ for var in fc_cort_var:
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
     print(fligner)
-    if fligner == 'scanner':
-        vmax = vmax_scanner
-    else:
-        vmax = vmax_other
+    #if fligner == 'scanner':
+    #    vmax = vmax_scanner
+    #else:
+    #    vmax = vmax_other
+    vmax = vmax_other
     for measure in measures:
         print(f'\t{measure}')
         meas_df = var_df.filter(regex=measures[measure], axis=0)
         if 'tract' in measure:
-            
             fibers = nifti_mapping.filter(regex=tract_measures[measure], axis=0).index
             var = fibers[0]
             tract_fname = nifti_mapping.loc[var]['atlas_fname']
             tract_nii = nib.load(tract_fname)
             tract_arr = tract_nii.get_fdata()
             #print(np.unique(tract_arr))
-            tract_arr *= var_df.at[f'{var}.change_score',(fligner_var, 'stat')]
+            if var_df.at[f'{var}.change_score',(fligner_var, 'sig')] == '**':
+                tract_arr *= var_df.at[f'{var}.change_score',(fligner_var, 'stat')]
+            else:
+                tract_arr *= 0
             all_tracts_arr = np.zeros(tract_arr.shape)
             all_tracts_arr += tract_arr
             for var in fibers[1:]:    
@@ -748,7 +826,7 @@ for fligner_var in list(hetero.keys()):
                 else:
                     pass
             meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
-            
+            meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_{measure}.nii')
             fig2,ax2 = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
                                     )
             plt.figure(layout='tight')
@@ -786,6 +864,7 @@ for fligner_var in list(hetero.keys()):
             
             print('\t\tplotting...', f'{sig} out of {len(meas_df.index)} heteroskedastic regions\n\t\tavg val: {np.mean(plotting_arr)}')
             meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+            meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_{measure}.nii')
             if 'subcortical' in measure:
                 grid_kw = dict(width_ratios=[3,1])
                 
@@ -840,10 +919,7 @@ btwn_fc_trgt = [i.split('.')[0].split('_')[-1] for i in btwn_fc]
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
     print(fligner)
-    if fligner == 'scanner':
-        vmax = vmax_scanner
-    else:
-        vmax = vmax_other
+    vmax = vmax_other
     #within-network fc is easy to plot bc there's only one HSK value per network (per fligner_var)
     meas_df = var_df.loc[wthn_fc]
     meas_vars = [i.split('.')[0] for i in meas_df.index]
@@ -868,8 +944,9 @@ for fligner_var in list(hetero.keys()):
     
     print('\t\tplotting...', f'{sig} out of {len(meas_df.index)} heteroskedastic regions')
     meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
-    figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 1)
-    figure.savefig(f'{PROJ_DIR}/figures/{fligner}xFCw_fk.png', dpi=400)
+    meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_FCw.nii')
+    figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 9)
+    figure.savefig(f'{PROJ_DIR}/figures/{fligner}_FCw_fk.png', dpi=400)
     plt.close()
     
     # between-network FC is tough bc we have to average all of a networks HSK values
@@ -910,7 +987,8 @@ for fligner_var in list(hetero.keys()):
         else:
             plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'fk']        
     meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
-    figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 1)
+    meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_FCb.nii')
+    figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 9)
     figure.savefig(f'{PROJ_DIR}/figures/{fligner}xFCb_fk.png', dpi=400)
     plt.close()
 
@@ -921,10 +999,10 @@ scs_varnames = [i.split('.')[0].split('_')[-1] for i in fc_scor_var]
 
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
-    if fligner == 'scanner':
-        vmax = vmax_scanner
-    else:
-        vmax = vmax_other
+    #if fligner == 'scanner':
+    #    vmax = vmax_scanner
+    #else:
+    #    vmax = vmax_other
     sig = []
     meas_df = var_df.loc[fc_scor_var]
     
@@ -963,10 +1041,11 @@ for fligner_var in list(hetero.keys()):
         else:
             plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'fk']        
     meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+    meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_FCscs.nii')
     fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
                          )
     plt.figure(layout='tight')
-    q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=1,
+    q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=9,
                            cut_coords=[-20, -10, 0, 10], vmax=vmax*1.1, 
                            annotate=False, cmap=func_cmap, colorbar=False,
                            symmetric_cbar=False, axes=ax)
@@ -975,7 +1054,7 @@ for fligner_var in list(hetero.keys()):
     fig.savefig(f'{PROJ_DIR}/figures/{fligner}xFCs_fk_scs.png', dpi=400, bbox_inches='tight')
     plt.close(fig)
 
-vmaxes = [vmax_scanner, vmax_other]
+vmaxes = [vmax_other]
 for vmax in vmaxes:
     fig = plt.figure()
     ax = fig.add_axes([0.05, 0.80, 0.9, 0.1])
