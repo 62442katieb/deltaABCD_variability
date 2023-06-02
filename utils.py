@@ -104,14 +104,11 @@ def assign_region_names(df, missing=False):
     missing = optional, list of ABCD region names not present in region_names dictionary
     '''
     
+    region_names = pd.read_csv('region_names.csv', header=0, index_col=0)
+    print(region_names.index)
     # read in region names 
-    try:
-        f = open("/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/Data/release4.0/python_scripts/abcd_vars_to_region_names.json", "r")
-        region_names = json.load(f)
-    except:
-        f = open("/Users/katherine.b/Dropbox/Projects/deltaABCD_clustering/abcd_vars_to_region_names.json", "r")
-        region_names = json.load(f)
     missing = []
+    df = df.copy()
     if not 'long_region' in df.columns:
         df['measure'] = ''
         df['region'] = ''
@@ -119,67 +116,73 @@ def assign_region_names(df, missing=False):
         df['atlas'] = ''
         df['long_region'] = ''
         df['hemisphere'] = ''
+        df['cog'] = ''
+        df['cog2'] = ''
+        df['sys'] = ''
         for var in df.index:
             #print(var)
-            if 'mrisdp' in var:
-                var_num = int(var.split('.')[0].split('_')[-1])
-                df.at[var, 'modality'] = 'smri'
-                df.at[var, 'atlas'] = 'dtx'
-                if var_num <= 148:
-                    df.at[var, 'measure'] = 'thick'
-                elif var_num <= 450 and var_num >= 303:
-                    df.at[var, 'measure'] = 'area'
-                elif var_num < 604 and var_num >= 450:
-                    df.at[var, 'measure'] = 'vol'
-                elif var_num <= 1054 and var_num >= 907:
-                    df.at[var, 'measure'] = 't1wcnt'
-                elif var_num == 604:
-                    df.at[var, 'measure'] = 'gmvol'
-            elif '_' in var:
-                var_list = var.split('.')[0].split('_')
-                df.at[var, 'modality'] = var_list[0]
-                df.at[var, 'measure'] = var_list[1]
-                df.at[var, 'atlas'] = var_list[2]
-                region = '_'.join(var_list[3:])
-                df.at[var, 'region'] = region
-                if 'scs' in var:
-                    if 'rsirni' in var:
-                        df.at[var, 'measure'] = 'rsirnigm'
-                    elif 'rsirnd' in var:
-                        df.at[var, 'measure'] = 'rsirndgm'
-                    else:
-                        pass
-                else:
-                    pass
-                if '_scs_' in region:
+            trim_var = var.split('.')[0]
+            
+            var_list = trim_var.split('_')
+            
+            df.at[var, 'modality'] = var_list[0]
+            df.at[var, 'measure'] = var_list[1]
+            df.at[var, 'atlas'] = var_list[2]
+            region = '_'.join(var_list[3:])
+            df.at[var, 'region'] = region
+            if 'scs' in trim_var:
+                if 'rsirni' in var:
+                    df.at[var, 'measure'] = 'rsirnigm'
+                elif 'rsirnd' in var:
+                    df.at[var, 'measure'] = 'rsirndgm'
+                elif '_scs_' in region:
                     temp = region.split('_scs_')
-                    region_name = f'{region_names[temp[0]][0]}, {region_names[temp[1]][0]}'
-                    hemisphere = region_names[temp[1]][1]
+                    one = region_names.loc[temp[0]]
+                    #print(one, two)
+                    two = region_names.loc[temp[1]]
+                    #print(one, two)
+                    region_name = f'{one["name"]} {two["name"]}'
+                    print(region_name)
+                    hemisphere = two['hemi']
                     df.at[var, 'long_region'] = region_name
                     df.at[var, 'hemisphere'] = hemisphere
                     df.at[var, 'measure'] = 'subcortical-network fc'
-                elif '_ngd_' in region:
-                    temp = region.split('_ngd_')
-                    if temp[0] == temp[1]:
-                        df.at[var, 'measure'] = 'within-network fc'
-                    else:
-                        df.at[var, 'measure'] = 'between-network fc'
-                    region_name = f'{region_names[temp[0]][0]}, {region_names[temp[1]][0]}'
-                    hemisphere = region_names[temp[1]][1]
-                    df.at[var, 'long_region'] = region_name
-                    df.at[var, 'hemisphere'] = hemisphere
-                elif str(region) not in (region_names.keys()):
-                    missing.append(region)
+                    df.at[var, 'cog'] = f'{one["cog"]} + {two["cog"]}'
+                    df.at[var, 'cog2'] = f'{one["cog2"]} + {two["cog2"]}'
+                    df.at[var, 'sys'] = f'{one["sys"]} + {two["sys"]}'
                 else:
-                    long_region = region_names[region]
-                    df.at[var, 'long_region'] = long_region[0]
-                    df.at[var, 'hemisphere'] = long_region[1]
+                    pass
+            elif '_ngd_' in region:
+                temp = region.split('_ngd_')
+                if temp[0] == temp[1]:
+                    df.at[var, 'measure'] = 'within-network fc'
+                else:
+                    df.at[var, 'measure'] = 'between-network fc'
+                one = region_names.loc[temp[0]]
+                two = region_names.loc[temp[1]]
+                region_name = f"{one['name']}-{two['name']}"
+                print(one['name'], two['name'], region_name)
+                hemisphere = two['hemi']
+                df.at[var, 'long_region'] = region_name
+                df.at[var, 'hemisphere'] = hemisphere
+                df.at[var, 'cog'] = f'{one["cog"]} + {two["cog"]}'
+                df.at[var, 'cog2'] = f'{one["cog2"]} + {two["cog2"]}'
+                df.at[var, 'sys'] = f'{one["sys"]} + {two["sys"]}'
+            elif str(region) not in (region_names.index):
+                missing.append(region)
+            else:
+                one = region_names.loc[region]
+                df.at[var, 'long_region'] = one['name']
+                df.at[var, 'hemisphere'] = one['hemi']
+                df.at[var, 'cog'] = one["cog"]
+                df.at[var, 'cog2'] = one["cog2"]
+                df.at[var, 'sys'] = one["sys"]
 
         df = df[df['measure'] != 't1w']
         df = df[df['measure'] != 't2w']
     else:
         pass
-    
+
     print(f'missed {len(missing)} regions bc they weren\'t in the dict')
     return df
 
