@@ -15,9 +15,7 @@ OUT_DIR = 'output'
 FIG_DIR = 'figures'
 
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, 'data_qcd.csv'), 
-                 header=0, 
-                 index_col='subjectkey')
+df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'data_qcd.pkl'))
 
 
 for site in df['site_id_l.baseline_year_1_arm_1'].unique():

@@ -105,7 +105,7 @@ def assign_region_names(df, missing=False):
     '''
     
     region_names = pd.read_csv('region_names.csv', header=0, index_col=0)
-    print(region_names.index)
+    #print(region_names.index)
     # read in region names 
     missing = []
     df = df.copy()

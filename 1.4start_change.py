@@ -47,7 +47,7 @@ FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data_qcd.csv"), index_col=0, header=0)
+df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
 
 df.drop(list(df.filter(regex='lesion.*').columns), axis=1, inplace=True)
 df.drop(list(df.filter(regex='.*_cf12_.*').columns), axis=1, inplace=True)
@@ -395,10 +395,14 @@ for measure in correlations['measure'].unique():
     q1 = descriptives.loc['25%']
     q3 = descriptives.loc['75%']
     # need to round these (:)
-    corr_stats.at[measure, ('Pearson: age, APΔ', '(Q1,Q3)')] = (np.round(q1[('Corr: Age, APC', 'r')],2), np.round(q3[('Corr: Age, APC', 'r')],2))
-    corr_stats.at[measure, ('Pearson: baseline, APΔ', '(Q1,Q3)')] = (np.round(q1[('Corr: Baseline, APC', 'r')],2), np.round(q3[('Corr: Baseline, APC', 'r')],2))
-    corr_stats.at[measure, ('Partial: age, APΔ', '(Q1,Q3)')] = (np.round(q1['Partial correlation: age, APΔ'],2), np.round(q3['Partial correlation: age, APΔ'],))
-    corr_stats.at[measure, ('Partial: baseline, APΔ', '(Q1,Q3)')] = (np.round(q1[('Partial correlation: baseline, APΔ')],2), np.round(q3[('Partial correlation: baseline, APΔ')],2))
+    corr_stats.at[measure, ('Pearson: age, APΔ', '(Q1,Q3)')] = (np.round(q1[('Corr: Age, APC', 'r')],2), 
+                                                                np.round(q3[('Corr: Age, APC', 'r')],2))
+    corr_stats.at[measure, ('Pearson: baseline, APΔ', '(Q1,Q3)')] = (np.round(q1[('Corr: Baseline, APC', 'r')],2), 
+                                                                     np.round(q3[('Corr: Baseline, APC', 'r')],2))
+    corr_stats.at[measure, ('Partial: age, APΔ', '(Q1,Q3)')] = (np.round(q1['Partial correlation: age, APΔ'],2), 
+                                                                np.round(q3['Partial correlation: age, APΔ'],2))
+    corr_stats.at[measure, ('Partial: baseline, APΔ', '(Q1,Q3)')] = (np.round(q1[('Partial correlation: baseline, APΔ')],2), 
+                                                                     np.round(q3[('Partial correlation: baseline, APΔ')],2))
     
     # proportion of regions with significant (p)corrs
     prop_sig = np.sum(temp_df[('Corr: Age, APC', 'p(r)')] < alpha) / len(temp_df.index)

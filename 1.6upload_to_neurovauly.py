@@ -13,12 +13,13 @@ col_name = 'Profiling intra- and inter-individual variability in child and adole
 
 # read in neurovault personal access token
 # without sharing it with the world via GH
-f = open("nv_access_token.txt", "r")
-token = f.read()
+#f = open("nv_access_token.txt", "r")
+#token = f.read()
+#print(type(token))
 
 # initialize upload client
-api = Client(access_token=token)
-#collection = api.create_collection(col_name)
+api = Client(access_token='0a0e8d4ad056a88728856f0f0f72c6edd0aa099e')
+collection = api.create_collection(col_name)
 
 # get a list of all niftis from the output folder
 niftis = glob(join(PROJ_DIR, OUTP_DIR, '*.nii'))
@@ -95,11 +96,11 @@ for nifti in niftis:
     print(image_name)
     modality = meta_data.loc[meas, 'modality']
 
-    #image = api.add_image(
-    #    collection['id'],
-    #    nifti,
-    #    name=,
-    #    modality='Other',
-    #    map_type='Pa',
-    #    analysis_level='group'
-    #)
+    image = api.add_image(
+        collection['id'],
+        nifti,
+        name=image_name,
+        modality=modality,
+        map_type='R',
+        analysis_level='group'
+    )

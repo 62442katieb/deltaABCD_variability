@@ -28,11 +28,12 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data_qcd.csv"), index_col=0, header=0)
+df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
 
 
 df.drop(list(df.filter(regex='lesion.*').columns), axis=1, inplace=True)
 df.drop(list(df.filter(regex='.*_cf12_.*').columns), axis=1, inplace=True)
+df.drop(list(df.filter(regex='.*_cortgordon_.*').columns), axis=1, inplace=True)
 no_2yfu = df[df["interview_date.2_year_follow_up_y_arm_1"].isna() == True].index
 df = df.drop(no_2yfu, axis=0)
 
@@ -75,14 +76,16 @@ q3 = np.quantile(all_ages, 0.75)
 age_bins = [ages[0], q1, q2, q3, ages[-1]]
 
 # combine female and male pubertal development scores into one variable
-df[['pds_p_ss_female_category_2.baseline_year_1_arm_1',
-    'pds_p_ss_male_category_2.baseline_year_1_arm_1']]
+
 df['pds_p_ss_category_2.baseline_year_1_arm_1'] = df['pds_p_ss_female_category_2.baseline_year_1_arm_1'].fillna(0) + df['pds_p_ss_male_category_2.baseline_year_1_arm_1'].fillna(0)
 df['pds_p_ss_category_2.baseline_year_1_arm_1'].replace({0:np.nan}, inplace=True)
+print(df[['pds_p_ss_female_category_2.baseline_year_1_arm_1',
+    'pds_p_ss_male_category_2.baseline_year_1_arm_1']].describe())
 
 # added plots of pubertal stage by age for
 # all ppts, afab ppts, and amab ppts
 # per reviewer request
+df.to_csv(join(PROJ_DIR, OUTP_DIR, 'why_duplicates.csv'))
 fig,ax = plt.subplots(figsize=(7,5))
 g = sns.kdeplot(x='interview_age.baseline_year_1_arm_1', 
                 hue='pds_p_ss_category_2.baseline_year_1_arm_1', 
@@ -259,9 +262,9 @@ var_df.dropna(how='all', axis=1, inplace=True)
 
 # calculate what proportion of measures show significant heteroscedasticity
 # just count('**') / # measures
-var_df.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_flinger-alpha<{np.round(alpha, 2)}.csv'))
+var_df.to_pickle(join(PROJ_DIR, OUTP_DIR, f'variance_flinger-alpha<{np.round(alpha, 2)}.pkl'))
 new_var_df = assign_region_names(var_df)
-var_df.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_flinger-alpha<{np.round(alpha, 2)}-regions.csv'))
+new_var_df.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_flinger-alpha<{np.round(alpha, 2)}-regions.csv'))
 
 concepts = {'morph': ['thick', 
                       'area', 
@@ -282,8 +285,12 @@ concepts = {'morph': ['thick',
                      'cor']}
 
 for i in var_df.index:
-    measure = var_df.loc[i]['measure']
-    measure = str(measure.values[0])
+    measure = i.split('_')[1]
+    modality = i.split('_')[0]
+    var_df.at[i, 'measure'] = measure
+    var_df.at[i, 'modality'] = modality
+    #measure = var_df.loc[i]['measure']
+    #measure = str(measure.values[0])
     if measure in concepts['morph']:
         var_df.at[i,'concept'] = 'macrostructure'
     elif measure in concepts['cell']:
@@ -406,16 +413,20 @@ mod_scan = pd.concat([stats[scan], modalities], axis=1).melt(value_vars=scan,
 alpha_scan = alphas[scan_alphas].melt(value_name='Significant').drop('variable', axis=1)
 scan_flinger = pd.concat([mod_scan, alpha_scan], axis=1)
 
+dark_crayons = ['#4d6c80', '#7f4d80', '#4d8071']
+dark = sns.color_palette(dark_crayons)
+
 # need to remake this with a third columns for scanner heteroscedasticity.
 # and redo the spacing between columns with a gridspec
-fig = plt.figure(figsize=(25,6))
-
+fig,ax = plt.subplots(figsize=(6,6))
+from matplotlib.gridspec import GridSpec
 gs = GridSpec(1, 8)
 
-ax0 = fig.add_subplot(gs[0:3])
-ax1 = fig.add_subplot(gs[3:7])
-ax2 = fig.add_subplot(gs[7])
-plt.tight_layout(w_pad=3, h_pad=1)
+#ax0 = fig.add_subplot(gs[0:3])
+#ax0 = fig.add_subplot()
+#ax1 = fig.add_subplot(gs[3:7])
+#ax2 = fig.add_subplot(gs[7])
+#plt.tight_layout(w_pad=1, h_pad=1)
 
 g = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=devt_flinger[devt_flinger['Significant'] == '**'], 
@@ -425,7 +436,7 @@ g = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   edgecolor='white',
                   dodge=True,
                   linewidth=0.5,
-                  ax=ax0,
+                  ax=ax,
                   palette=crayons,
                   hue_order=['macrostructure', 
                            'microstructure', 
@@ -434,13 +445,13 @@ g = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
 k = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
                   data=devt_flinger[devt_flinger['Significant'] != '**'], 
                   hue='concept',
-                  marker='P',
-                  size=11,
-                  linewidth=0.5,
+                  marker='o',
+                  size=7,
+                  linewidth=1,
                   edgecolor='white',
                   dodge=True,
-                  ax=ax0,
-                  palette=crayons,
+                  ax=ax,
+                  palette=dark,
                   hue_order=['macrostructure', 
                            'microstructure', 
                            'function']
@@ -451,79 +462,82 @@ g.set_xlabel('')
 g.set_xticklabels(['Age', 'Sex', 'Puberty'])
 
 
-h = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
-                  data=demo_flinger[demo_flinger['Significant'] == '**'], 
-                  hue='concept',
-                    marker='o',
-                  size=7,
-                  linewidth=0.5,
-                  edgecolor='white',
-                  dodge=True,
-                  ax=ax1,
-                  palette=crayons,
-                  hue_order=['macrostructure', 
-                           'microstructure', 
-                           'function'],
-              
-                 )
-j = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
-                  data=demo_flinger[demo_flinger['Significant'] != '**'], 
-                  hue='concept',
-                    marker='P',
-                  size=11,
-                  linewidth=0.5,
-                  dodge=True,
-                  edgecolor='white',
-                  ax=ax1,
-                  palette=crayons,
-                  hue_order=['macrostructure', 
-                           'microstructure', 
-                           'function'],
-              
-                 )
-handles, labels = h.get_legend_handles_labels()
-h.legend(handles[:3], labels [:3], bbox_to_anchor=(0.5, -0.15), ncol=3)
-h.set_ylabel('')
-h.set_xlabel('')
+#h = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
+#                  data=demo_flinger[demo_flinger['Significant'] == '**'], 
+#                  hue='concept',
+#                    marker='o',
+#                  size=7,
+#                  linewidth=0.5,
+#                  edgecolor='white',
+#                  dodge=True,
+#                  ax=ax1,
+#                  palette=crayons,
+#                  hue_order=['macrostructure', 
+#                           'microstructure', 
+#                           'function'],
+#              
+#                 )
+#j = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
+#                  data=demo_flinger[demo_flinger['Significant'] != '**'], 
+#                  hue='concept',
+#                    marker='P',
+#                  size=11,
+#                  linewidth=0.5,
+#                  dodge=True,
+#                  edgecolor='white',
+#                  ax=ax1,
+#                  palette=dark,
+#                  hue_order=['macrostructure', 
+#                           'microstructure', 
+#                           'function'],
+#              
+#                 )
+#handles, labels = k.get_legend_handles_labels()
+#k.legend(handles[:3], labels [:3], 
+#         bbox_to_anchor=(0.5, -0.15), 
+#         loc="center",
+#         ncol=3, )
+#k.set_ylabel('')
+#k.set_xlabel('')
 
-h.set_xticklabels(['Race &\nEthnicity', 
-                   'Household\nIncome', 
-                   'Caregiver\nEducation', 
-                   'Caregiver\nMarital\nStatus', 
-                   #'Scanner\nManufacturer'
-                  ])
+#h.set_xticklabels(['Race &\nEthnicity', 
+#                   'Household\nIncome', 
+#                   'Caregiver\nEducation', 
+#                   'Caregiver\nMarital\nStatus', 
+#                   'Scanner\nManufacturer'
+#                  ])
 
-l = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
-                  data=scan_flinger[scan_flinger['Significant'] == '**'], 
-                  hue='concept',
-                  marker='o',
-                  size=7,
-                  edgecolor='white',
-                  dodge=True,
-                  linewidth=0.5,
-                  ax=ax2,
-                  palette=crayons,
-                  hue_order=['macrostructure', 
-                           'microstructure', 
-                           'function']
-                 )
-k = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
-                  data=scan_flinger[scan_flinger['Significant'] != '**'], 
-                  hue='concept',
-                  marker='P',
-                  size=11,
-                  linewidth=0.5,
-                  edgecolor='white',
-                  dodge=True,
-                  ax=ax2,
-                  palette=crayons,
-                  hue_order=['macrostructure', 
-                           'microstructure', 
-                           'function']
-                 )
-l.get_legend().remove()
-l.set_ylabel('')
-l.set_xlabel('')
-l.set_xticklabels(['MRI\nManufacturer'])
-fig.show()
+#l = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
+#                  data=scan_flinger[scan_flinger['Significant'] == '**'], 
+#                  hue='concept',
+#                  marker='o',
+#                  size=7,
+#                  edgecolor='white',
+#                  dodge=True,
+#                  linewidth=0.5,
+#                  ax=ax2,
+#                  palette=crayons,
+#                 hue_order=['macrostructure', 
+#                           'microstructure', 
+#                           'function']
+#                 )
+#k = sns.stripplot(x='variable', y='Flinger-Killeen Statistic',
+#                  data=scan_flinger[scan_flinger['Significant'] != '**'], 
+#                  hue='concept',
+#                  marker='P',
+#                  size=11,
+#                  linewidth=0.5,
+#                  edgecolor='white',
+#                  dodge=True,
+#                  ax=ax2,
+#                  palette=dark,
+#                  hue_order=['macrostructure', 
+#                           'microstructure', 
+#                           'function']
+#                 )
+#l.get_legend().remove()
+#l.set_ylabel('')
+#l.set_xlabel('')
+#l.set_xticklabels(['MRI\nManufacturer'])
+#fig.show()
 fig.savefig(f'{PROJ_DIR}/figures/heteroscedasticity_concept.png', dpi=400, bbox_inches="tight")

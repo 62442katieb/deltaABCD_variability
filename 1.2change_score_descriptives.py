@@ -38,7 +38,7 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data_qcd.csv"), index_col=0, header=0)
+df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
 
 df.drop(list(df.filter(regex='lesion.*').columns), axis=1, inplace=True)
 df.drop(list(df.filter(regex='.*_cf12_.*').columns), axis=1, inplace=True)
@@ -96,14 +96,14 @@ concepts = {'morph': ['thick',
                       'vol',
                       'dtivol'],
             'cell': ['t1wcnt', 
-                     'rsirni', 
-                     'rsirnd',
                      'rsirnigm', 
                      'rsirndgm',
                      'dtifa', 
                      'dtimd',
                      'dtild', 
-                     'dtitd'],
+                     'dtitd',
+                     'rsirni', 
+                     'rsirnd'],
             'func':['var',
                     'c',
                     'cor',
@@ -197,11 +197,13 @@ sub_df.replace(long_names, inplace=True)
 # apc macro- and microstructure ridge plot
 g = sns.FacetGrid(sub_df, 
                   row="measure", row_order=['GMV', 'CT', 'CA', 'WMV', 
-                                            'G/W', 'FA','MD', 'LD', 'TD',
-                                            'RNI', 'RNI (gm)','RND','RND (gm)'],
+                                            'G/W', 'RNI (gm)', 'RND (gm)',
+                                            'FA','MD', 'LD', 'TD',
+                                            'RNI', 'RND',],
                   hue="measure", hue_order=['GMV', 'CT', 'CA', 'WMV', 
-                                            'G/W', 'FA','MD', 'LD', 'TD',
-                                            'RNI', 'RNI (gm)','RND','RND (gm)'],
+                                            'G/W','RNI (gm)','RND (gm)',
+                                            'FA','MD', 'LD', 'TD',
+                                            'RNI', 'RND',],
                   aspect=15, height=.5, palette=morph_cell_pal)
 
 # Draw the densities in a few steps
@@ -230,7 +232,7 @@ g.figure.subplots_adjust(hspace=-.25)
 g.set_titles("")
 g.set(yticks=[], ylabel="")
 g.despine(bottom=True, left=True)
-g.savefig(f'../{FIGS_DIR}/apr_morpcell.png', dpi=400)
+g.savefig(f'{PROJ_DIR}/{FIGS_DIR}/apr_morpcell.png', dpi=400)
 
 sub_df = descriptives[descriptives['concept'] == 'function']
 sub_df2 = descriptives[descriptives['concept'] == 'function']
@@ -264,7 +266,7 @@ g.figure.subplots_adjust(hspace=-.25)
 g.set_titles("")
 g.set(yticks=[], ylabel="")
 g.despine(bottom=True, left=True)
-g.savefig(f'../{FIGS_DIR}/apr_function.png', dpi=400)
+g.savefig(f'{PROJ_DIR}/{FIGS_DIR}/apr_function.png', dpi=400)
 
 # calculate descriptives
 desc_summ = pd.DataFrame(index=measures, columns=['mean', 'sdev', '(Q1, Q3)', '(min, max)'])
@@ -560,6 +562,10 @@ atlas_arr = atlas_nii.get_fdata()
 plotting_arr = np.zeros(atlas_arr.shape)
 sig = 0
 
+###############
+# per-network FC plotting here
+###############
+
 for i in avgs.index:
     if not 'vs.' in i:
         j = i.split('.')[0]
@@ -568,6 +574,7 @@ for i in avgs.index:
     else: 
         j = i.split('.')[0]
     value = nifti_mapping.loc[j]['atlas_value']
+    
     #print(i, value)
     if value is np.nan:
         pass
