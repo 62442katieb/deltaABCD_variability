@@ -46,10 +46,9 @@ df <- pd$read_pickle(paste(proj_dir,
                      collapse = NULL))
 
 # this makes a new dataframe of cortical (gm) rnd measures
-rnd_cols <- colnames(df[, grep(pattern = "dmri_rsirndgm.*\\change_score",
-                     colnames(df))])
 
-# repeat for cortical thickness ("smri_thick.*") and bold variance ("rsfmri_var.*")
+
+
 
 cov_cols <- c("sex",
               "interview_age",
@@ -58,7 +57,16 @@ cov_cols <- c("sex",
 )
 # fd_cols <- c("dmri_rsi_meanmotion", "dmri_rsi_meanmotion2")
 
+# can copy paste from here to line 119 and just change "dmri_rsirnd.*" to the 
+# cortical thickness and bold variance patterns
+
+
 # add cortical thickness and bold variance dataframes to the c()
+# repeat for cortical thickness ("smri_thick.*") and bold variance ("rsfmri_var.*")
+# and "dmri_rsirnigm.*"
+rnd_cols <- colnames(df[, grep(pattern = "dmri_rsirndgm.*\\change_score",
+                     colnames(df))])
+
 temp_df <- df[, c(rnd_cols, cov_cols)]
 
 complete_df <- drop_na(temp_df)
@@ -81,7 +89,7 @@ dim(Group1.Y)
 Group1.X <- df_covariates
 dim(Group1.X)
 
-Group1.X$dmri_rsi_meanmotion <- (complete_df$dmri_rsi_meanmotion + complete_df$dmri_rsi_meanmotion2) / 2
+#Group1.X$dmri_rsi_meanmotion <- (complete_df$dmri_rsi_meanmotion + complete_df$dmri_rsi_meanmotion2) / 2
 
 # note:
 # 1) check all variables- continous/factor
@@ -90,20 +98,9 @@ Group1.X$dmri_rsi_meanmotion <- (complete_df$dmri_rsi_meanmotion + complete_df$d
 
 # Multiple regression model
 lm.Group1 <- lm(Group1.Y ~ Group1.X$interview_age +
-                 as.factor(Group1.X$race_ethnicity) +
-                 Group1.X$physical_activity1_y +
-                 (Group1.X$demo_comb_income_v2) +
-                 Group1.X$stq_y_ss_weekday +
-                 Group1.X$stq_y_ss_weekend +
-                 Group1.X$nsc_p_ss_mean_3_items +
-                 Group1.X$reshist_addr1_proxrd +
-                 Group1.X$reshist_addr1_popdensity +
-                 as.factor(Group1.X$reshist_addr1_urban_area) +
                  Group1.X$sex +
-                 Group1.X$ehi_y_ss_scoreb +
                  as.factor(Group1.X$mri_info_manufacturer) +
-                 as.factor(Group1.X$site_id_l) +
-                 Group1.X$dmri_rsi_meanmotion, na.action = na.omit) # data =)
+                 as.factor(Group1.X$site_id_l), na.action = na.omit) # data =)
 
 
 # R.square -> how well the model explains the variation
