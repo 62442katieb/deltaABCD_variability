@@ -381,7 +381,20 @@ new_measure_order = [
     'Subcortical-to-Network FC'
     ]
 
-hetero = {'fligner_income':{
+hetero = {
+    'fligner_age':{
+                    'var': age,
+                    'levels': [(107.,112.), (113.,119.), (120.,125.), (126.,133.)],
+                    'strings': ['9-9.3', '9.4-9.9', '10-10.4', '10.5-11']},
+               'fligner_sex':{
+                   'var': sex,
+                   'levels': ['F', 'M'],
+                   'strings': ['female', 'male']},
+               'fligner_puberty': {
+                   'var': puberty, 
+                   'levels': [1., 2., 3.],
+                   'strings': ['pre', 'early', 'mid']},
+                'fligner_income':{
                     'var': income,
                     'levels': [(0,6), (7,8), (9,10)],
                     'strings': ['<$75k', '$75k-100k', '>$100k']},
@@ -402,24 +415,12 @@ hetero = {'fligner_income':{
                'fligner_marital': {
                    'var': marry, 
                    'levels': [1,(2,5)], 
-                   'strings': ['Married', 'Not Married']},
-          'fligner_age':{
-                    'var': age,
-                    'levels': [(107.,112.), (113.,119.), (120.,125.), (126.,133.)],
-                    'strings': ['9-9.3', '9.4-9.9', '10-10.4', '10.5-11']},
-               'fligner_sex':{
-                   'var': sex,
-                   'levels': ['F', 'M'],
-                   'strings': ['female', 'male']},
-               'fligner_puberty': {
-                   'var': puberty, 
-                   'levels': [1., 2., 3.],
-                   'strings': ['pre', 'early', 'mid']}, 
+                   'strings': ['Married', 'Not Married']}, 
                }
 #print(var_df['measure'].unique())
 #print('duplicate indices:', sum(var_df.index.duplicated()))
 
-for fligner_var in list(hetero.keys()):
+for fligner_var in list(hetero.keys())[:3]:
     var_name = hetero[fligner_var]['var']
     subsamples = {}
     strings = hetero[fligner_var]['strings']
@@ -623,7 +624,9 @@ for fligner_var in hetero.keys():
     func_pal = sns.cubehelix_palette(n_colors=n_colors, start=3.0, rot=-0.6, 
                                      gamma=1.0, hue=0.7, light=0.6, dark=0.4)
     
-    
+sns.set(style='white', context='paper')
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams['font.monospace'] = 'Courier New'    
 
 # let's visualize this variability!
 destrieux = datasets.fetch_atlas_destrieux_2009()
@@ -854,132 +857,6 @@ for var in fc_cort_var:
 
 # test run plotting wm tracts not on a t1 (until I can get them properly registered)
 
-for fligner_var in list(hetero.keys()):
-    fligner = fligner_var.split('_')[-1]
-    print(fligner)
-    #if fligner == 'scanner':
-    #    vmax = vmax_scanner
-    #else:
-    #    vmax = vmax_other
-    vmax = vmax_other
-    for measure in measures:
-        print(f'\t{measure}')
-        meas_df = var_df.filter(regex=measures[measure], axis=0)
-        if 'tract' in measure:
-            fibers = nifti_mapping.filter(regex=tract_measures[measure], axis=0).index
-            var = fibers[0]
-            tract_fname = nifti_mapping.loc[var]['atlas_fname']
-            tract_nii = nib.load(tract_fname)
-            tract_arr = tract_nii.get_fdata()
-            #print(np.unique(tract_arr))
-            if var_df.at[f'{var}.change_score',(fligner_var, 'sig')] == '**':
-                tract_arr *= var_df.at[f'{var}.change_score',(fligner_var, 'stat')]
-            else:
-                tract_arr *= 0
-            all_tracts_arr = np.zeros(tract_arr.shape)
-            nv_arr = np.zeros(tract_arr.shape)
-            all_tracts_arr += tract_arr
-            for var in fibers[1:]:    
-                tract_fname = nifti_mapping.loc[var]['atlas_fname']
-                if type(tract_fname) is str:
-                    try:
-                        tract_nii = nib.load(tract_fname)
-                        tract_arr = tract_nii.get_fdata()
-                        #print(np.unique(tract_arr))
-                        nv_arr += tract_arr * (np.log10(var_df.at[i,(fligner_var, 'p')]) * -1)
-                        if var_df.at[f'{var}.change_score',(fligner_var, 'sig')] == '**':
-                            tract_arr *= var_df.at[f'{var}.change_score',(fligner_var, 'stat')]
-                        else:
-                            tract_arr *= 0
-                        all_tracts_arr += tract_arr
-                    except Exception as e:
-                        pass
-                else:
-                    pass
-            meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
-            nv_nimg = nib.Nifti1Image(nv_arr, atlas_nii.affine).to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_nlogp_{measure}.nii')
-            meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_{measure}.nii')
-            fig2,ax2 = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
-                                    )
-            plt.figure(layout='tight')
-            q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=1,
-                                    #cut_coords=[-20, 0, 18, 40], 
-                                    vmax=vmax*1.1, 
-                                    annotate=True, cmap=pals[measure], colorbar=False,
-                                    symmetric_cbar=False, axes=ax2)
-            #q.add_edges(meas_nimg)
-            fig2.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400, bbox_inches='tight')
-            plt.close(fig2)
-        else:
-            #print(len(meas_df.index))
-            meas_vars = [i.split('.')[0] for i in meas_df.index]
-            atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
-            #print(atlas_fname)
-            atlas_nii = nib.load(atlas_fname)
-            atlas_arr = atlas_nii.get_fdata()
-            plotting_arr = np.zeros(atlas_arr.shape)
-            nv_arr = np.zeros(atlas_arr.shape)
-            sig = 0
-            for i in meas_df.index:
-                if 'cdk_total' in i:
-                    pass
-                else:
-                    j = i.split('.')[0]
-                    value = nifti_mapping.loc[j]['atlas_value']
-                    #print(i, value)
-                    if value is np.nan:
-                        pass
-                    else:
-                        nv_arr[np.where(atlas_arr == value)] = - np.log10(var_df.at[i,(fligner_var, 'p')])
-                        if var_df.at[i,(fligner_var, 'sig')] == '**':
-                            sig += 1
-                            plotting_arr[np.where(atlas_arr == value)] = var_df.at[i,(fligner_var, 'stat')]
-                        else:
-                            plotting_arr[np.where(atlas_arr == value)] = 0
-            nv_nimg = nib.Nifti1Image(nv_arr, atlas_nii.affine).to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_nlogp_{measure}.nii')
-            print('\t\tplotting...', f'{sig} out of {len(meas_df.index)} heteroskedastic regions\n\t\tavg val: {np.mean(plotting_arr)}')
-            meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
-            meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_{measure}.nii')
-            if 'subcortical' in measure:
-                grid_kw = dict(width_ratios=[3,1])
-                
-                fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
-                                    )
-                plt.figure(layout='tight')
-                v = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=1,
-                                    #cut_coords=[-20, -10, 0, 10], 
-                                    vmax=vmax*1.1, 
-                                    annotate=True, cmap=pals[measure], colorbar=False,
-                                    symmetric_cbar=False, axes=ax)
-
-                #ax[1].set_visible(False)
-                fig.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk_scs.png', dpi=400, bbox_inches='tight')
-                plt.close(fig)
-            
-            elif 'cortical' in measure:
-                figure = plot_surfaces(meas_nimg, fsaverage, pals[measure], vmax, 1)
-                #texture_l = surface.vol_to_surf(meas_nimg, fsaverage.pial_left, interpolation='nearest')
-                #texture_r = surface.vol_to_surf(meas_nimg, fsaverage.pial_right, interpolation='nearest')
-
-                #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
-                                                    #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
-                #plt.tight_layout(pad=2)
-                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftmed.png', dpi=400)
-                #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
-                                                    #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
-                #plt.tight_layout(pad=2)
-                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftlat.png', dpi=400)
-                #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
-                                                    #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
-                #plt.tight_layout(pad=2)
-                #figure.savefig(f'../figures/{measure}x{fligner}_fk_rightlat.png', dpi=400)
-                #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
-                                                    #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
-                #plt.tight_layout(pad=2)
-                figure.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400)
-                plt.close()
-                
-
 corrs = var_df.filter(regex='rsfmri_c_ngd.*', axis=0).index
 corrs = [i.split('.')[0] for i in corrs]
 networks = list(np.unique([i.split('_')[-1] for i in corrs]))
@@ -1047,7 +924,7 @@ for fligner_var in list(hetero.keys()):
         # grab nlog p for all of that network's connections
         # calculate average heteroscedasticity of all 
         # significantly heteroscedastic network connections
-        atlas_fname = nifti_mapping.loc[temp_df.index[0].split('.')]['atlas_fname'].unique()[0]
+        atlas_fname = nifti_mapping.loc[temp_df.index[0].split('.')[0]]['atlas_fname']
         atlas_nii = nib.load(atlas_fname)
         atlas_arr = atlas_nii.get_fdata()
         nv_arr = np.zeros(atlas_arr.shape)
@@ -1148,6 +1025,7 @@ for fligner_var in list(hetero.keys()):
     plt.figure(layout='tight')
     q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=9,
                            #cut_coords=[-20, -10, 0, 10], 
+                           cut_coords=4,
                            vmax=vmax*1.1, 
                            annotate=True, cmap=func_cmap, colorbar=False,
                            symmetric_cbar=False, axes=ax)
@@ -1184,4 +1062,134 @@ for vmax in vmaxes:
 
     plt.savefig(f'{PROJ_DIR}/figures/morph-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
     plt.close()
+
+
+
+for fligner_var in list(hetero.keys()):
+    fligner = fligner_var.split('_')[-1]
+    print(fligner)
+    #if fligner == 'scanner':
+    #    vmax = vmax_scanner
+    #else:
+    #    vmax = vmax_other
+    vmax = vmax_other
+    for measure in measures:
+        print(f'\t{measure}')
+        meas_df = var_df.filter(regex=measures[measure], axis=0)
+        if 'tract' in measure:
+            fibers = nifti_mapping.filter(regex=tract_measures[measure], axis=0).index
+            var = fibers[0]
+            tract_fname = nifti_mapping.loc[var]['atlas_fname']
+            tract_nii = nib.load(tract_fname)
+            tract_arr = tract_nii.get_fdata()
+            #print(np.unique(tract_arr))
+            if var_df.at[f'{var}.change_score',(fligner_var, 'sig')] == '**':
+                tract_arr *= var_df.at[f'{var}.change_score',(fligner_var, 'stat')]
+            else:
+                tract_arr *= 0
+            all_tracts_arr = np.zeros(tract_arr.shape)
+            nv_arr = np.zeros(tract_arr.shape)
+            all_tracts_arr += tract_arr
+            for var in fibers[1:]:    
+                tract_fname = nifti_mapping.loc[var]['atlas_fname']
+                if type(tract_fname) is str:
+                    try:
+                        tract_nii = nib.load(tract_fname)
+                        tract_arr = tract_nii.get_fdata()
+                        #print(np.unique(tract_arr))
+                        nv_arr += tract_arr * (np.log10(var_df.at[i,(fligner_var, 'p')]) * -1)
+                        if var_df.at[f'{var}.change_score',(fligner_var, 'sig')] == '**':
+                            tract_arr *= var_df.at[f'{var}.change_score',(fligner_var, 'stat')]
+                        else:
+                            tract_arr *= 0
+                        all_tracts_arr += tract_arr
+                    except Exception as e:
+                        pass
+                else:
+                    pass
+            meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
+            nv_nimg = nib.Nifti1Image(nv_arr, atlas_nii.affine).to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_nlogp_{measure}.nii')
+            meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_{measure}.nii')
+            fig2,ax2 = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
+                                    )
+            plt.figure(layout='tight')
+            q = plotting.plot_stat_map(meas_nimg, display_mode='lyrz',  threshold=1,
+                                    #cut_coords=[-20, 0, 18, 40], 
+                                    #cut_coords=4,
+                                    vmax=vmax*1.1, 
+                                    annotate=True, cmap=pals[measure], colorbar=False,
+                                    symmetric_cbar=False, axes=ax2)
+            #q.add_edges(meas_nimg)
+            fig2.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400, bbox_inches='tight')
+            plt.close(fig2)
+        else:
+            #print(len(meas_df.index))
+            meas_vars = [i.split('.')[0] for i in meas_df.index]
+            atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
+            #print(atlas_fname)
+            atlas_nii = nib.load(atlas_fname)
+            atlas_arr = atlas_nii.get_fdata()
+            plotting_arr = np.zeros(atlas_arr.shape)
+            nv_arr = np.zeros(atlas_arr.shape)
+            sig = 0
+            for i in meas_df.index:
+                if 'cdk_total' in i:
+                    pass
+                else:
+                    j = i.split('.')[0]
+                    value = nifti_mapping.loc[j]['atlas_value']
+                    #print(i, value)
+                    if value is np.nan:
+                        pass
+                    else:
+                        nv_arr[np.where(atlas_arr == value)] = - np.log10(var_df.at[i,(fligner_var, 'p')])
+                        if var_df.at[i,(fligner_var, 'sig')] == '**':
+                            sig += 1
+                            plotting_arr[np.where(atlas_arr == value)] = var_df.at[i,(fligner_var, 'stat')]
+                        else:
+                            plotting_arr[np.where(atlas_arr == value)] = 0
+            nv_nimg = nib.Nifti1Image(nv_arr, atlas_nii.affine).to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_nlogp_{measure}.nii')
+            print('\t\tplotting...', f'{sig} out of {len(meas_df.index)} heteroskedastic regions\n\t\tavg val: {np.mean(plotting_arr)}')
+            meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+            meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_{measure}.nii')
+            if 'subcortical' in measure:
+                grid_kw = dict(width_ratios=[3,1])
+                
+                fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
+                                    )
+                plt.figure(layout='tight')
+                v = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=1,
+                                    #cut_coords=[-20, -10, 0, 10], 
+                                    cut_coords=4,
+                                    vmax=vmax*1.1, 
+                                    annotate=True, cmap=pals[measure], colorbar=False,
+                                    symmetric_cbar=False, axes=ax)
+
+                #ax[1].set_visible(False)
+                fig.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk_scs.png', dpi=400, bbox_inches='tight')
+                plt.close(fig)
+            
+            elif 'cortical' in measure:
+                figure = plot_surfaces(meas_nimg, fsaverage, pals[measure], vmax, 1)
+                #texture_l = surface.vol_to_surf(meas_nimg, fsaverage.pial_left, interpolation='nearest')
+                #texture_r = surface.vol_to_surf(meas_nimg, fsaverage.pial_right, interpolation='nearest')
+
+                #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
+                                                    #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
+                #plt.tight_layout(pad=2)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftmed.png', dpi=400)
+                #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
+                                                    #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
+                #plt.tight_layout(pad=2)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftlat.png', dpi=400)
+                #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
+                                                    #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
+                #plt.tight_layout(pad=2)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_rightlat.png', dpi=400)
+                #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
+                                                    #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
+                #plt.tight_layout(pad=2)
+                figure.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400)
+                plt.close()
+                
 
