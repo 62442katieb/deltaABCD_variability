@@ -394,28 +394,28 @@ hetero = {
                    'var': puberty, 
                    'levels': [1., 2., 3.],
                    'strings': ['pre', 'early', 'mid']},
-                'fligner_income':{
-                    'var': income,
-                    'levels': [(0,6), (7,8), (9,10)],
-                    'strings': ['<$75k', '$75k-100k', '>$100k']},
+                #'fligner_income':{
+                #    'var': income,
+                #    'levels': [(0,6), (7,8), (9,10)],
+                #    'strings': ['<$75k', '$75k-100k', '>$100k']},
             #   'fligner_scanner':{
             #       'var': mri,
             #       'levels': ['SIEMENS', 
             #               'GE MEDICAL SYSTEMS', 
             #               'Philips Medical Systems'],
             #       'strings': ['Siemens', 'GE', 'Philips']},
-               'fligner_edu': {
-                   'var': edu, 
-                   'levels': [(0,14), (15,17), 18, (19,22)],
-                   'strings': ['HS/GED', 'AA/Some', 'Bach', 'Grad']}, 
-               'fligner_raceth': {
-                   'var': race,
-                   'levels': [1,2,3,(4,5)], 
-                   'strings': ['White', 'Black', 'Hispanic', 'Asian/Oth.']},
-               'fligner_marital': {
-                   'var': marry, 
-                   'levels': [1,(2,5)], 
-                   'strings': ['Married', 'Not Married']}, 
+               #'fligner_edu': {
+               #    'var': edu, 
+               #    'levels': [(0,14), (15,17), 18, (19,22)],
+               #    'strings': ['HS/GED', 'AA/Some', 'Bach', 'Grad']}, 
+               #'fligner_raceth': {
+               #    'var': race,
+               #    'levels': [1,2,3,(4,5)], 
+               #    'strings': ['White', 'Black', 'Hispanic', 'Asian/Oth.']},
+               #'fligner_marital': {
+               #    'var': marry, 
+               #    'levels': [1,(2,5)], 
+               #    'strings': ['Married', 'Not Married']}, 
                }
 #print(var_df['measure'].unique())
 #print('duplicate indices:', sum(var_df.index.duplicated()))
@@ -456,7 +456,15 @@ for fligner_var in list(hetero.keys())[:3]:
                 variance.at[region, f'{string}*'] = np.var(df.loc[ppts][region])
             else:
                 variance.at[region, string] = np.var(df.loc[ppts][region])
-
+    variance.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_by_level-{var_name}.csv'))
+    new_df = pd.DataFrame(index=var_df['measure'].unique(), columns=strings)
+    for measure in var_df['measure'].unique():
+        for string in strings:
+            if variance[variance['measure'] == measure].iloc[0][string] > 0:
+                new_df.at[measure, string] = np.mean(variance[variance['measure'] == measure][string])
+            else:
+                new_df.at[measure, string] = np.mean(variance[variance['measure'] == measure][f'{string}*'])
+    new_df.to_csv(join(PROJ_DIR, OUTP_DIR, f'variance_by_level-{var_name}_measures.csv'))
     colors = sns.husl_palette(n_colors=len(levels), h=0.01, s=0.8, l=0.65, as_cmap=False)
     darks = sns.husl_palette(n_colors=len(levels), h=0.01, s=0.9, l=0.40, as_cmap=False)
     color_list = colors.as_hex()
@@ -511,6 +519,7 @@ for fligner_var in list(hetero.keys())[:3]:
                     mean = np.mean(variance[variance['long_measure'] == measure][string])
                     axis.axvline(mean, lw=2, ls='--', color=dark_list[j], alpha=0.75)
                 h.get_legend().remove()
+                h.set_xlabel('Variance')
             else:
                 pass
             
@@ -521,6 +530,7 @@ for fligner_var in list(hetero.keys())[:3]:
                      f'{fligner_var.split("_")[-1]}_variance.png'), 
                 dpi=500, 
                 bbox_inches='tight')      
+print('\n\nVARIANCE PLOTS ARE DONE\n\n')
 
 for fligner_var in hetero.keys():
     #print('\n\n',fligner_var)
@@ -531,6 +541,7 @@ for fligner_var in hetero.keys():
     #print(levels, strings)
     
     sig_measures = var_df[var_df[(fligner_var, 'sig')] == '**'].index
+    nsig_measures = var_df[var_df[(fligner_var, 'sig')] != '**'].index
     #top_50 = var_df[(fligner_var, 'stat')].sort_values()[-50:].index
     #highest_heterosced = var_description.loc[top_50].describe()
     #bot_50 = var_df[(fligner_var, 'stat')].sort_values()[:50].index
@@ -545,6 +556,7 @@ for fligner_var in hetero.keys():
         fligner_df = df[df[var].between(it[0], it[1])]
     fligner_df = pd.Series(fligner_df[var_df.index].var(), name=str(strings[0]))
     #print(levels[0])
+    
 
     for i in range(0, len(levels[1:])):
         level = levels[i+1]
@@ -559,13 +571,19 @@ for fligner_var in hetero.keys():
         #print(level)
         temp_df = pd.Series(temp_df[var_df.index].var(), name=string)
         fligner_df = pd.concat([temp_df, fligner_df], axis=1)
+    print('in fligner_df but not significant', 
+          len(set(fligner_df.index) - set(sig_measures)), 
+          '\nsignificant but not in fligner df', 
+          len(set(sig_measures) - set(fligner_df.index)))
+    temp = fligner_df.loc[sig_measures]
     #fligner_df = fligner_df.dropna(thresh=len(levels) - 1)
     #top_50_df = fligner_df.loc[top_50]
     #not_present = list(set(levels) - set(fligner_df.columns))
-    
     mann_whitney_u = pd.DataFrame()
+    #temp = fligner_df.loc[sig_measures]
     for string in strings:
         dat = fligner_df[string].dropna()
+        #print(dat.index, '\n\n\n\n')
         for string1 in strings:
             dat1 = fligner_df[string1].dropna()
             if string != string1:
@@ -587,16 +605,23 @@ for fligner_var in hetero.keys():
                     res = mannwhitneyu(dat.loc[micro_var], dat1.loc[micro_var], alternative='greater')
                     #mann_whitney_u.at[f'{string} > {string1}', ('micro', 'stat')] = res.statistic
                     mann_whitney_u.at['micro', column] = res.pvalue
+                    
                     for measure in var_df['measure'].unique():
+                        print(measure)
                         variables = var_df[var_df['measure'] == measure].index
-                        res = mannwhitneyu(dat.loc[variables], dat1.loc[variables], alternative='greater')
-                        mann_whitney_u.at[measure, column] = res.pvalue
+                        sig_variables = list(set(variables) - set(nsig_measures))
+                        if len(sig_variables) == 0:
+                            pass
+                        else:
+                            res = mannwhitneyu(dat.loc[sig_variables], dat1.loc[sig_variables], alternative='greater')
+                            mann_whitney_u.at[measure, column] = res.pvalue
+                            print(res.pvalue)
                 else:
                     mann_whitney_u.at['all', column] = np.nan
                     mann_whitney_u.at['all', column] = np.nan
             else:
                 pass
-    mann_whitney_u = mann_whitney_u.loc[row_order2]
+    #mann_whitney_u = mann_whitney_u.loc[row_order2]
     mann_whitney_u.to_csv(join(PROJ_DIR, OUTP_DIR,f'mann_whitney-{variable}-variance_diff.csv'))
     #convert from variance to coefficient of variation (sdev / mean)
     heteroskedasticity = pd.Series(var_df[(fligner_var, 'stat')], 
@@ -624,7 +649,7 @@ for fligner_var in hetero.keys():
     func_pal = sns.cubehelix_palette(n_colors=n_colors, start=3.0, rot=-0.6, 
                                      gamma=1.0, hue=0.7, light=0.6, dark=0.4)
     
-sns.set(style='white', context='paper')
+sns.set(style='white', context='paper', font_scale=2.)
 plt.rcParams["font.family"] = "monospace"
 plt.rcParams['font.monospace'] = 'Courier New'    
 
@@ -686,7 +711,10 @@ func_pal = sns.cubehelix_palette(start=3.0, rot=-0.6, gamma=1.0, hue=1, light=0.
 func_cmap = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hue=1, light=0.8, dark=0.4, 
                                   as_cmap=True, reverse=True)
 big_pal = morph_pal + cell_pal + func_pal
-sns.palplot(big_pal)
+#sns.palplot(big_pal)
+sns.set(style='white', context='paper', font_scale=2.)
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams['font.monospace'] = 'Courier New'    
 
 fsaverage = datasets.fetch_surf_fsaverage()
 
@@ -805,6 +833,9 @@ morph_cmap = sns.diverging_palette(250, 256.3, s=90, l=60, center="dark", as_cma
 func_cmap = sns.diverging_palette(250, 140.9, s=90, l=60, center="dark", as_cmap=True)
 cell_cmap = sns.diverging_palette(250, 294.3, s=90, l=60, center="dark", as_cmap=True)
 #cell_pal = sns.diverging_palette(250, 294.3, s=80, l=55, center="dark", as_cmap=False)
+sns.set(style='white', context='paper', font_scale=2.)
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams['font.monospace'] = 'Courier New'   
 
 pals = {'cortical-thickness': morph_cmap,
         'cortical-gwcontrast': cell_cmap,
@@ -902,7 +933,7 @@ for fligner_var in list(hetero.keys()):
     meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
     meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_FCw.nii')
     figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 9)
-    figure.savefig(f'{PROJ_DIR}/figures/{fligner}_FCw_fk.png', dpi=400)
+    figure.savefig(f'{PROJ_DIR}/figures/{fligner}_FCw_fk.png', dpi=600)
     plt.close()
     
     # between-network FC is tough bc we have to average all of a networks HSK values
@@ -943,7 +974,7 @@ for fligner_var in list(hetero.keys()):
         ntwk_nimg = nib.Nifti1Image(ntwk_arr, atlas_nii.affine)
         nv_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_{ntwk}FCb-nlogp.nii')
         figure = plot_surfaces(nv_nimg, fsaverage, func_cmap, vmax, 3)
-        figure.savefig(f'{PROJ_DIR}/figures/{fligner}x{ntwk}FC_fk.png', dpi=400)
+        figure.savefig(f'{PROJ_DIR}/figures/{fligner}x{ntwk}FC_fk.png', dpi=600)
         mean_hsk = np.mean(sig)
         # grab name of first conn var for this network for plotting
         avgs.at[temp_df.index[0], 'fk'] = mean_hsk
@@ -966,7 +997,7 @@ for fligner_var in list(hetero.keys()):
     meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
     meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_FCb.nii')
     figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 9)
-    figure.savefig(f'{PROJ_DIR}/figures/{fligner}xFCb_fk.png', dpi=400)
+    figure.savefig(f'{PROJ_DIR}/figures/{fligner}xFCb_fk.png', dpi=600)
     plt.close()
 
 
@@ -1020,7 +1051,7 @@ for fligner_var in list(hetero.keys()):
             plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'fk']        
     meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
     meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_FCscs.nii')
-    fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
+    fig,ax = plt.subplots(figsize=(4,8)
                          )
     plt.figure(layout='tight')
     q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=9,
@@ -1031,7 +1062,7 @@ for fligner_var in list(hetero.keys()):
                            symmetric_cbar=False, axes=ax)
     #q.add_edges(meas_nimg)
     #ax[1].set_visible(False)
-    fig.savefig(f'{PROJ_DIR}/figures/{fligner}xFCs_fk_scs.png', dpi=400, bbox_inches='tight')
+    fig.savefig(f'{PROJ_DIR}/figures/{fligner}xFCs_fk_scs.png', dpi=600, bbox_inches='tight')
     plt.close(fig)
 
 vmaxes = [vmax_other]
@@ -1045,7 +1076,7 @@ for vmax in vmaxes:
                                 )
     ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
 
-    plt.savefig(f'{PROJ_DIR}/figures/func-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
+    plt.savefig(f'{PROJ_DIR}/figures/func-cmap_1-{vmax}.png', bbox_inches='tight', dpi=600)
 
     cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
                                 cmap=cell_cmap, 
@@ -1053,17 +1084,19 @@ for vmax in vmaxes:
                                 )
     ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
 
-    plt.savefig(f'{PROJ_DIR}/figures/cell-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
+    plt.savefig(f'{PROJ_DIR}/figures/cell-cmap_1-{vmax}.png', bbox_inches='tight', dpi=600)
     cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
                                 cmap=morph_cmap, 
                                 values=range(-int(vmax*1.1),int(vmax*1.1)), 
                                 )
     ax.set_xlabel('Heteroscedasticity (F-K Statistic)')
 
-    plt.savefig(f'{PROJ_DIR}/figures/morph-cmap_1-{vmax}.png', bbox_inches='tight', dpi=400)
+    plt.savefig(f'{PROJ_DIR}/figures/morph-cmap_1-{vmax}.png', bbox_inches='tight', dpi=600)
     plt.close()
 
-
+sns.set(style='white', context='poster')
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams['font.monospace'] = 'Courier New'   
 
 for fligner_var in list(hetero.keys()):
     fligner = fligner_var.split('_')[-1]
@@ -1110,17 +1143,17 @@ for fligner_var in list(hetero.keys()):
             meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
             nv_nimg = nib.Nifti1Image(nv_arr, atlas_nii.affine).to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_nlogp_{measure}.nii')
             meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/{fligner}_{measure}.nii')
-            fig2,ax2 = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
+            fig2,ax2 = plt.subplots(figsize=(4,2)
                                     )
             plt.figure(layout='tight')
-            q = plotting.plot_stat_map(meas_nimg, display_mode='lyrz',  threshold=1,
+            q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=1,
                                     #cut_coords=[-20, 0, 18, 40], 
-                                    #cut_coords=4,
+                                    cut_coords=4,
                                     vmax=vmax*1.1, 
                                     annotate=True, cmap=pals[measure], colorbar=False,
                                     symmetric_cbar=False, axes=ax2)
             #q.add_edges(meas_nimg)
-            fig2.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400, bbox_inches='tight')
+            fig2.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=600, bbox_inches='tight')
             plt.close(fig2)
         else:
             #print(len(meas_df.index))
@@ -1166,7 +1199,7 @@ for fligner_var in list(hetero.keys()):
                                     symmetric_cbar=False, axes=ax)
 
                 #ax[1].set_visible(False)
-                fig.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk_scs.png', dpi=400, bbox_inches='tight')
+                fig.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk_scs.png', dpi=600, bbox_inches='tight')
                 plt.close(fig)
             
             elif 'cortical' in measure:
@@ -1177,19 +1210,19 @@ for fligner_var in list(hetero.keys()):
                 #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
                                                     #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
                 #plt.tight_layout(pad=2)
-                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftmed.png', dpi=400)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftmed.png', dpi=600)
                 #figure = plotting.plot_surf_stat_map(fsaverage.pial_left, texture_l, symmetric_cbar=False, threshold=1,
                                                     #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
                 #plt.tight_layout(pad=2)
-                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftlat.png', dpi=400)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_leftlat.png', dpi=600)
                 #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
                                                     #cmap=pals[measure], view='medial', colorbar=False, vmax=vmax)
                 #plt.tight_layout(pad=2)
-                #figure.savefig(f'../figures/{measure}x{fligner}_fk_rightlat.png', dpi=400)
+                #figure.savefig(f'../figures/{measure}x{fligner}_fk_rightlat.png', dpi=600)
                 #figure = plotting.plot_surf_stat_map(fsaverage.pial_right, texture_r, symmetric_cbar=False, threshold=1,
                                                     #cmap=pals[measure], view='lateral', colorbar=False, vmax=vmax)
                 #plt.tight_layout(pad=2)
-                figure.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=400)
+                figure.savefig(f'{PROJ_DIR}/figures/{fligner}x{measure}_fk.png', dpi=600)
                 plt.close()
                 
 

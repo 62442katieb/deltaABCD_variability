@@ -383,17 +383,22 @@ columns = pd.MultiIndex.from_product([meas, stats])
 corr_stats = pd.DataFrame(columns=columns)
 for measure in correlations['measure'].unique():
     temp_df = correlations[correlations['measure'] == measure]
+    start_change_sig = temp_df[temp_df['Partial correlation: baseline, APΔ'] < alpha]
     descriptives = temp_df.describe()
+    sig_desc = start_change_sig.describe()
     
     # I want mean correlation, quartiles, and proportion of regions that are significantly correlated
     corr_stats.at[measure, ('Pearson: age, APΔ', 'mean')] = descriptives.loc['mean'][('Corr: Age, APC', 'r')]
     corr_stats.at[measure, ('Pearson: baseline, APΔ', 'mean')] = descriptives.loc['mean'][('Corr: Baseline, APC', 'r')]
     corr_stats.at[measure, ('Partial: age, APΔ', 'mean')] = descriptives.loc['mean']['Partial correlation: age, APΔ']
     corr_stats.at[measure, ('Partial: baseline, APΔ', 'mean')] = descriptives.loc['mean']['Partial correlation: baseline, APΔ']
-    
+    corr_stats.at[measure, ('SIG Partial: age, APΔ', 'mean')] = sig_desc.loc['mean']['Partial correlation: age, APΔ']
     # quartiles are already calculated in `descriptives`
     q1 = descriptives.loc['25%']
     q3 = descriptives.loc['75%']
+
+    sig_q1 = sig_desc.loc['25%']
+    sig_q3 = sig_desc.loc['75%']
     # need to round these (:)
     corr_stats.at[measure, ('Pearson: age, APΔ', '(Q1,Q3)')] = (np.round(q1[('Corr: Age, APC', 'r')],2), 
                                                                 np.round(q3[('Corr: Age, APC', 'r')],2))
@@ -401,6 +406,11 @@ for measure in correlations['measure'].unique():
                                                                      np.round(q3[('Corr: Baseline, APC', 'r')],2))
     corr_stats.at[measure, ('Partial: age, APΔ', '(Q1,Q3)')] = (np.round(q1['Partial correlation: age, APΔ'],2), 
                                                                 np.round(q3['Partial correlation: age, APΔ'],2))
+    sig_iqr = (np.round(sig_q1['Partial correlation: age, APΔ'],2),
+               np.round(sig_q3['Partial correlation: age, APΔ'],2))
+    print(sig_iqr)
+    corr_stats.at[measure, ('SIG Partial: age, APΔ', '(Q1,Q3)')] = str(sig_iqr)
+
     corr_stats.at[measure, ('Partial: baseline, APΔ', '(Q1,Q3)')] = (np.round(q1[('Partial correlation: baseline, APΔ')],2), 
                                                                      np.round(q3[('Partial correlation: baseline, APΔ')],2))
     

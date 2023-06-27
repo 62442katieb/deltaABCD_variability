@@ -142,7 +142,7 @@ def assign_region_names(df, missing=False):
                     two = region_names.loc[temp[1]]
                     #print(one, two)
                     region_name = f'{one["name"]} {two["name"]}'
-                    print(region_name)
+                    #print(region_name)
                     hemisphere = two['hemi']
                     df.at[var, 'long_region'] = region_name
                     df.at[var, 'hemisphere'] = hemisphere
