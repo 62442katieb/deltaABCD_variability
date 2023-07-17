@@ -3,7 +3,7 @@
 
 import pandas as pd
 import numpy as np
-import seaborn as sns
+#import seaborn as sns
 
 from os.path import join
 
@@ -12,10 +12,13 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data.csv"), index_col=0, header=0)
+df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data.pkl"))
 df.drop(list(df.filter(regex='lesion.*').columns), axis=1, inplace=True)
 no_2yfu = df[df["interview_date.2_year_follow_up_y_arm_1"].isna() == True].index
 df = df.drop(no_2yfu, axis=0)
+
+print(np.sum(df.columns.duplicated()))
+
 
 qc_vars = ["imgincl_dmri_include",
            "imgincl_rsfmri_include",
@@ -24,32 +27,42 @@ qc_vars = ["imgincl_dmri_include",
            "imgincl_t1w_include",
            "mrif_score"]
 
-keep = df[df['mrif_score.baseline_year_1_arm_1'].between(1,2)].index
+keep = df[df['mrif_score.baseline_year_1_arm_1'].between(1,2, inclusive='both')].index
+df = df.loc[keep]
+keep = df[df['mrif_score.2_year_follow_up_y_arm_1'].between(1,2, inclusive='both')].index
 df = df.loc[keep]
 
 # modality-specific filtering via masks
-rsfmri_mask1 = df['imgincl_rsfmri_include.baseline_year_1_arm_1'] == 0
-rsfmri_mask2 = df['rsfmri_var_ntpoints.baseline_year_1_arm_1'] <= 750.
-rsfmri_mask3 = df['imgincl_rsfmri_include.2_year_follow_up_y_arm_1'] == 0
-rsfmri_mask4 = df['rsfmri_var_ntpoints.2_year_follow_up_y_arm_1'] <= 750.
+# specify the data to keep, then invert the mask before applying
+rsfmri_mask1 = df['imgincl_rsfmri_include.baseline_year_1_arm_1'] == 1
+rsfmri_mask2 = df['rsfmri_var_ntpoints.baseline_year_1_arm_1'] >= 750.
+rsfmri_mask3 = df['imgincl_rsfmri_include.2_year_follow_up_y_arm_1'] == 1
+rsfmri_mask4 = df['rsfmri_var_ntpoints.2_year_follow_up_y_arm_1'] >= 750.
 rsfmri_mask = rsfmri_mask1 * rsfmri_mask2 * rsfmri_mask3 * rsfmri_mask4
 
-smri_mask1 = df['imgincl_t1w_include.baseline_year_1_arm_1'] == 0
-smri_mask2 = df['imgincl_t1w_include.2_year_follow_up_y_arm_1'] == 0
+# t1 quality for freesurfer ROI delineations
+# 1=include, 0=exclude
+smri_mask1 = df['imgincl_t1w_include.baseline_year_1_arm_1'] == 1
+smri_mask2 = df['imgincl_t1w_include.2_year_follow_up_y_arm_1'] == 1
 smri_mask = smri_mask1 * smri_mask2
 
-dmri_mask1 = df['imgincl_dmri_include.baseline_year_1_arm_1'] == 0
-dmri_mask2 = df['imgincl_dmri_include.2_year_follow_up_y_arm_1'] == 0
-dmri_mask = dmri_mask1 * dmri_mask2
+# dmri quality for RSI estimates
+# 1=include, 0=exclude
+# head motion greater than 2mm FD on average = exclude
+dmri_mask1 = df['imgincl_dmri_include.baseline_year_1_arm_1'] == 1
+dmri_mask2 = df['dmri_rsi_meanmotion.baseline_year_1_arm_1'] < 2.
+dmri_mask3 = df['imgincl_dmri_include.2_year_follow_up_y_arm_1'] == 1
+dmri_mask4 = df['dmri_rsi_meanmotion.2_year_follow_up_y_arm_1'] < 2.
+dmri_mask = dmri_mask1 * dmri_mask2 * dmri_mask3 * dmri_mask4
 
 smri_cols = list(df.filter(regex='smri.').columns) + list(df.filter(regex='mrisdp.').columns)
 rsfmri_cols = df.filter(regex='rsfmri.').columns
 dmri_cols = df.filter(regex='dmri').columns
 other_cols = set(df.columns) - set(smri_cols) - set(rsfmri_cols) - set(dmri_cols)
 
-rsfmri_quality = df[rsfmri_cols].mask(rsfmri_mask)
-smri_quality = df[smri_cols].mask(smri_mask)
-dmri_quality = df[dmri_cols].mask(dmri_mask)
+rsfmri_quality = df[rsfmri_cols].mask(np.invert(rsfmri_mask))
+smri_quality = df[smri_cols].mask(np.invert(smri_mask))
+dmri_quality = df[dmri_cols].mask(np.invert(dmri_mask))
 other = df[other_cols]
 
 # after filtering out radiological abnormalities with mrif_score
@@ -58,7 +71,7 @@ other = df[other_cols]
 # up first: rsfmri
 quality_df = pd.concat([other, rsfmri_quality, smri_quality, dmri_quality], axis=1)
 
-quality_df.to_csv(join(PROJ_DIR, DATA_DIR, "data_qcd.csv"))
+quality_df.to_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
 
 demographics = ["demo_prnt_marital_v2",
                 "demo_prnt_ed_v2",
@@ -94,7 +107,7 @@ df = None
 
 no_2yfu = demo_df[demo_df["interview_date.2_year_follow_up_y_arm_1"].isna() == True].index
 lost_N = len(no_2yfu)
-total_N = len(demo_df.index)
+total_N = len(df.index)
 
 print(f"Of the total {total_N} participants at baseline, {lost_N} (or {np.round((lost_N / total_N) *100, 2)}%) did not have a 2-year follow-up imaging appointment and were, thus, excluded from further analyses.")
 
