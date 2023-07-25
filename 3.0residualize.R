@@ -96,7 +96,7 @@ dim(Group1.X)
 # 3) check for normality, homoscedascity,linearity,collinearity
 
 # Multiple regression model
-lm.Group1 <- lm(Group1.Y ~ Group1.X$interview_age +
+lm.Group1 <- lm(Group1.Y ~ ##Group1.X$interview_age +
                  Group1.X$sex +
                  as.factor(Group1.X$mri_info_deviceserialnumber),
                  na.action = na.omit) # data =)
@@ -118,7 +118,7 @@ dev.off()
 
 save(Group1_residuals, file=paste(proj_dir,
                                   outp_dir,
-                                  'residualized_rnd.Rda',
+                                  'residualized_rndscanner_sex.Rda',
                                   sep = "/",
                                   collapse = NULL))
 
@@ -164,7 +164,7 @@ dim(Group1.X)
 # 3) check for normality, homoscedascity,linearity,collinearity
 
 # Multiple regression model
-lm.Group1 <- lm(Group1.Y ~ Group1.X$interview_age +
+lm.Group1 <- lm(Group1.Y ~ #Group1.X$interview_age +
                   Group1.X$sex +
                  as.factor(Group1.X$mri_info_deviceserialnumber),
                  na.action = na.omit) # data =)
@@ -186,7 +186,7 @@ dev.off()
 
 save(Group1_residuals, file=paste(proj_dir,
                                   outp_dir,
-                                  'residualized_thick.Rda',
+                                  'residualized_thickscanner_sex.Rda',
                                   sep = "/",
                                   collapse = NULL))
 
@@ -232,7 +232,7 @@ dim(Group1.X)
 # 3) check for normality, homoscedascity,linearity,collinearity
 
 # Multiple regression model
-lm.Group1 <- lm(Group1.Y ~ Group1.X$interview_age +
+lm.Group1 <- lm(Group1.Y ~ #Group1.X$interview_age +
                   Group1.X$sex +
                  as.factor(Group1.X$mri_info_deviceserialnumber),
                  na.action = na.omit) # data =)
@@ -254,7 +254,7 @@ dev.off()
 
 save(Group1_residuals, file=paste(proj_dir,
                                   outp_dir,
-                                  'residualized_rsfmri.Rda',
+                                  'residualized_rsfmriscanner_sex.Rda',
                                   sep = "/",
                                   collapse = NULL))
 
@@ -300,7 +300,7 @@ dim(Group1.X)
 # 3) check for normality, homoscedascity,linearity,collinearity
 
 # Multiple regression model
-lm.Group1 <- lm(Group1.Y ~ Group1.X$interview_age +
+lm.Group1 <- lm(Group1.Y ~ #Group1.X$interview_age +
                   Group1.X$sex +
                  as.factor(Group1.X$mri_info_deviceserialnumber),
                  na.action = na.omit) # data =)
@@ -322,6 +322,6 @@ dev.off()
 
 save(Group1_residuals, file=paste(proj_dir,
                                   outp_dir,
-                                  'residualized_rnigm.Rda',
+                                  'residualized_rnigmscanner_sex.Rda',
                                   sep = "/",
                                   collapse = NULL))
