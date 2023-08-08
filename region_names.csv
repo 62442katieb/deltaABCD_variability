@@ -1,0 +1,307 @@
+var,name,hemi,cog,cog2,sys
+aal,Accumbens,L,reward,,basal ganglia
+aalh,Accumbens,L,reward,,basal ganglia
+aar,Accumbens,R,reward,,basal ganglia
+aarh,Accumbens,R,reward,,basal ganglia
+ablh,Accumbens,L,reward,,basal ganglia
+abrh,Accumbens,R,reward,,basal ganglia
+amygdalalh,Amugdala,L,emotion,,limbic
+aglh,Amygdala,L,emotion,,limbic
+agrh,Amygdala,R,emotion,,limbic
+amygdalarh,Amygdala,R,emotion,,limbic
+atrlh,Anterior Thalamic Radiation,L,executive function,,
+atrrh,Anterior Thalamic Radiation,R,executive function,,
+ad,Auditory Network,B,sensory,auditory,sensory/motor
+au,Auditory Network,B,sensory,auditory,sensory/motor
+ad_ngd_ad,Auditory Network- Within,B,sensory,auditory,sensory/motor
+banksstslh,Banks of Superior Temporal Sulcus,L,visual processing,social,social
+banksstsrh,Banks of Superior Temporal Sulcus,R,visual processing,social,social
+bstslh,Banks of Superior Temporal Sulcus,L,visual processing,social,social
+bstsrh,Banks of Superior Temporal Sulcus,R,visual processing,social,social
+brainstem,Brainstem,B,homeostasis,,
+bs,Brainstem,B,homeostasis,,
+bstem,Brainstem,B,homeostasis,,
+caudatelh,Caudate,L,reward,cognition,basal ganglia
+caudaterh,Caudate,R,reward,cognition,basal ganglia
+cdelh,Caudate,L,reward,cognition,basal ganglia
+cderh,Caudate,R,reward,cognition,basal ganglia
+cdlh,Caudate,L,reward,cognition,basal ganglia
+cdrh,Caudate,R,reward,cognition,basal ganglia
+cbclh,Cerebellar Cortex,L,motor,interoception,cerebellum
+cbcrh,Cerebellar Cortex,R,motor,interoception,cerebellum
+crbcortexlh,Cerebellar Cortex,L,motor,interoception,cerebellum
+crbcortexrh,Cerebellar Cortex,R,motor,interoception,cerebellum
+crcxlh,Cerebellar Cortex,L,motor,interoception,cerebellum
+crcxrh,Cerebellar Cortex,R,motor,interoception,cerebellum
+cbwmlh,Cerebellar White Matter,L,,,cerebellum
+cbwmrh,Cerebellar White Matter,R,,,cerebellum
+crbwmatterlh,Cerebellar White Matter,L,,,cerebellum
+crbwmatterrh,Cerebellar White Matter,L,,,cerebellum
+cwmlh,Cerebral White Matter,L,,,
+cwmrh,Cerebral White Matter,L,,,
+iclh,Cingulate Gyrus - Ithmus,L,executive function,reward,triple network
+icrh,Cingulate Gyrus - Ithmus,R,executive function,reward,triple network
+ihcatelh,Cingulate Gyrus - Ithsmus,L,executive function,reward,triple network
+ihcaterh,Cingulate Gyrus - Ithsmus,R,executive function,reward,triple network
+ihclatelh,Cingulate Gyrus - Ithsmus,L,executive function,reward,triple network
+ihclaterh,Cingulate Gyrus - Ithsmus,R,executive function,reward,triple network
+caclh,Cingulate Gyrus- Caudal Anterior,L,reward,decision making,triple network
+cacrh,Cingulate Gyrus- Caudal Anterior,L,reward,decision making,triple network
+cdacatelh,Cingulate Gyrus- Caudal Anterior,L,reward,decision making,triple network
+cdacaterh,Cingulate Gyrus- Caudal Anterior,R,reward,decision making,triple network
+cdaclatelh,Cingulate Gyrus- Caudal Anterior,L,reward,decision making,triple network
+cdaclaterh,Cingulate Gyrus- Caudal Anterior,R,reward,decision making,triple network
+pcglh,Cingulate Gyrus- Posterior,L,visual processing,memory,triple network
+pcgrh,Cingulate Gyrus- Posterior,R,visual processing,memory,triple network
+psclatelh,Cingulate Gyrus- Posterior,L,visual processing,memory,triple network
+psclaterh,Cingulate Gyrus- Posterior,R,visual processing,memory,triple network
+ptcatelh,Cingulate Gyrus- Posterior,L,visual processing,memory,triple network
+ptcaterh,Cingulate Gyrus- Posterior,R,visual processing,memory,triple network
+raclh,Cingulate Gyrus- Rostral Anterior,L,reward,error processing,triple network
+racrh,Cingulate Gyrus- Rostral Anterior,R,reward,error processing,triple network
+rlaclatelh,Cingulate Gyrus- Rostral Anterior,L,reward,error processing,triple network
+rlaclaterh,Cingulate Gyrus- Rostral Anterior,R,reward,error processing,triple network
+rracatelh,Cingulate Gyrus- Rostral Anterior,L,reward,error processing,triple network
+rracaterh,Cingulate Gyrus- Rostral Anterior,R,reward,error processing,triple network
+cerc,Cingulo-opercular Network,B,executive function,attention,executive function
+cgc,Cingulo-opercular Network,B,executive function,attention,executive function
+ca,Cinguloparietal Network,B,executive function,,executive function
+copa,Cinguloparietal Network,B,executive function,,executive function
+cgclh,Cingulum - Cinglulate,L,executive function,emotion,
+cgcrh,Cingulum - Cinglulate,R,executive function,emotion,
+cghlh,Cingulum - Parahippocampal,L,memory,,medial temporal lobe
+cghrh,Cingulum - Parahippocampal,R,memory,,medial temporal lobe
+cc,Corpus Callosum,B,,,
+cstlh,Corticospinal Tract,L,motor,,sensory/motor
+cstrh,Corticospinal Tract,R,motor,,sensory/motor
+cnlh,Cuneus,L,visual processing,,sensory/motor
+cnrh,Cuneus,R,visual processing,,sensory/motor
+cuneuslh,Cuneus,L,visual processing,,sensory/motor
+cuneusrh,Cuneus,R,visual processing,,sensory/motor
+df,Default Mode Network,B,memory,social,triple network
+dt,Default Mode Network,B,memory,social,triple network
+dla,Dorsal Attention Network,B,executive function,attention,executive function
+dsa,Dorsal Attention Network,B,executive function,attention,executive function
+dlprefrlh,Dorsal Prefrontal Cortex,L,executive function,,triple network
+dlprefrrh,Dorsal Prefrontal Cortex,R,executive function,,triple network
+dmfrlh,Dorsomedial Frontal Cortex,L,mentalizing,,
+dmfrrh,Dorsomedial Frontal Cortex,R,mentalizing,,
+ehinallh,Entorhinal Cortex,L,memory,,medial temporal lobe
+ehinalrh,Entorhinal Cortex,R,memory,,medial temporal lobe
+entorhinallh,Entorhinal Cortex,L,memory,,medial temporal lobe
+entorhinalrh,Entorhinal Cortex,R,memory,,medial temporal lobe
+erlh,Entorhinal Cortex,L,memory,,medial temporal lobe
+errh,Entorhinal Cortex,R,memory,,medial temporal lobe
+n,Extra-Network,B,,,
+none,Extra-Network,B,,,
+fmaj,Forceps Major,B,visual processing,,visual
+fmin,Forceps Minor,B,motor,,sensory/motor
+fxlh,Fornix,L,memory,,medial temporal lobe
+fxrh,Fornix,R,memory,,medial temporal lobe
+fxcutlh,Fornix (excluding Fimbria),L,memory,,medial temporal lobe
+fxcutrh,Fornix (excluding Fimbria),R,memory,,medial temporal lobe
+fplh,Frontal Pole,L,executive function,emotion,executive function
+fpolelh,Frontal Pole,L,executive function,emotion,executive function
+fpolerh,Frontal Pole,R,executive function,emotion,executive function
+fprh,Frontal Pole,R,executive function,emotion,executive function
+frpolelh,Frontal Pole,L,executive function,emotion,executive function
+frpolerh,Frontal Pole,R,executive function,emotion,executive function
+fo,Frontoparietal Network,B,executive function,emotion,triple network
+fopa,Frontoparietal Network,B,executive function,emotion,triple network
+fflh,Fusiform Gyrus,L,visual processing,social,social
+ffrh,Fusiform Gyrus,R,visual processing,social,social
+fusiformlh,Fusiform Gyrus,L,visual processing,social,social
+fusiformrh,Fusiform Gyrus,R,visual processing,social,social
+hclh,Hippocampus,L,memory,,medial temporal lobe
+hcrh,Hippocampus,R,memory,,medial temporal lobe
+hplh,Hippocampus,L,memory,,medial temporal lobe
+hprh,Hippocampus,R,memory,,medial temporal lobe
+hpuslh,Hippocampus,L,memory,,medial temporal lobe
+hpusrh,Hippocampus,R,memory,,medial temporal lobe
+parsopclh,Inferior Frontal Gyrus- Pars Opercularis,L,language,,language
+parsopcrh,Inferior Frontal Gyrus- Pars Opercularis,R,language,,language
+parsopllh,Inferior Frontal Gyrus- Pars Opercularis,L,language,,language
+parsoplrh,Inferior Frontal Gyrus- Pars Opercularis,R,language,,language
+poplh,Inferior Frontal Gyrus- Pars Opercularis,L,language,,language
+poprh,Inferior Frontal Gyrus- Pars Opercularis,R,language,,language
+parsobalislh,Inferior Frontal Gyrus- Pars Orbitalis,L,language,,language
+parsobalisrh,Inferior Frontal Gyrus- Pars Orbitalis,R,language,,language
+parsobislh,Inferior Frontal Gyrus- Pars Orbitalis,L,language,,language
+parsobisrh,Inferior Frontal Gyrus- Pars Orbitalis,R,language,,language
+poblh,Inferior Frontal Gyrus- Pars Orbitalis,L,language,,language
+pobrh,Inferior Frontal Gyrus- Pars Orbitalis,R,language,,language
+parstgrislh,Inferior Frontal Gyrus- Pars Triangularis,L,language,,language
+parstgrisrh,Inferior Frontal Gyrus- Pars Triangularis,R,language,,language
+parstularislh,Inferior Frontal Gyrus- Pars Triangularis,L,language,,language
+parstularisrh,Inferior Frontal Gyrus- Pars Triangularis,R,language,,language
+ptglh,Inferior Frontal Gyrus- Pars Triangularis,L,language,,language
+ptgrh,Inferior Frontal Gyrus- Pars Triangularis,R,language,,language
+ifsfclh,Inferior Frontal Superior Frontal,L,,,
+ifsfcrh,Inferior Frontal Superior Frontal,R,,,
+ifolh,Inferior Fronto-occipital Fasciculus,L,language,,language
+iforh,Inferior Fronto-occipital Fasciculus,R,language,,language
+ilflh,Inferior Longitudinal Fasiculus,L,visual processing,,
+ilfrh,Inferior Longitudinal Fasiculus,R,visual processing,,
+ifpalh,Inferior Parietal Lobule,L,visual processing,attention,triple network
+ifparh,Inferior Parietal Lobule,R,visual processing,attention,triple network
+ifpllh,Inferior Parietal Lobule,L,visual processing,attention,triple network
+ifplrh,Inferior Parietal Lobule,R,visual processing,attention,triple network
+iplh,Inferior Parietal Lobule,L,visual processing,attention,triple network
+iprh,Inferior Parietal Lobule,R,visual processing,attention,triple network
+iftlh,Inferior Temporal Gyrus,L,language,memory,language
+iftmlh,Inferior Temporal Gyrus,L,language,memory,language
+iftmrh,Inferior Temporal Gyrus,R,language,memory,language
+iftrh,Inferior Temporal Gyrus,R,language,memory,language
+itlh,Inferior Temporal Gyrus,L,language,memory,language
+itrh,Inferior Temporal Gyrus,R,language,memory,language
+insulalh,Insula,L,interoception,attention,triple network
+insularh,Insula,R,interoception,attention,triple network
+islh,Insula,L,interoception,attention,triple network
+isrh,Insula,R,interoception,attention,triple network
+intracranialv,Intracranial Volume,B,,,
+lvrh,Lateral Ventricle,R,,,
+ilvlh,Lateral Ventricle- Inferior ,L,,,
+ilvrh,Lateral Ventricle- Inferior ,R,,,
+lglh,Lingual Gyrus,L,visual processing,language,language
+lgrh,Lingual Gyrus,R,visual processing,language,language
+linguallh,Lingual Gyrus,L,visual processing,language,language
+lingualrh,Lingual Gyrus,R,visual processing,language,language
+cdmdflh,Middle Frontal Gyrus- Caudal,L,visual processing,attention,triple network
+cdmdfrh,Middle Frontal Gyrus- Caudal,R,visual processing,attention,triple network
+cdmdfrlh,Middle Frontal Gyrus- Caudal,L,visual processing,attention,triple network
+cdmdfrrh,Middle Frontal Gyrus- Caudal,R,visual processing,attention,triple network
+cmflh,Middle Frontal Gyrus- Caudal,L,visual processing,attention,triple network
+cmfrh,Middle Frontal Gyrus- Caudal,R,visual processing,attention,triple network
+rlmdflh,Middle Frontal Gyrus- Rostral,L,executive function,emotion,executive function
+rlmdfrh,Middle Frontal Gyrus- Rostral,R,executive function,emotion,executive function
+rmflh,Middle Frontal Gyrus- Rostral,L,executive function,emotion,executive function
+rmfrh,Middle Frontal Gyrus- Rostral,R,executive function,emotion,executive function
+rrmdfrlh,Middle Frontal Gyrus- Rostral,L,executive function,emotion,executive function
+rrmdfrrh,Middle Frontal Gyrus- Rostral,R,executive function,emotion,executive function
+mdtlh,Middle Temporal Gyrus,L,language,visual processing,language
+mdtmlh,Middle Temporal Gyrus,L,language,visual processing,language
+mdtmrh,Middle Temporal Gyrus,R,language,visual processing,language
+mdtrh,Middle Temporal Gyrus,R,language,visual processing,language
+mtlh,Middle Temporal Gyrus,L,language,visual processing,language
+mtrh,Middle Temporal Gyrus,R,language,visual processing,language
+loccipitallh,Occipital Cortex - Lateral,L,visual processing,,sensory/motor
+loccipitalrh,Occipital Cortex - Lateral,R,visual processing,,sensory/motor
+locclh,Occipital Cortex - Lateral,L,visual processing,,sensory/motor
+loccrh,Occipital Cortex - Lateral,R,visual processing,,sensory/motor
+lolh,Occipital Cortex - Lateral,L,visual processing,,sensory/motor
+lorh,Occipital Cortex - Lateral,R,visual processing,,sensory/motor
+mobfrlh,Occipital Cortex- Medial,L,vision,,sensory/motor
+mobfrrh,Occipital Cortex- Medial,R,vision,,sensory/motor
+moboflh,Occipital Cortex- Medial,L,vision,,sensory/motor
+mobofrh,Occipital Cortex- Medial,R,vision,,sensory/motor
+lobfrlh,Orbitofrontal Gyrus - Lateral,L,executive function,reward,social
+lobfrrh,Orbitofrontal Gyrus - Lateral,R,executive function,reward,social
+loboflh,Orbitofrontal Gyrus - Lateral,L,executive function,reward,social
+lobofrh,Orbitofrontal Gyrus - Lateral,R,executive function,reward,social
+loflh,Orbitofrontal Gyrus - Lateral,L,executive function,reward,social
+lofrh,Orbitofrontal Gyrus - Lateral,R,executive function,reward,social
+moflh,Orbitofrontal Gyrus- Medial,L,sensorimotor,reward,social
+mofrh,Orbitofrontal Gyrus- Medial,R,sensorimotor,reward,social
+pallidumlh,Pallidum,L,executive function,motivation,basal ganglia
+pallidumrh,Pallidum,R,executive function,motivation,basal ganglia
+pllh,Pallidum,L,executive function,motivation,basal ganglia
+plrh,Pallidum,L,executive function,motivation,basal ganglia
+paracentrallh,Paracentral Gyrus,L,sensorimotor,,sensory/motor
+paracentralrh,Paracentral Gyrus,R,sensorimotor,,sensory/motor
+paracnlh,Paracentral Gyrus,L,sensorimotor,,sensory/motor
+paracnrh,Paracentral Gyrus,R,sensorimotor,,sensory/motor
+parahpallh,Parahippocampal Gyrus,L,spatial,memory,medial temporal lobe
+parahpalrh,Parahippocampal Gyrus,R,spatial,memory,medial temporal lobe
+phlh,Parahippocampal Gyrus,L,spatial,memory,medial temporal lobe
+phrh,Parahippocampal Gyrus,R,spatial,memory,medial temporal lobe
+pcclh,Pericalcarine,L,visual processing,,sensory/motor
+pccrh,Pericalcarine,R,visual processing,,sensory/motor
+pericclh,Pericalcarine Cortex,L,vision,,sensory/motor
+periccrh,Pericalcarine Cortex,L,vision,,sensory/motor
+pctlh,Postcentral Gyrus,L,sensory,,sensory/motor
+pctrh,Postcentral Gyrus,R,sensory,,sensory/motor
+postcentrallh,Postcentral Gyrus,L,sensory,,sensory/motor
+postcentralrh,Postcentral Gyrus,R,sensory,,sensory/motor
+postcnlh,Postcentral Gyrus,L,sensory,,sensory/motor
+postcnrh,Postcentral Gyrus,R,sensory,,sensory/motor
+prctlh,Precentral Gyrus,L,motor,,sensory/motor
+prctrh,Precentral Gyrus,R,motor,,sensory/motor
+precentrallh,Precentral Gyrus,L,motor,,sensory/motor
+precentralrh,Precentral Gyrus,R,motor,,sensory/motor
+precnlh,Precentral Gyrus,L,motor,,sensory/motor
+precnrh,Precentral Gyrus,R,motor,,sensory/motor
+pclh,Paracentral Gyrus,L,memory,social,sensory/motor
+pcrh,Paracentral Gyrus,R,memory,social,sensory/motor
+prcnlh,Precuneus,L,memory,social,triple network
+prcnrh,Precuneus,R,memory,social,triple network
+precuneuslh,Precuneus,L,memory,social,triple network
+precuneusrh,Precuneus,L,memory,social,triple network
+ptlh,Putamen,L,motor,executive function,basal ganglia
+ptrh,Putamen,R,motor,executive function,basal ganglia
+putamenlh,Putamen,L,motor,executive function,basal ganglia
+putamenrh,Putamen,R,motor,executive function,basal ganglia
+rspltp,Retrosplenial Temporal Network,B,memory,,
+rst,Retrosplenial Temporal Network,B,memory,,
+sa,Salience Network,B,attention,,triple network
+smh,Sensorimotor Network- Hand,B,sensorimotor,,sensory/motor
+smm,Sensorimotor Network- Mouth,B,sensorimotor,,sensory/motor
+sifclh,Striatal Inferior Frontal WM,L,motor,reward,basal ganglia
+sifcrh,Striatal Inferior Frontal WM,L,motor,reward,basal ganglia
+scslh,Superior Corticostriate Tract,L,motor,reward,basal ganglia
+scsrh,Superior Corticostriate Tract,L,motor,reward,basal ganglia
+fscslh,Superior Corticostriate Tract - Frontal,L,motor,reward,basal ganglia
+fscsrh,Superior Corticostriate Tract - Frontal,R,motor,reward,basal ganglia
+pscslh,Superior Corticostriate Tract- Parietal,L,motor,reward,basal ganglia
+pscsrh,Superior Corticostriate Tract- Parietal,R,motor,reward,basal ganglia
+sflh,Superior Frontal Gyrus,L,executive function,social,executive function
+sfrh,Superior Frontal Gyrus,R,executive function,social,executive function
+suflh,Superior Frontal Gyrus,L,executive function,social,executive function
+sufrh,Superior Frontal Gyrus,R,executive function,social,executive function
+sufrlh,Superior Frontal Gyrus,L,executive function,social,executive function
+sufrrh,Superior Frontal Gyrus,R,executive function,social,executive function
+slflh,Superior Longitudinal Fasiculus,L,language,attention,language
+slfrh,Superior Longitudinal Fasiculus,R,language,attention,language
+pslflh,Superior Longitudinal Fasiculus- Parietal,L,executive function,attention,attention
+pslfrh,Superior Longitudinal Fasiculus- Parietal,R,executive function,attention,attention
+tslflh,Superior Longitudinal Fasiculus- Temporal,L,language,,language
+tslfrh,Superior Longitudinal Fasiculus- Temporal,R,language,,language
+spetallh,Superior Parietal Lobule,L,visual processing,spatial,sensory/motor
+spetalrh,Superior Parietal Lobule,R,visual processing,spatial,sensory/motor
+splh,Superior Parietal Lobule,L,visual processing,spatial,sensory/motor
+sprh,Superior Parietal Lobule,R,visual processing,spatial,sensory/motor
+supllh,Superior Parietal Lobule,L,visual processing,spatial,sensory/motor
+suplrh,Superior Parietal Lobule,R,visual processing,spatial,sensory/motor
+sutlh,Superior Temporal Gyrus,L,sensory,language,language
+sutmlh,Superior Temporal Gyrus,L,sensory,language,language
+sutmrh,Superior Temporal Gyrus,R,sensory,language,language
+sutrh,Superior Temporal Gyrus,R,sensory,language,language
+stlh,Superior Temporal Lobule,L,sensory,language,language
+strh,Superior Temporal Lobule,R,sensory,language,language
+smlh,Supramarginal Gyrus,L,language,,triple network
+smrh,Supramarginal Gyrus,R,language,,triple network
+tmpolelh,Temporal Pole,L,language,memory,language
+tmpolerh,Temporal Pole,R,language,memory,language
+tpolelh,Temporal Pole,L,language,memory,language
+tpolerh,Temporal Pole,R,language,memory,language
+thplh,Thalamus,L,sensorimotor,memory,limbic
+thprh,Thalamus,R,sensorimotor,memory,limbic
+tplh,Thalamus,L,sensorimotor,memory,limbic
+tprh,Thalamus,R,sensorimotor,memory,limbic
+trvtmlh,Transverse Temporal Gyrus,L,sensory,error processing,sensory/motor
+trvtmrh,Transverse Temporal Gyrus,R,sensory,error processing,sensory/motor
+ttlh,Transverse Temporal Gyrus,L,sensory,error processing,sensory/motor
+ttrh,Transverse Temporal Gyrus,R,sensory,error processing,sensory/motor
+tvtlh,Transverse Temporal Gyrus,L,sensory,error processing,sensory/motor
+tvtrh,Transverse Temporal Gyrus,R,sensory,error processing,sensory/motor
+unclh,Uncinate Fasiculus,L,visual processing,social,
+uncrh,Uncinate Fasiculus,R,visual processing,social,
+vta,Ventral Attention Network,B,attention,,attention
+vdclh,Ventral Diencephalon,L,sensorimotor,,sensory/motor
+vdcrh,Ventral Diencephalon,R,sensorimotor,,sensory/motor
+vedclh,Ventral Diencephalon,L,sensorimotor,,sensory/motor
+vedcrh,Ventral Diencephalon,R,sensorimotor,,sensory/motor
+ventraldclh,Ventral Diencephalon,L,sensorimotor,,sensory/motor
+ventraldcrh,Ventral Diencephalon,R,sensorimotor,,sensory/motor
+vtdclh,Ventral Diencephalon,L,sensorimotor,,sensory/motor
+vtdcrh,Ventral Diencephalon,R,sensorimotor,,sensory/motor
+vs,Visual Network,B,sensory,,sensory/motor
