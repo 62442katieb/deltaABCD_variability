@@ -524,7 +524,9 @@ for fligner_var in list(hetero.keys())[:3]:
                 pass
             
             
-            
+    variance.to_csv(join(PROJ_DIR, 
+                     OUTP_DIR, 
+                     f'variance_by_level-{fligner_var.split("_")[-1]}.csv'))         
     fig.savefig(join(PROJ_DIR, 
                      FIGS_DIR, 
                      f'{fligner_var.split("_")[-1]}_variance.png'), 
