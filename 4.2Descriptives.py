@@ -97,7 +97,6 @@ for network in network_wise.keys():
 # calculating descriptives of all auditory network connections
 # then, grab all the variable names for ad connections
 ad_conns = network_wise['ad']
-
 # compute descriptives for each way that we calculated deltaFC
 for measure in measures.keys():
     # this is the vectorized upper tri dataframe, we're grabbing just the auditory network connections

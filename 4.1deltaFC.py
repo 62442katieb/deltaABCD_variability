@@ -6,6 +6,7 @@ import pandas as pd
 import seaborn as sns
 import nibabel as nib
 import bct
+import pingouin as pg
 
 from os.path import join
 import warnings
@@ -40,33 +41,35 @@ df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
 
 ppts = df.filter(regex="rsfmri_c_.*change_score").dropna().index
 
-rsfc = pd.read_csv(
-    "/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/Data/release5.0/core/imaging/mri_y_rsfmr_cor_gp_gp.csv",
-    header=0,
-    index_col=[0,1]
+base_rsfc = pd.read_pickle(
+    join(PROJ_DIR, DATA_DIR, 'rsfc_sans_motion-baseline.pkl')
 ).dropna()
+
+y2fu_rsfc = pd.read_pickle(
+    join(PROJ_DIR, DATA_DIR, 'rsfc_sans_motion-2yearfup.pkl')
+).dropna()
+
+nones = list(base_rsfc.filter(regex='rsfmri_c_ngd_.*_ngd_n').columns) + list(base_rsfc.filter(regex='rsfmri_c_ngd_n_.*').columns)
+base_rsfc = base_rsfc.drop(nones, axis=1)
+y2fu_rsfc = y2fu_rsfc.drop(nones, axis=1)
 
 tpts = [
     'baseline_year_1_arm_1',
     '2_year_follow_up_y_arm_1'
 ]
 
-within_network = [i for i in rsfc.columns if i.split('_')[3] == i.split('_')[5]]
+within_network = [i for i in base_rsfc.columns if i.split('_')[3] == i.split('_')[5]]
 
-btwn = rsfc.columns
+btwn = base_rsfc.columns
 
 network_wise = {}
 
 for i in [j.split('_')[3] for j in within_network]:
     network_wise[i] = [k for k in btwn if i == k.split('_')[3]]
 
-between_network = [i for i in rsfc.columns if i.split('_')[3] != i.split('_')[5]]
+between_network = [i for i in base_rsfc.columns if i.split('_')[3] != i.split('_')[5]]
 
-conns = rsfc.columns
-
-base_df = rsfc.swaplevel(axis=0).loc['baseline_year_1_arm_1']
-y2fu_df = rsfc.swaplevel(axis=0).loc['2_year_follow_up_y_arm_1']
-
+conns = base_rsfc.columns
 
 sign_change = pd.DataFrame(index=ppts, columns=conns, dtype=float)
 change = pd.DataFrame(index=ppts, columns=conns, dtype=float)
@@ -84,16 +87,16 @@ measures = {
 }
 
 for i in ppts:
-    if i not in base_df.index or i not in y2fu_df.index:
+    if i not in base_rsfc.index or i not in y2fu_rsfc.index:
         pass
     else:
         age0 = df.loc[i, 'interview_age.baseline_year_1_arm_1'] / 12.
         age2 = df.loc[i, 'interview_age.2_year_follow_up_y_arm_1'] / 12.
         for conn in conns:
-            base = base_df.loc[i, conn]
-            y2fu = y2fu_df.loc[i, conn]
+            base = base_rsfc.loc[i, conn]
+            y2fu = y2fu_rsfc.loc[i, conn]
             
-            temp = pd.concat([base_df[conn], y2fu_df[conn]])
+            temp = pd.concat([base_rsfc[conn], y2fu_rsfc[conn]])
             
             sem = np.std(temp.values, ddof=1) / np.sqrt(np.size(temp.values))
             abs_sem = np.std(np.abs(temp.values), ddof=1) / np.sqrt(np.size(temp.values))
@@ -137,7 +140,7 @@ long_corr = pd.concat(
     ], 
     axis=1
 )
-long_corr['score'] = ['z(corr)'] * 696111
+long_corr['score'] = ['z(corr)'] * 593136
 
 long_abs = pd.concat(
     [
@@ -146,7 +149,7 @@ long_abs = pd.concat(
     ], 
     axis=1
 )
-long_abs['score'] = ['abs(z(corr))'] * 696111
+long_abs['score'] = ['abs(z(corr))'] * 593136
 long_rci = pd.concat(
     [
         rci.melt(), 
@@ -154,7 +157,7 @@ long_rci = pd.concat(
     ], 
     axis=1
 )
-long_rci['score'] = ['rci'] * 696111
+long_rci['score'] = ['rci'] * 593136
 long_rci_abs = pd.concat(
     [
         rci_abs.melt(), 
@@ -162,7 +165,7 @@ long_rci_abs = pd.concat(
     ], 
     axis=1
 )
-long_rci_abs['score'] = ['abs(rci)'] * 696111
+long_rci_abs['score'] = ['abs(rci)'] * 593136
 long_plus1 = pd.concat(
     [
         change_plus1.melt(), 
@@ -170,7 +173,7 @@ long_plus1 = pd.concat(
     ], 
     axis=1
 )
-long_plus1['score'] = ['corr + 1'] * 696111
+long_plus1['score'] = ['corr + 1'] * 593136
 
 mega_df = pd.concat([
     long_corr,
