@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -103,322 +104,11 @@ def assign_region_names(df, missing=False):
     missing = optional, list of ABCD region names not present in region_names dictionary
     '''
     
-    region_names = {'aal': ('Accumbens', 'L'), 
-                    'aalh': ('Accumbens', 'L'), 
-                    'aar': ('Accumbens', 'R'), 
-                    'aarh': ('Accumbens', 'R'), 
-                    'ablh': ('Accumbens', 'L'), 
-                    'abrh': ('Accumbens', 'R'),
-                    'ad': ('Auditory Network', 'B'), 
-                    'aglh': ('Amygdala', 'L'), 
-                    'agrh': ('Amygdala', 'R'), 
-                    'amygdalalh': ('Amugdala', 'L'), 
-                    'amygdalarh': ('Amygdala', 'R'), 
-                    'aomtmlh': (),
-                    'aomtmrh': (), 
-                    'atrlh': ('Anterior Thalamic Radiation', 'L'), 
-                    'atrrh': ('Anterior Thalamic Radiation', 'R'),
-                    'bstslh': ('Banks of Superior Temporal Sulcus', 'L'),
-                    'bstsrh': ('Banks of Superior Temporal Sulcus', 'R'),
-                    'banksstslh': ('Banks of Superior Temporal Sulcus', 'L'), 
-                    'banksstsrh': ('Banks of Superior Temporal Sulcus', 'R'),
-                    'brainstem': ('Brainstem', 'B'), 
-                    'bs': ('Brainstem', 'B'), 
-                    'bstem': ('Brainstem', 'B'), 
-                    'ca': ('Cinguloparietal Network', 'B'), 
-                    'caclh': ('Cingulate Gyrus, Caudal Anterior', 'L'),
-                    'cacrh': ('Cingulate Gyrus, Caudal Anterior', 'L'),
-                    'caudatelh': ('Caudate', 'L'), 
-                    'caudaterh': ('Caudate', 'R'),
-                    'cbclh': ('Cerebellar Cortex', 'L'), 
-                    'cbcrh': ('Cerebellar Cortex', 'R'), 
-                    'cbwmlh': ('Cerebellar White Matter', 'L'), 
-                    'cbwmrh': ('Cerebellar White Matter', 'R'), 
-                    'cc': ('Corpus Callosum', 'B'), 
-                    'cdacatelh': ('Anterior Cingulate, Caudal', 'L'),
-                    'cdacaterh': ('Anterior Cingulate, Caudal', 'R'), 
-                    'cdaclatelh': ('Anterior Cingulate, Caudal', 'L'), 
-                    'cdaclaterh': ('Anterior Cingulate, Caudal', 'R'), 
-                    'cdelh': ('Caudate', 'L'), 
-                    'cderh': ('Caudate', 'R'), 
-                    'cdlh': ('Caudate', 'L'),
-                    'cdmdflh': ('Middle Frontal Gyrus, Caudal', 'L'), 
-                    'cdmdfrh': ('Middle Frontal Gyrus, Caudal', 'R'), 
-                    'cdmdfrlh': ('Middle Frontal Gyrus, Caudal', 'L'), 
-                    'cdmdfrrh': ('Middle Frontal Gyrus, Caudal', 'R'), 
-                    'cdrh': ('Caudate', 'R'), 
-                    'cgc': ('Cingulo-Opercular Network', 'B'),
-                    'cgclh': ('Cingulate Cingulum', 'L'), 
-                    'cgcrh': ('Cingulate Cingulum', 'R'), 
-                    'cghlh': ('Parahippocam Cingulum', 'L'), 
-                    'cghrh': ('Parahippocam Cingulum', 'R'),
-                    'cmflh': ('Middle Frontal Gyrus, Caudal', 'L'),
-                    'cmfrm': ('Middle Frontal Gyrus, Caudal', 'R'),
-                    'crbcortexlh': ('Cerebellar Cortex', 'L'),
-                    'crbcortexrh': ('Cerebellar Cortex', 'R'), 
-                    'crbwmatterlh': ('Cerebellar White Matter', 'L'), 
-                    'crbwmatterrh': ('Cerebellar White Matter', 'L'), 
-                    'crcxlh': ('Cerebellar Cortex', 'L'), 
-                    'crcxrh': ('Cerebellar Cortex', 'R'),
-                    'cstlh': ('Corticospinal Tract', 'L'), 
-                    'cstrh': ('Corticospinal Tract', 'R'), 
-                    'cuneuslh': ('Cuneus', 'L'), 
-                    'cuneusrh': ('Cuneus', 'R'), 
-                    'cwmlh': ('Cerebral White Matter', 'L'), 
-                    'cwmrh': ('Cerebral White Matter', 'L'), 
-                    'dla': ('Dorsal Attention Network', 'B'),
-                    'dlprefrlh': ('Dorsal Prefrontal Cortex', 'L'), 
-                    'dlprefrrh': ('Dorsal Prefrontal Cortex', 'R'), 
-                    'dmfrlh': ('Dorsomedial Frontal Cortex', 'L'), 
-                    'dmfrrh': ('Dorsomedial Frontal Cortex', 'R'), 
-                    'dt': ('Default Mode Network', 'B'), 
-                    'df': ('Default Mode Network', 'B'), 
-                    'ehinallh': ('Entorhinal Cortex', 'L'),
-                    'ehinalrh': ('Entorhinal Cortex', 'R'), 
-                    'entorhinallh': ('Entorhinal Cortex', 'L'), 
-                    'entorhinalrh': ('Entorhinal Cortex', 'R'), 
-                    'fflh': ('Fusiform Gyrus', 'L'), 
-                    'ffrh': ('Fusiform Gyrus', 'R'), 
-                    'fmaj': ('Fornix Major', 'B'),
-                    'fmin': ('Fornix Minor', 'B'), 
-                    'fo': ('Frontoparietal Network', 'B'), 
-                    'fpolelh': ('Frontal Pole', 'L'), 
-                    'fpolerh': ('Frontal Pole', 'R'), 
-                    'frpolelh': ('Frontal Pole', 'L'), 
-                    'frpolerh': ('Frontal Pole', 'R'),
-                    'fscslh': ('Superior Corticostriate Tract (Frontal)', 'L'), 
-                    'fscsrh': ('Superior Corticostriate Tract (Frontal)', 'R'), 
-                    'fusiformlh': ('Fusiform Gyrus', 'L'), 
-                    'fusiformrh': ('Fusiform Gyrus', 'R'), 
-                    'fxcutlh': ('Fornix (excluding Fimbria)', 'L'),
-                    'fxcutrh': ('Fornix (excluding Fimbria)', 'R'), 
-                    'fxlh': ('Fornix', 'L'), 
-                    'fxrh': ('Fornix', 'R'), 
-                    'hclh': ('Hippocampus', 'L'),
-                    'hcrh': ('Hippocampus', 'R'), 
-                    'hplh': ('Hippocampus', 'L'), 
-                    'hprh': ('Hippocampus', 'R'), 
-                    'hpuslh': ('Hippocampus', 'L'), 
-                    'hpusrh': ('Hippocampus', 'R'), 
-                    'ifolh': ('Inferior Fronto-occipital Fasciculus', 'L'), 
-                    'iforh': ('Inferior Fronto-occipital Fasciculus', 'R'),
-                    'ifh': ('Inferior Parietal', 'L'), 
-                    'ifparh': ('Inferior Parietal', 'R'), 
-                    'ifpllh': ('Inferior Parietal', 'L'), 
-                    'ifplrh': ('Inferior Parietal', 'R'), 
-                    'ifsfclh': ('Inferior Frontal Superior Frontal', 'L'), 
-                    'ifsfcrh': ('Inferior Frontal Superior Frontal', 'R'),
-                    'iftlh': ('Inferior Temporal', 'L'), 
-                    'iftmlh': ('Inferior Temporal', 'L'), 
-                    'iftmrh': ('Inferior Temporal', 'R'), 
-                    'iftrh': ('Inferior Temporal', 'R'), 
-                    'ihcatelh': ('Cingulate Gyrus, Ithsmus', 'L'), 
-                    'ihcaterh': ('Cingulate Gyrus, Ithsmus', 'R'),
-                    'ihclatelh': ('Cingulate Gyrus, Ithsmus', 'L'), 
-                    'ihclaterh': ('Cingulate Gyrus, Ithsmus', 'R'), 
-                    'ilflh': ('Inferior Longitudinal Fasiculus', 'L'), 
-                    'ilfrh': ('Inferior Longitudinal Fasiculus', 'R'), 
-                    'ilvlh': ('Inferior Lateral Ventricle', 'L'), 
-                    'ilvrh': ('Inferior Lateral Ventricle', 'R'),
-                    'insulalh': ('Insula', 'L'), 
-                    'insularh': ('Insula', 'R'), 
-                    'intracranialv': ('Intracranial Volume', 'B'), 
-                    'linguallh': ('Lingual Gyrus', 'L'), 
-                    'lingualrh': ('Lingual Gyrus', 'R'),
-                    'lobfrlh': ('Orbitofrontal Gyrus, Lateral', 'L'), 
-                    'lobfrrh': ('Orbitofrontal Gyrus, Lateral', 'R'), 
-                    'loboflh': ('Orbitofrontal Gyrus, Lateral', 'L'), 
-                    'lobofrh': ('Orbitofrontal Gyrus, Lateral', 'R'), 
-                    'loccipitallh': ('Occipital Gyrus, Lateral', 'L'),
-                    'loccipitalrh': ('Occipital Gyrus, Lateral', 'R'), 
-                    'locclh': ('Occipital Gyrus, Lateral', 'L'), 
-                    'loccrh': ('Occipital Gyrus, Lateral', 'R'), 
-                    'lvrh': ('Lateral Ventricle', 'R'), 
-                    'mdtlh': ('Middle Temporal Gyrus', 'L'), 
-                    'mdtmlh': ('Middle Temporal Gyrus', 'L'),
-                    'mdtmrh': ('Middle Temporal Gyrus', 'R'), 
-                    'mdtrh': ('Middle Temporal Gyrus', 'R'), 
-                    'mobfrlh': ('Occipital Gyrus, Medial', 'L'), 
-                    'mobfrrh': ('Occipital Gyrus, Medial', 'R'), 
-                    'moboflh': ('Occipital Gyrus, Medial', 'L'), 
-                    'mobofrh': ('Occipital Gyrus, Medial', 'R'), 
-                    'n': ('Extra-Network', 'B'),
-                    'lidumlh': ('lidum', 'L'), 
-                    'lidumrh': ('lidum', 'R'),
-                    'paracentrallh': ('Paracentral Gyrus', 'L'), 
-                    'paracentralrh': ('Paracentral Gyrus', 'R'), 
-                    'paracnlh': ('Paracentral Gyrus', 'L'), 
-                    'paracnrh': ('Paracentral Gyrus', 'R'),
-                    'parahlh': ('Parahippocam Gyrus', 'L'), 
-                    'parahrh': ('Parahippocam Gyrus', 'R'), 
-                    'parsobalislh': ('Inferior Frontal Gyrus, Pars Orbitalis', 'L'), 
-                    'parsobalisrh': ('Inferior Frontal Gyrus, Pars Orbitalis', 'R'),
-                    'parsobislh': ('Inferior Frontal Gyrus, Pars Orbitalis', 'L'), 
-                    'parsobisrh': ('Inferior Frontal Gyrus, Pars Orbitalis', 'R'), 
-                    'parsopclh': ('Inferior Frontal Gyrus, Pars Opercularis', 'L'), 
-                    'parsopcrh': ('Inferior Frontal Gyrus, Pars Opercularis', 'R'), 
-                    'parsopllh': ('Inferior Frontal Gyrus, Pars Opercularis', 'L'),
-                    'parsoplrh': ('Inferior Frontal Gyrus, Pars Opercularis', 'R'), 
-                    'parstgrislh': ('Inferior Frontal Gyrus, Pars Triangularis', 'L'), 
-                    'parstgrisrh': ('Inferior Frontal Gyrus, Pars Triangularis', 'R'), 
-                    'parstularislh': ('Inferior Frontal Gyrus, Pars Triangularis', 'L'),
-                    'parstularisrh': ('Inferior Frontal Gyrus, Pars Triangularis', 'R'), 
-                    'pclh': ('Precuneus', 'L'), 
-                    'pcrh': ('Precuneus', 'R'), 
-                    'pericclh': ('Pericalcarine Cortex', 'L'), 
-                    'periccrh': ('Pericalcarine Cortex', 'L'), 
-                    'pllh': ('lidum', 'L'),
-                    'plrh': ('lidum', 'L'), 
-                    'postcentrallh': ('Postcentral Gyrus', 'L'), 
-                    'postcentralrh': ('Postcentral Gyrus', 'R'), 
-                    'postcnlh': ('Postcentral Gyrus', 'L'), 
-                    'postcnrh': ('Postcentral Gyrus', 'R'),
-                    'precentrallh': ('Precentral Gyrus', 'L'), 
-                    'precentralrh': ('Precentral Gyrus', 'R'), 
-                    'precnlh': ('Precentral Gyrus', 'L'), 
-                    'precnrh': ('Precentral Gyrus', 'R'),
-                    'precuneuslh': ('Precuneus', 'L'), 
-                    'precuneusrh': ('Precuneus', 'L'), 
-                    'psclatelh': ('Cingulate Gyrus, Posterior', 'L'), 
-                    'psclaterh': ('Cingulate Gyrus, Posterior', 'R'), 
-                    'pscslh': ('Superior Corticostriate Tract, Parietal', 'L'),
-                    'pscsrh': ('Superior Corticostriate Tract, Parietal', 'R'), 
-                    'pslflh': ('Superior Longitudinal Fasiculus, Parietal', 'L'), 
-                    'pslfrh': ('Superior Longitudinal Fasiculus, Parietal', 'R'), 
-                    'ptcatelh': ('Cingulate Gyrus, Posterior', 'L'), 
-                    'ptcaterh': ('Cingulate Gyrus, Posterior', 'R'), 
-                    'ptlh': ('Putamen', 'L'),
-                    'ptoltmlh': (), 
-                    'ptoltmrh': (), 
-                    'ptrh': ('Putamen', 'R'), 
-                    'putamenlh': ('Putamen', 'L'), 
-                    'putamenrh': ('Putamen', 'R'),
-                    'rlaclatelh': ('Cingulate Gyrus, Rostral Anterior', 'L'), 
-                    'rlaclaterh': ('Cingulate Gyrus, Rostral Anterior', 'R'), 
-                    'rlmdflh': ('Middle Frontal Gyrus, Rostral', 'L'), 
-                    'rlmdfrh': ('Middle Frontal Gyrus, Rostral', 'R'), 
-                    'rracatelh': ('Cingulate Gyrus, Rostral Anterior', 'L'),
-                    'rracaterh': ('Cingulate Gyrus, Rostral Anterior', 'R'), 
-                    'rrmdfrlh': ('Middle Frontal Gyrus, Rostral', 'L'), 
-                    'rrmdfrrh': ('Middle Frontal Gyrus, Rostral', 'R'), 
-                    'rspltp': ('Retrosplenial Temporal Network', 'B'), 
-                    'sa': ('Salience Network', 'B'), 
-                    'scslh': ('Superior Corticostriate Tract', 'L'),
-                    'scsrh': ('Superior Corticostriate Tract', 'L'), 
-                    'sifclh': ('Striatum, Inferior Frontal', 'L'), 
-                    'sifcrh': ('Striatum, Inferior Frontal', 'L'), 
-                    'slflh': ('Superior Longitudinal Fasiculus', 'L'), 
-                    'slfrh': ('Superior Longitudinal Fasiculus', 'R'), 
-                    'smh': ('Sensorimotor Network, Hand', 'B'), 
-                    'smlh': ('Supramarginal Gyrus', 'L'),
-                    'smm': ('Sensorimotor Network, Mouth', 'B'), 
-                    'smrh': ('Supramarginal Gyrus', 'R'), 
-                    'spetallh': ('Superior Parietal Lobule', 'L'), 
-                    'spetalrh': ('Superior Parietal Lobule', 'R'), 
-                    'suflh': ('Superior Frontal Gyrus', 'L'), 
-                    'sufrh': ('Superior Frontal Gyrus', 'R'), 
-                    'sufrlh': ('Superior Frontal Gyrus', 'L'),
-                    'sufrrh': ('Superior Frontal Gyrus', 'R'), 
-                    'supllh': ('Superior Parietal Lobule', 'L'), 
-                    'suplrh': ('Superior Parietal Lobule', 'R'), 
-                    'sutlh': ('Superior Temporal Gyrus', 'L'), 
-                    'sutmlh': ('Superior Temporal Gyrus', 'L'), 
-                    'sutmrh': ('Superior Temporal Gyrus', 'R'), 
-                    'sutrh': ('Superior Temporal Gyrus', 'R'),
-                    'thplh': ('Thalamus', 'L'), 
-                    'thprh': ('Thalamus', 'R'), 
-                    'tmpolelh': ('Temporal Pole', 'L'), 
-                    'tmpolerh': ('Temporal Pole', 'R'), 
-                    'total': (), 
-                    'tplh': ('Thalamus', 'L'),
-                    'tpolelh': ('Temporal Pole', 'L'), 
-                    'tpolerh': ('Temporal Pole', 'R'), 
-                    'tprh': ('Thalamus', 'R'), 
-                    'trvtmlh': ('Transverse Temporal Gyrus', 'L'), 
-                    'trvtmrh': ('Transverse Temporal Gyrus', 'R'), 
-                    'tslflh': ('Superior Longitudinal Fasiculus, Temporal', 'L'),
-                    'tslfrh': ('Superior Longitudinal Fasiculus, Temporal', 'R'), 
-                    'tvtlh': ('Transverse Temporal Gyrus', 'L'), 
-                    'tvtrh': ('Transverse Temporal Gyrus', 'R'), 
-                    'unclh': ('Uncinate Fasiculus', 'L'), 
-                    'uncrh': ('Uncinate Fasiculus', 'R'), 
-                    'vdclh': ('Ventral Diencephalon', 'L'), 
-                    'vdcrh': ('Ventral Diencephalon', 'R'),
-                    'vedclh': ('Ventral Diencephalon', 'L'), 
-                    'vedcrh': ('Ventral Diencephalon', 'R'), 
-                    'ventraldclh': ('Ventral Diencephalon', 'L'), 
-                    'ventraldcrh': ('Ventral Diencephalon', 'R'), 
-                    'vs': ('Visual Network', 'B'), 
-                    'vta': ('Ventral Attention Network', 'B'),
-                    'vtdclh': ('Ventral Diencephalon', 'L'), 
-                    'vtdcrh': ('Ventral Diencephalon', 'R'),
-                    'ad_ngd_ad': ('Auditory Network, Within', 'B'),
-                    'ca': ('Cinguloparietal Network', 'B'),
-                    'cerc': ('Cingulo-opercular Network', 'B'),
-                    'cgc': ('Cingulo-opercular Network', 'B'),
-                    'cmfrh': ('Middle Frontal Gyrus, Caudal', 'R'),
-                    'cnlh': ('Cuneus', 'L'),
-                    'cnrh': ('Cuneus', 'R'),
-                    'copa': ('Cinguloparietal Network', 'B'),
-                    'pcclh': ('Pericalcarine', 'L'),
-                    'pccrh': ('Pericalcarine', 'R'),
-                    'pcglh': ('Cingulate Gyrus, Posterior', 'L'),
-                    'pcgrh': ('Cingulate Gyrus, Posterior', 'R'),
-                    'pctlh': ('Postcentral Gyrus', 'L'),
-                    'pctrh': ('Postcentral Gyrus', 'R'),
-                    'phlh': ('Parahippocam Gyrus', 'L'),
-                    'phrh': ('Parahippocam Gyrus', 'R'),
-                    'poblh': ('Inferior Frontal Gyrus, Pars Orbitalis', 'L'),
-                    'pobrh': ('Inferior Frontal Gyrus, Pars Orbitalis', 'R'),
-                    'poplh': ('Inferior Frontal Gyrus, Pars Opercularis', 'L'),
-                    'poprh': ('Inferior Frontal Gyrus, Pars Opercularis', 'R'),
-                    'prcnlh': ('Precuneus', 'L'),
-                    'prcnrh': ('Precuneus', 'R'),
-                    'prctlh': ('Precentral Gyrus', 'L'),
-                    'prctrh': ('Precentral Gyrus', 'R'),
-                    'ptglh': ('Inferior Frontal Gyrus, Pars Triangularis', 'L'),
-                    'ptgrh': ('Inferior Frontal Gyrus, Pars Triangularis', 'R'),
-                    'raclh': ('Cingulate Gyrus, Rostral Anterior', 'L'),
-                    'racrh': ('Cingulate Gyrus, Rostral Anterior', 'R'),
-                    'rmflh': ('Middle Frontal Gyrus, Rostral', 'L'),
-                    'rmfrh': ('Middle Frontal Gyrus, Rostral', 'R'),
-                    'sflh': ('Superior Frontal Gyrus', 'L'),
-                    'sfrh': ('Superior Frontal Gyrus', 'R'),
-                    'splh': ('Superior Parietal Lobule', 'L'),
-                    'sprh': ('Superior Parietal Lobule', 'R'),
-                    'stlh': ('Superior Temporal Lobule', 'L'),
-                    'strh': ('Superior Temporal Lobule', 'R'),
-                    'ttlh': ('Transverse Temporal Lobe', 'L'),
-                    'ttrh': ('Transverse Temporal Lobe', 'R'),
-                    'erlh': ('Entorhinal Cortex', 'L'),
-                    'errh': ('Entorhinal Cortex', 'R'),'fplh': ('Frontal Pole', 'L'),
-                    'fprh': ('Frontal Pole', 'R'),
-                    'au': ('Auditory Network', 'B'),
-                    'dsa': ('Dorsal Attention Network', 'B'),
-                    'fopa': ('Frontoparietal Network', 'B'),
-                    'none': ('Extra-Network', 'B'),
-                    'rst': ('Retrosplenial Temporal Network', 'B'),
-                    'iclh': ('Cingulate Gyrus, Ithmus', 'L'),
-                    'icrh': ('Cingulate Gyrus, Ithmus', 'R'),
-                    'iplh': ('Inferior Parietal Lobule', 'L'),
-                    'iprh': ('Inferior Parietal Lobule', 'R'),
-                    'islh': ('Insula', 'L'),
-                    'isrh': ('Insula', 'R'),
-                    'itlh': ('Inferior Temporal Gyrus', 'L'),
-                    'itrh': ('Inferior Temporal Gyrus', 'R'),
-                    'lglh': ('Lingual Gyrus', 'L'),
-                    'lgrh': ('Lingual Gyrus', 'R'),
-                    'loflh': ('Orbitofrontal Gyrus, Lateral', 'L'),
-                    'lofrh': ('Orbitofrontal Gyrus, Lateral', 'R'),
-                    'lolh': ('Lateral Occipital Gyrus', 'L'),
-                    'lorh': ('Lateral Occipital Gyrus', 'R'),
-                    'moflh': ('Orbitofrontal Gyrus, Medial', 'L'),
-                    'mofrh': ('Orbitofrontal Gyrus, Medial', 'R'),
-                    'mtlh': ('Middle Temporal Gyrus', 'L'),
-                    'mtrh': ('Middle Temporal Gyrus', 'R'),}
-
-    
+    region_names = pd.read_csv('region_names.csv', header=0, index_col=0)
+    #print(region_names.index)
+    # read in region names 
     missing = []
+    df = df.copy()
     if not 'long_region' in df.columns:
         df['measure'] = ''
         df['region'] = ''
@@ -426,67 +116,73 @@ def assign_region_names(df, missing=False):
         df['atlas'] = ''
         df['long_region'] = ''
         df['hemisphere'] = ''
+        df['cog'] = ''
+        df['cog2'] = ''
+        df['sys'] = ''
         for var in df.index:
             #print(var)
-            if 'mrisdp' in var:
-                var_num = int(var.split('.')[0].split('_')[-1])
-                df.at[var, 'modality'] = 'smri'
-                df.at[var, 'atlas'] = 'dtx'
-                if var_num <= 148:
-                    df.at[var, 'measure'] = 'thick'
-                elif var_num <= 450 and var_num >= 303:
-                    df.at[var, 'measure'] = 'area'
-                elif var_num < 604 and var_num >= 450:
-                    df.at[var, 'measure'] = 'vol'
-                elif var_num <= 1054 and var_num >= 907:
-                    df.at[var, 'measure'] = 't1wcnt'
-                elif var_num == 604:
-                    df.at[var, 'measure'] = 'gmvol'
-            elif '_' in var:
-                var_list = var.split('.')[0].split('_')
-                df.at[var, 'modality'] = var_list[0]
-                df.at[var, 'measure'] = var_list[1]
-                df.at[var, 'atlas'] = var_list[2]
-                region = '_'.join(var_list[3:])
-                df.at[var, 'region'] = region
-                if 'scs' in var:
-                    if 'rsirni' in var:
-                        df.at[var, 'measure'] = 'rsirnigm'
-                    elif 'rsirnd' in var:
-                        df.at[var, 'measure'] = 'rsirndgm'
-                    else:
-                        pass
-                else:
-                    pass
-                if '_scs_' in region:
+            trim_var = var.split('.')[0]
+            
+            var_list = trim_var.split('_')
+            
+            df.at[var, 'modality'] = var_list[0]
+            df.at[var, 'measure'] = var_list[1]
+            df.at[var, 'atlas'] = var_list[2]
+            region = '_'.join(var_list[3:])
+            df.at[var, 'region'] = region
+            if 'scs' in trim_var:
+                if 'rsirni' in var:
+                    df.at[var, 'measure'] = 'rsirnigm'
+                elif 'rsirnd' in var:
+                    df.at[var, 'measure'] = 'rsirndgm'
+                elif '_scs_' in region:
                     temp = region.split('_scs_')
-                    region_name = f'{region_names[temp[0]][0]}, {region_names[temp[1]][0]}'
-                    hemisphere = region_names[temp[1]][1]
+                    one = region_names.loc[temp[0]]
+                    #print(one, two)
+                    two = region_names.loc[temp[1]]
+                    #print(one, two)
+                    region_name = f'{one["name"]} {two["name"]}'
+                    #print(region_name)
+                    hemisphere = two['hemi']
                     df.at[var, 'long_region'] = region_name
                     df.at[var, 'hemisphere'] = hemisphere
                     df.at[var, 'measure'] = 'subcortical-network fc'
-                elif '_ngd_' in region:
-                    temp = region.split('_ngd_')
-                    if temp[0] == temp[1]:
-                        df.at[var, 'measure'] = 'within-network fc'
-                    else:
-                        df.at[var, 'measure'] = 'between-network fc'
-                    region_name = f'{region_names[temp[0]][0]}, {region_names[temp[1]][0]}'
-                    hemisphere = region_names[temp[1]][1]
-                    df.at[var, 'long_region'] = region_name
-                    df.at[var, 'hemisphere'] = hemisphere
-                elif str(region) not in (region_names.keys()):
-                    missing.append(region)
+                    df.at[var, 'cog'] = f'{one["cog"]} + {two["cog"]}'
+                    df.at[var, 'cog2'] = f'{one["cog2"]} + {two["cog2"]}'
+                    df.at[var, 'sys'] = f'{one["sys"]} + {two["sys"]}'
                 else:
-                    long_region = region_names[region]
-                    df.at[var, 'long_region'] = long_region[0]
-                    df.at[var, 'hemisphere'] = long_region[1]
+                    pass
+            elif '_ngd_' in region:
+                temp = region.split('_ngd_')
+                if temp[0] == temp[1]:
+                    df.at[var, 'measure'] = 'within-network fc'
+                else:
+                    df.at[var, 'measure'] = 'between-network fc'
+                one = region_names.loc[temp[0]]
+                two = region_names.loc[temp[1]]
+                region_name = f"{one['name']}-{two['name']}"
+                print(one['name'], two['name'], region_name)
+                hemisphere = two['hemi']
+                df.at[var, 'long_region'] = region_name
+                df.at[var, 'hemisphere'] = hemisphere
+                df.at[var, 'cog'] = f'{one["cog"]} + {two["cog"]}'
+                df.at[var, 'cog2'] = f'{one["cog2"]} + {two["cog2"]}'
+                df.at[var, 'sys'] = f'{one["sys"]} + {two["sys"]}'
+            elif str(region) not in (region_names.index):
+                missing.append(region)
+            else:
+                one = region_names.loc[region]
+                df.at[var, 'long_region'] = one['name']
+                df.at[var, 'hemisphere'] = one['hemi']
+                df.at[var, 'cog'] = one["cog"]
+                df.at[var, 'cog2'] = one["cog2"]
+                df.at[var, 'sys'] = one["sys"]
 
         df = df[df['measure'] != 't1w']
         df = df[df['measure'] != 't2w']
     else:
         pass
-    
+
     print(f'missed {len(missing)} regions bc they weren\'t in the dict')
     return df
 
