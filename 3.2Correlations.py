@@ -1,16 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[10]:
-
-
-
-pip install pyreadr
-
-
-# In[11]:
-
-
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -18,74 +8,31 @@ import matplotlib.pyplot as plt
 
 import pyreadr
 
-
-# In[2]:
-
-
 from os.path import join
 from scipy.stats import spearmanr
 
-
-# In[3]:
-
-
-PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis//"
+PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis/"
 DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
+thk_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'smri_thick_age-SA.pkl'))
+var_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'rsfmri_var_age-SA.pkl'))
+rni_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'dmri_rsirnigm_age-SA.pkl'))
+rnd_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'dmri_rsirndgm_age-SA.pkl'))
 
-# In[4]:
-
-
-thk_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'smri_thick_age-SA.csv'),
-    index_col=0, header=0
-)
-var_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'rsfmri_var_age-SA.csv'),
-    index_col=0, header=0
-)
-rni_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'dmri_rsirnigm_age-SA.csv'),
-    index_col=0, header=0
-)
-rnd_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'dmri_rsirndgm_age-SA.csv'),
-    index_col=0, header=0
-)
-
-
-# In[5]:
-
-
-# no need to do this for each of the SA/age dfs
-# just showing you the structure of the data
-rnd_df.head()
-
-
-# In[12]:
-
-
-# read in each .Rda file and run correlations
-result = pyreadr.read_r(join(PROJ_DIR, OUTP_DIR, 'residualized_rnd.Rda'))
-residualized_rnd = result['Group1_residuals']
-
-
-# In[13]:
-
+change_scores =  pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'residualized_change_scores.pkl'))
 
 # this cell does the correlations
-
+residualized_thk = change_scores.filter(like="smri_thick_cdk")
+residualized_rnd = change_scores.filter(like="dmri_rsirndgm_cdk_")
+residualized_rni = change_scores.filter(like="dmri_rsirnigm_cdk_")
+residualized_var = change_scores.filter(like="rsfmri_var_cdk")
 # first, make empty dataframes that we'll fill in the for loop
 # for s-a axis loading corrs/alignment
 sa_rnd_corrs = pd.DataFrame()
 # and for age-10 map corrs/alignment
 age_rnd_corrs = pd.DataFrame()
-
-
-# In[14]:
-
 
 # now for each person (i),
 for i in residualized_rnd.index:
@@ -96,7 +43,7 @@ for i in residualized_rnd.index:
     # fix the index so that it matches the SA-axis rank
     temp1.index = [var.split('.')[0] for var in temp1.index]
     # just grab the S-A axis rank column from rnd_df
-    temp2 = rnd_df['SA_rank']
+    temp2 = rnd_df['SA_avg']
     # rename it so that we know these are per-region s-a axis values
     temp2.name = 'sa_axis'
     # put those two mini-dfs together to make life easier
@@ -108,118 +55,38 @@ for i in residualized_rnd.index:
     sa_rnd_corrs.at[i,'p'] = p
     sa_rnd_corrs.at[i,'r'] = r
 
+    # and now do it all over for the age map
+    temp2 = rnd_df['age_avg']
+    temp2.name = 'age_effect'
+    temp = pd.concat([temp1, temp2], axis=1).dropna()
+    r,p = spearmanr(temp['ppt'], temp['age_effect'])
 
-# In[15]:
+    age_rnd_corrs.at[i,'p'] = p
+    age_rnd_corrs.at[i,'r'] = r
 
-
-# and now do it all over for the age map
-temp2 = rnd_df['age_avg']
-temp2.name = 'age_effect'
-temp = pd.concat([temp1, temp2], axis=1).dropna()
-r,p = spearmanr(temp['ppt'], temp['age_effect'])
-
-
-# In[16]:
-
-
-age_rnd_corrs.at[i,'p'] = p
-age_rnd_corrs.at[i,'r'] = r
-
-
-# In[17]:
-
-
-sa_rnd_corrs.to_csv(join(PROJ_DIR, OUTP_DIR, 'sa_rnd_corrs.csv'))
-sa_rnd_corrs.to_csv(join(PROJ_DIR, OUTP_DIR, 'age_rnd_corrs.csv'))
-
-
-# In[18]:
-
+sa_rnd_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_rnd_corrs.pkl'))
+age_rnd_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_rnd_corrs.pkl'))
 
 # set the plotting settings so our graphs are pretty
 sns.set(context='talk', style='white', palette='husl')
-
-
-# In[22]:
-
 
 # we're going to plot all the correlations
 # and in a different color, the significant correlations @ p < 0.01
 fig,ax = plt.subplots()
 sns.kdeplot(sa_rnd_corrs['r'], fill=True, ax=ax)
-sns.kdeplot(sa_rnd_corrs[sa_rnd_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
+ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
+ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
+#sns.kdeplot(sa_rnd_corrs[sa_rnd_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
 fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rnd_x_sa-axis.png'), bbox_inches='tight')
-
-
-# In[42]:
-
 
 # same for age effect
 fig,ax = plt.subplots()
 sns.kdeplot(age_rnd_corrs['r'], fill=True, ax=ax, warn_singular=False)
-sns.kdeplot(age_rnd_corrs[age_rnd_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
+ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
+ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
+#ax[0,1].axvline(4, lw=4, ls='--', color='#333333', alpha=0.4)
+#sns.kdeplot(age_rnd_corrs[age_rnd_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
 fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rnd_x_age.png'), bbox_inches='tight')
-
-
-# In[38]:
-
-
-age_rnd_corrs.head()
-
-
-# In[39]:
-
-
-sa_rnd_corrs.head()
-
-
-# In[41]:
-
-
-# RNIGM
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-import pyreadr
-
-from os.path import join
-from scipy.stats import spearmanr
-
-
-PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis//"
-DATA_DIR = "data/"
-FIGS_DIR = "figures/"
-OUTP_DIR = "output/"
-
-
-thk_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'smri_thick_age-SA.csv'),
-    index_col=0, header=0
-)
-var_df = pd.read_csv( 
-    join(PROJ_DIR, OUTP_DIR, 'rsfmri_var_age-SA.csv'),
-    index_col=0, header=0
-)
-rni_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'dmri_rsirnigm_age-SA.csv'),
-    index_col=0, header=0
-)
-rnd_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'dmri_rsirndgm_age-SA.csv'),
-    index_col=0, header=0
-)
-
-
-# no need to do this for each of the SA/age dfs
-# just showing you the structure of the data
-# rni_df.head()
-
-
-# read in each .Rda file and run correlations
-result = pyreadr.read_r(join(PROJ_DIR, OUTP_DIR, 'residualized_rnigm.Rda'))
-residualized_rni = result['Group1_residuals']
 
 
 # this cell does the correlations
@@ -239,7 +106,7 @@ for i in residualized_rni.index:
     # fix the index so that it matches the SA-axis rank
     temp1.index = [var.split('.')[0] for var in temp1.index]
     # just grab the S-A axis rank column from rni_df
-    temp2 = rni_df['SA_rank']
+    temp2 = rni_df['SA_avg']
     # rename it so that we know these are per-region s-a axis values
     temp2.name = 'sa_axis'
     # put those two mini-dfs together to make life easier
@@ -260,8 +127,8 @@ for i in residualized_rni.index:
     age_rni_corrs.at[i,'p'] = p
     age_rni_corrs.at[i,'r'] = r
 
-sa_rni_corrs.to_csv(join(PROJ_DIR, OUTP_DIR, 'sa_rni_corrs.csv'))
-sa_rni_corrs.to_csv(join(PROJ_DIR, OUTP_DIR, 'age_rni_corrs.csv'))
+sa_rni_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_rni_corrs.pkl'))
+age_rni_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_rni_corrs.pkl'))
 
 
 # set the plotting settings so our graphs are pretty
@@ -271,7 +138,9 @@ sns.set(context='talk', style='white', palette='husl')
 # and in a different color, the significant correlations @ p < 0.01
 fig,ax = plt.subplots()
 sns.kdeplot(sa_rni_corrs['r'], fill=True, ax=ax, warn_singular=False)
-sns.kdeplot(sa_rni_corrs[sa_rni_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
+ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
+ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
+#sns.kdeplot(sa_rni_corrs[sa_rni_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
 fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rni_x_sa-axis.png'), bbox_inches='tight')
 
 
@@ -279,77 +148,11 @@ fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rni_x_sa-axis.png'), bbox_inches='tight')
 # same for age effect
 fig,ax = plt.subplots()
 sns.kdeplot(age_rni_corrs['r'], fill=True, ax=ax, warn_singular=False)
-sns.kdeplot(age_rni_corrs[age_rni_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
+ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
+ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
+#sns.kdeplot(age_rni_corrs[age_rni_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
 fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rni_x_age.png'), bbox_inches='tight')
 
-
-# In[40]:
-
-
-# no need to do this for each of the SA/age dfs
-# just showing you the structure of the data
-rni_df.head()
-
-
-# In[43]:
-
-
-age_rni_corrs.head()
-
-
-# In[37]:
-
-
-sa_rni_corrs.head()
-
-
-# In[45]:
-
-
-# RSFMRI
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-import pyreadr
-
-from os.path import join
-from scipy.stats import spearmanr
-
-
-PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis//"
-DATA_DIR = "data/"
-FIGS_DIR = "figures/"
-OUTP_DIR = "output/"
-
-
-thk_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'smri_thick_age-SA.csv'),
-    index_col=0, header=0
-)
-var_df = pd.read_csv( 
-    join(PROJ_DIR, OUTP_DIR, 'rsfmri_var_age-SA.csv'),
-    index_col=0, header=0
-)
-rni_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'dmri_rsirnigm_age-SA.csv'),
-    index_col=0, header=0
-)
-rnd_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'dmri_rsirndgm_age-SA.csv'),
-    index_col=0, header=0
-)
-
-
-# no need to do this for each of the SA/age dfs
-# just showing you the structure of the data
-# var_df.head()
-
-
-# read in each .Rda file and run correlations
-result = pyreadr.read_r(join(PROJ_DIR, OUTP_DIR, 'residualized_rsfmri.Rda'))
-residualized_var = result['Group1_residuals']
 
 
 # this cell does the correlations
@@ -369,7 +172,7 @@ for i in residualized_var.index:
     # fix the index so that it matches the SA-axis rank
     temp1.index = [var.split('.')[0] for var in temp1.index]
     # just grab the S-A axis rank column from var_df
-    temp2 = var_df['SA_rank']
+    temp2 = var_df['SA_avg']
     # rename it so that we know these are per-region s-a axis values
     temp2.name = 'sa_axis'
     # put those two mini-dfs together to make life easier
@@ -390,8 +193,8 @@ for i in residualized_var.index:
     age_var_corrs.at[i,'p'] = p
     age_var_corrs.at[i,'r'] = r
 
-sa_var_corrs.to_csv(join(PROJ_DIR, OUTP_DIR, 'sa_var_corrs.csv'))
-sa_var_corrs.to_csv(join(PROJ_DIR, OUTP_DIR, 'age_var_corrs.csv'))
+sa_var_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_var_corrs.pkl'))
+age_var_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_var_corrs.pkl'))
 
 
 # set the plotting settings so our graphs are pretty
@@ -401,7 +204,9 @@ sns.set(context='talk', style='white', palette='husl')
 # and in a different color, the significant correlations @ p < 0.01
 fig,ax = plt.subplots()
 sns.kdeplot(sa_var_corrs['r'], fill=True, ax=ax, warn_singular=False)
-sns.kdeplot(sa_var_corrs[sa_var_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
+ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
+ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
+#sns.kdeplot(sa_var_corrs[sa_var_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
 fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rsfmri_x_sa-axis.png'), bbox_inches='tight')
 
 
@@ -409,57 +214,10 @@ fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rsfmri_x_sa-axis.png'), bbox_inches='tight
 # same for age effect
 fig,ax = plt.subplots()
 sns.kdeplot(age_var_corrs['r'], fill=True, ax=ax, warn_singular=False)
-sns.kdeplot(age_var_corrs[age_var_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
+ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
+ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
+#sns.kdeplot(age_var_corrs[age_var_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
 fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rsfmri_x_age.png'), bbox_inches='tight')
-
-
-# In[46]:
-
-
-# THICK
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-import pyreadr
-
-from os.path import join
-from scipy.stats import spearmanr
-
-
-PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis//"
-DATA_DIR = "data/"
-FIGS_DIR = "figures/"
-OUTP_DIR = "output/"
-
-
-thk_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'smri_thick_age-SA.csv'),
-    index_col=0, header=0
-)
-var_df = pd.read_csv( 
-    join(PROJ_DIR, OUTP_DIR, 'rsfmri_var_age-SA.csv'),
-    index_col=0, header=0
-)
-rni_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'dmri_rsirnigm_age-SA.csv'),
-    index_col=0, header=0
-)
-rnd_df = pd.read_csv(
-    join(PROJ_DIR, OUTP_DIR, 'dmri_rsirndgm_age-SA.csv'),
-    index_col=0, header=0
-)
-
-
-# no need to do this for each of the SA/age dfs
-# just showing you the structure of the data
-# thk_df.head()
-
-
-# read in each .Rda file and run correlations
-result = pyreadr.read_r(join(PROJ_DIR, OUTP_DIR, 'residualized_thick.Rda'))
-residualized_thk = result['Group1_residuals']
 
 
 # this cell does the correlations
@@ -479,7 +237,7 @@ for i in residualized_thk.index:
     # fix the index so that it matches the SA-axis rank
     temp1.index = [var.split('.')[0] for var in temp1.index]
     # just grab the S-A axis rank column from thk_df
-    temp2 = thk_df['SA_rank']
+    temp2 = thk_df['SA_avg']
     # rename it so that we know these are per-region s-a axis values
     temp2.name = 'sa_axis'
     # put those two mini-dfs together to make life easier
@@ -500,8 +258,8 @@ for i in residualized_thk.index:
     age_thk_corrs.at[i,'p'] = p
     age_thk_corrs.at[i,'r'] = r
 
-sa_thk_corrs.to_csv(join(PROJ_DIR, OUTP_DIR, 'sa_thk_corrs.csv'))
-sa_thk_corrs.to_csv(join(PROJ_DIR, OUTP_DIR, 'age_thk_corrs.csv'))
+sa_thk_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_thk_corrs.pkl'))
+age_thk_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_thk_corrs.pkl'))
 
 
 # set the plotting settings so our graphs are pretty
@@ -511,7 +269,9 @@ sns.set(context='talk', style='white', palette='husl')
 # and in a different color, the significant correlations @ p < 0.01
 fig,ax = plt.subplots()
 sns.kdeplot(sa_thk_corrs['r'], fill=True, ax=ax, warn_singular=False)
-sns.kdeplot(sa_thk_corrs[sa_thk_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
+ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
+ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
+#sns.kdeplot(sa_thk_corrs[sa_thk_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
 fig.savefig(join(PROJ_DIR, FIGS_DIR, 'thk_x_sa-axis.png'), bbox_inches='tight')
 
 
@@ -519,12 +279,7 @@ fig.savefig(join(PROJ_DIR, FIGS_DIR, 'thk_x_sa-axis.png'), bbox_inches='tight')
 # same for age effect
 fig,ax = plt.subplots()
 sns.kdeplot(age_thk_corrs['r'], fill=True, ax=ax, warn_singular=False)
-sns.kdeplot(age_thk_corrs[age_thk_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
+ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
+ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
+#sns.kdeplot(age_thk_corrs[age_thk_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
 fig.savefig(join(PROJ_DIR, FIGS_DIR, 'thk_x_age.png'), bbox_inches='tight')
-
-
-# In[ ]:
-
-
-
-
