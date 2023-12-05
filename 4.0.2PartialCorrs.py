@@ -80,7 +80,7 @@ rs_motion = pd.read_csv(
 ).dropna()
 base_mot = rs_motion.swaplevel(axis=0).loc['baseline_year_1_arm_1'].filter(like='rsfmri').drop(['rsfmri_numtrs', 'rsfmri_nvols', 'rsfmri_tr'], axis=1)
 y2fu_mot = rs_motion.swaplevel(axis=0).loc['2_year_follow_up_y_arm_1'].filter(like='rsfmri').drop(['rsfmri_numtrs', 'rsfmri_nvols', 'rsfmri_tr'], axis=1)
-y4fu_mot = rs_motion.swaplevel(axis=0).loc['4_year_follow_up_y_arm_1'].filter(like='rsfmri').drop(['rsfmri_numtrs', 'rsfmri_nvols', 'rsfmri_tr'], axis=1)
+#y4fu_mot = rs_motion.swaplevel(axis=0).loc['4_year_follow_up_y_arm_1'].filter(like='rsfmri').drop(['rsfmri_numtrs', 'rsfmri_nvols', 'rsfmri_tr'], axis=1)
 
 nones = list(rsfc.filter(regex='rsfmri_c_ngd_.*_ngd_n').columns) + list(rsfc.filter(regex='rsfmri_c_ngd_n_.*').columns)
 rsfc = rsfc.drop(nones, axis=1)
@@ -110,16 +110,62 @@ y2fu_df = rsfc.swaplevel(axis=0).loc['2_year_follow_up_y_arm_1']
 base_df = pd.concat([base_df,base_mot[motion_cols]], axis=1).dropna()
 y2fu_df = pd.concat([y2fu_df,y2fu_mot[motion_cols]], axis=1).dropna()
 #y4fu_df = pd.concat([y4fu_df,y4fu_mot[motion_cols]], axis=1).dropna()
+base_temp = base_df.copy()
+base_temp.columns = [f'{i}-base' for i in base_df.columns]
+y2fu_temp = y2fu_df.copy()
+y2fu_temp.columns = [f'{i}-y2fu' for i in y2fu_df.columns]
 
-base_resid = residualize(base_df.drop(motion_cols, axis=1).values, confounds=base_df[motion_cols].values)
-y2fu_resid = residualize(y2fu_df.drop(motion_cols, axis=1).values, confounds=y2fu_df[motion_cols].values)
-#y4fu_resid = residualize(y4fu_df.drop(motion_cols, axis=1).values, confounds=y4fu_df[motion_cols].values)
+all_the_things = pd.concat([base_temp, y2fu_temp], axis=1).dropna()
+for col in motion_cols:
+    all_the_things[f'{col}-avg'] = (all_the_things[f'{col}-base'] + all_the_things[f'{col}-y2fu']) / 2
 
-base_resid = pd.DataFrame(base_resid, index=base_df.index, columns=base_df.drop(motion_cols, axis=1).columns)
-y2fu_resid = pd.DataFrame(y2fu_resid, index=y2fu_df.index, columns=y2fu_df.drop(motion_cols, axis=1).columns)
-#y4fu_resid = pd.DataFrame(y4fu_resid, index=y4fu_df.index, columns=y4fu_df.drop(motion_cols, axis=1).columns)
+corrs = ['correlation', 'semipartial_base', 'semipartial_y2fu', 'partial']
+stats = ['r', 'ci95', 'p(r)']
+cols = pd.MultiIndex.from_product([corrs, stats])
+corr_semi = pd.DataFrame(
+    index=conns,
+    columns=cols
+)
 
-base_resid.to_pickle(join(PROJ_DIR, DATA_DIR, 'rsfc_sans_motion-baseline.pkl'))
-y2fu_resid.to_pickle(join(PROJ_DIR, DATA_DIR, 'rsfc_sans_motion-2yearfup.pkl'))
+for conn in conns:
+    pmr = pg.corr(
+        all_the_things[f'{conn}-base'], 
+        all_the_things[f'{conn}-y2fu'], 
+        method='spearman'
+    )
+    corr_semi.at[conn, ('correlation', 'r')] = pmr['r'].values[0]
+    corr_semi.at[conn, ('correlation', 'ci95')] = pmr['CI95%'].values[0]
+    corr_semi.at[conn, ('correlation', 'p(r)')] = pmr['p-val'].values[0]
+    sp0 = pg.partial_corr(
+        all_the_things, 
+        f'{conn}-base', 
+        f'{conn}-y2fu', 
+        x_covar=[f'{i}-base' for i in motion_cols],
+        method='spearman'
+    )
+    corr_semi.at[conn, ('semipartial_base', 'r')] = sp0['r'].values[0]
+    corr_semi.at[conn, ('semipartial_base', 'ci95')] = sp0['CI95%'].values[0]
+    corr_semi.at[conn, ('semipartial_base', 'p(r)')] = sp0['p-val'].values[0]
+    sp2 = pg.partial_corr(
+        all_the_things.dropna(), 
+        f'{conn}-base', 
+        f'{conn}-y2fu', 
+        y_covar=[f'{i}-y2fu' for i in motion_cols],
+        method='spearman'
+    )
+    corr_semi.at[conn, ('semipartial_y2fu', 'r')] = sp2['r'].values[0]
+    corr_semi.at[conn, ('semipartial_y2fu', 'ci95')] = sp2['CI95%'].values[0]
+    corr_semi.at[conn, ('semipartial_y2fu', 'p(r)')] = sp2['p-val'].values[0]
+    pcr = pg.partial_corr(
+        all_the_things, 
+        f'{conn}-base', 
+        f'{conn}-y2fu', 
+        covar=[f'{i}-avg' for i in motion_cols],
+        method='spearman'
+    )
+    corr_semi.at[conn, ('partial', 'r')] = pcr['r'].values[0]
+    corr_semi.at[conn, ('partial', 'ci95')] = pcr['CI95%'].values[0]
+    corr_semi.at[conn, ('partial', 'p(r)')] = pcr['p-val'].values[0]
 
-print(base_resid.describe(), '\n', y2fu_resid.describe())
+corr_semi.to_pickle(join(PROJ_DIR, OUTP_DIR, 'deltafc-timepoint_correlations.pkl'))
+#print(corr_semi.describe())
