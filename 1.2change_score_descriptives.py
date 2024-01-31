@@ -39,7 +39,7 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, "data_qcd.csv"), index_col=0, header=0)
+df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
 
 df.drop(list(df.filter(regex='lesion.*').columns), axis=1, inplace=True)
 df.drop(list(df.filter(regex='.*_cf12_.*').columns), axis=1, inplace=True)
@@ -97,14 +97,14 @@ concepts = {'morph': ['thick',
                       'vol',
                       'dtivol'],
             'cell': ['t1wcnt', 
-                     'rsirni', 
-                     'rsirnd',
                      'rsirnigm', 
                      'rsirndgm',
                      'dtifa', 
                      'dtimd',
                      'dtild', 
-                     'dtitd'],
+                     'dtitd',
+                     'rsirni', 
+                     'rsirnd'],
             'func':['var',
                     'c',
                     'cor',
@@ -198,11 +198,13 @@ sub_df.replace(long_names, inplace=True)
 # apc macro- and microstructure ridge plot
 g = sns.FacetGrid(sub_df, 
                   row="measure", row_order=['GMV', 'CT', 'CA', 'WMV', 
-                                            'G/W', 'FA','MD', 'LD', 'TD',
-                                            'RNI', 'RNI (gm)','RND','RND (gm)'],
+                                            'G/W', 'RNI (gm)', 'RND (gm)',
+                                            'FA','MD', 'LD', 'TD',
+                                            'RNI', 'RND',],
                   hue="measure", hue_order=['GMV', 'CT', 'CA', 'WMV', 
-                                            'G/W', 'FA','MD', 'LD', 'TD',
-                                            'RNI', 'RNI (gm)','RND','RND (gm)'],
+                                            'G/W','RNI (gm)','RND (gm)',
+                                            'FA','MD', 'LD', 'TD',
+                                            'RNI', 'RND',],
                   aspect=15, height=.5, palette=morph_cell_pal)
 
 # Draw the densities in a few steps
@@ -231,7 +233,7 @@ g.figure.subplots_adjust(hspace=-.25)
 g.set_titles("")
 g.set(yticks=[], ylabel="")
 g.despine(bottom=True, left=True)
-g.savefig(f'../{FIGS_DIR}/apr_morpcell.png', dpi=400)
+g.savefig(f'{PROJ_DIR}/{FIGS_DIR}/apr_morpcell.png', dpi=600)
 
 sub_df = descriptives[descriptives['concept'] == 'function']
 sub_df2 = descriptives[descriptives['concept'] == 'function']
@@ -265,7 +267,7 @@ g.figure.subplots_adjust(hspace=-.25)
 g.set_titles("")
 g.set(yticks=[], ylabel="")
 g.despine(bottom=True, left=True)
-g.savefig(f'../{FIGS_DIR}/apr_function.png', dpi=400)
+g.savefig(f'{PROJ_DIR}/{FIGS_DIR}/apr_function.png', dpi=600)
 
 # calculate descriptives
 desc_summ = pd.DataFrame(index=measures, columns=['mean', 'sdev', '(Q1, Q3)', '(min, max)'])
@@ -351,7 +353,9 @@ pals = {'cortical-thickness': morph_cmap,
             'tract-RNI': cell_cmap,
         'cortical-network-connectivity': func_cmap,
             'subcortical-network-connectivity': func_cmap}
-
+sns.set(style='white', context='poster')
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams['font.monospace'] = 'Courier New'
 # let's plot APC on brains pls
 for measure in measures.keys():
     #print(measure, measures[measure])
@@ -389,25 +393,26 @@ for measure in measures.keys():
             else:
                 pass
         meas_nimg = nib.Nifti1Image(all_tracts_arr, tract_nii.affine)
+        meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_{measure}.nii')
         plt.figure(layout='tight')
-        #fig,ax = plt.subplots(ncols=2, gridspec_kw=grid_kw, figsize=(24,4))
+        fig,ax = plt.subplots(figsize=(4,2))
         q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=0.01,
-                               cut_coords=[-10,3,18,40], 
+                               cut_coords=[-10, 3, 18, 40],  
                                black_bg=False,
                                    vmax=vmax*1.1, 
-                                   annotate=True, cmap=pals[measure], colorbar=False,
-                                   #axes=ax[0]
-                              )
-        q.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400)
-        r = plotting.plot_glass_brain(meas_nimg, display_mode='lyrz',  threshold=.01,
-                               #cut_coords=[35,50,65,85], 
-                               black_bg=False, alpha=0.4,
-                                   vmax=vmax*1.1, 
                                    annotate=False, cmap=pals[measure], colorbar=False,
-                                   #axes=ax[0]
+                                   axes=ax
                               )
+        fig.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=600, bbox_inches='tight')
+        #r = plotting.plot_glass_brain(meas_nimg, display_mode='lyrz',  threshold=.01,
+        #                       #cut_coords=[35,50,65,85], 
+        #                       black_bg=False, alpha=0.4,
+        #                           vmax=vmax*1.1, 
+        #                           annotate=False, cmap=pals[measure], colorbar=False,
+        #                           #axes=ax[0]
+        #                      )
         #ax[1].set_visible(False)
-        r.savefig(f'{PROJ_DIR}/figures/APC_{measure}-glass.png', dpi=400)
+        #r.savefig(f'{PROJ_DIR}/figures/APC_{measure}-glass.png', dpi=600)
     else:
         #print(nifti_mapping.loc[meas_vars]['atlas_fname'])
         atlas_fname = nifti_mapping.loc[meas_vars]['atlas_fname'].unique()[0]
@@ -425,19 +430,20 @@ for measure in measures.keys():
                 avg = descriptives.at[i, 'annualized percent change']
                 plotting_arr[np.where(atlas_arr == value)] = avg
         meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+        meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_{measure}.nii')
         if 'subcortical' in measure:
-            fig,ax = plt.subplots()
+            fig,ax = plt.subplots(figsize=(4,2))
             #plt.figure(layout='tight')
             q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=0.01,
                                    cut_coords=[-20, -10, 0, 10], vmax=vmax*1.1, 
                                    annotate=False, cmap=pals[measure], colorbar=False,
                                    symmetric_cbar=False, axes=ax)
 
-            fig.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400, bbox_inches='tight')
+            fig.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=600, bbox_inches='tight')
             plt.close(fig)
         elif 'cortical' in measure:
             figure = plot_surfaces(meas_nimg, fsaverage, pals[measure], vmax, 0.01)
-            figure.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=400, bbox_inches='tight')
+            figure.savefig(f'{PROJ_DIR}/figures/APC_{measure}.png', dpi=600, bbox_inches='tight')
             plt.close(figure)
 
 # gather variables (network names) for plotting connectivity
@@ -453,6 +459,9 @@ btwn_fc_src = [i.split('.')[0].split('_')[3] for i in btwn_fc]
 btwn_fc_trgt = [i.split('.')[0].split('_')[-1] for i in btwn_fc]
 
 vmax = 3.5
+sns.set(style='white', context='poster')
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams['font.monospace'] = 'Courier New'
 
 # okay, now we're plotting between and within network connectivity
 #within-network fc is easy to plot bc there's only one HSK value per network (per fligner_var)
@@ -473,11 +482,15 @@ for i in meas_df.index:
         plotting_arr[np.where(atlas_arr == value)] = descriptives.at[i,'annualized percent change']
 
 meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_FCw.nii')
 figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, .01)
-figure.savefig(f'{PROJ_DIR}/figures/APCxFCw.png', dpi=400)
+figure.savefig(f'{PROJ_DIR}/figures/APCxFCw.png', dpi=600)
 
 scs_varnames = [i.split('.')[0].split('_')[-1] for i in fc_scor_var]
 
+sns.set(style='white', context='poster')
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams['font.monospace'] = 'Courier New'
 
 # now subcortical-cortical functional connectivity
 sig = []
@@ -513,7 +526,8 @@ for i in avgs.index:
     else:
         plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'apc']        
 meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
-fig,ax = plt.subplots(#ncols=2, gridspec_kw=grid_kw, figsize=(24,4)
+meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_FCscs.nii')
+fig,ax = plt.subplots(figsize=(4,2)
                      )
 #plt.figure(layout='tight')
 q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=.01,
@@ -522,7 +536,7 @@ q = plotting.plot_stat_map(meas_nimg, display_mode='z',  threshold=.01,
                        symmetric_cbar=False, axes=ax)
 
 #ax[1].set_visible(False)
-fig.savefig(f'{PROJ_DIR}/figures/APCxFCs_scs.png', dpi=400, bbox_inches='tight')
+fig.savefig(f'{PROJ_DIR}/figures/APCxFCs_scs.png', dpi=600, bbox_inches='tight')
 plt.close(fig)
 
 # between-network FC is tough bc we have to average all of a networks HSK values
@@ -532,7 +546,13 @@ meas_df = descriptives.loc[btwn_fc]
 meas_df.loc[btwn_fc, 'from_ntwk'] = btwn_fc_src
 meas_df.loc[btwn_fc, 'to_ntwk'] = btwn_fc_trgt
 avgs = pd.DataFrame()
-for ntwk in np.unique(btwn_fc_src):
+
+# visual network is never the "source" network
+# because duplicate recirpocal connections
+# are not included in the dataset
+ntwks = btwn_fc_src + ['vs']
+
+for ntwk in ntwks:
     temp_df = meas_df[meas_df['from_ntwk'] == ntwk]
     temp_df2 = meas_df[meas_df['to_ntwk'] == ntwk]
     temp_df = pd.concat([temp_df, temp_df2], axis=0)
@@ -550,17 +570,32 @@ atlas_nii = nib.load(atlas_fname)
 atlas_arr = atlas_nii.get_fdata()
 plotting_arr = np.zeros(atlas_arr.shape)
 sig = 0
+
+###############
+# per-network FC plotting here
+###############
+sns.set(style='white', context='poster')
+plt.rcParams["font.family"] = "monospace"
+plt.rcParams['font.monospace'] = 'Courier New'
+
 for i in avgs.index:
-    j = i.split('.')[0]
+    if not 'vs.' in i:
+        j = i.split('.')[0]
+    elif not 'vta' in i:
+        j = 'rsfmri_c_ngd_vs_ngd_vs'
+    else: 
+        j = i.split('.')[0]
     value = nifti_mapping.loc[j]['atlas_value']
+    
     #print(i, value)
     if value is np.nan:
         pass
     else:
         plotting_arr[np.where(atlas_arr == value)] = avgs.at[i,'apc']        
 meas_nimg = nib.Nifti1Image(plotting_arr, atlas_nii.affine)
+meas_nimg.to_filename(f'{PROJ_DIR}/{OUTP_DIR}/APC_FCb.nii')
 figure = plot_surfaces(meas_nimg, fsaverage, func_cmap, vmax, 0.01)
-figure.savefig(f'{PROJ_DIR}/figures/APCxFCb.png', dpi=400)
+figure.savefig(f'{PROJ_DIR}/figures/APCxFCb.png', dpi=600)
 
 
 morph_cmap = sns.diverging_palette(22, 256.3, s=70, l=50, center="light", n=6, as_cmap=True)
@@ -580,14 +615,14 @@ cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal',
                               )
 ax.set_xlabel('Annualized percent change')
 
-plt.savefig(f'{PROJ_DIR}/figures/morph-cmap_1-{-vmax,vmax}.png', bbox_inches='tight', dpi=400)
+plt.savefig(f'{PROJ_DIR}/figures/morph-cmap_1-{-vmax,vmax}.png', bbox_inches='tight', dpi=600)
 
 cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal', 
                                cmap=cell_cmap, 
                                values=range_, 
                               )
 ax.set_xlabel('Annualized percent change')
-plt.savefig(f'{PROJ_DIR}/figures/cell-cmap_1-{-vmax,vmax}.png', bbox_inches='tight', dpi=400)
+plt.savefig(f'{PROJ_DIR}/figures/cell-cmap_1-{-vmax,vmax}.png', bbox_inches='tight', dpi=600)
 
 vmax = 3.5
 range_ = np.arange(-int(vmax*5), int(vmax*5)) / 5.
@@ -597,4 +632,5 @@ cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal',
                                values=range_, 
                               )
 ax.set_xlabel('Annualized percent change')
+
 plt.savefig(f'{PROJ_DIR}/figures/func-cmap_1-{-vmax,vmax}.png', bbox_inches='tight', dpi=400)

@@ -13,9 +13,7 @@ DATA_DIR = 'data'
 OUT_DIR = 'output'
 FIG_DIR = 'figures'
 
-df = pd.read_csv(join(PROJ_DIR, DATA_DIR, 'data.csv'), 
-                 header=0, 
-                 index_col='subjectkey')
+df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'data.pkl'))
 
 demographics = [#"demo_prnt_ethn_v2",
                 "demo_prnt_marital_v2",
@@ -64,16 +62,18 @@ for var in demographics + mri_qc:
 demo_df = df[demo_and_qc]
 df = None
 
-qc_df = pd.read_csv(join(PROJ_DIR, DATA_DIR, 'data_qcd.csv'), 
-                 header=0, 
-                 index_col='subjectkey')
-qc_ppts = qc_df.dropna(how='all').index
+qc_df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'data_qcd.pkl'))
+print(np.sum(qc_df.columns.duplicated()))
+
+qc_ppts = qc_df.dropna(thresh=500).index
 qc_df = None
 
 
 no_2yfu = demo_df[demo_df["interview_date.2_year_follow_up_y_arm_1"].isna() == True].index
 lost_N = len(no_2yfu)
 total_N = len(demo_df.index)
+
+print(set(qc_ppts) - set(demo_df.index))
 
 y2fu_df = demo_df.loc[qc_ppts]
 

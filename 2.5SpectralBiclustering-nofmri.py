@@ -5,19 +5,24 @@ import enlighten
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import pingouin as pg
 import matplotlib.pyplot as plt
 
 from os.path import join, exists
-from sklearn.experimental import enable_halving_search_cv
-from sklearn.model_selection import HalvingGridSearchCV, train_test_split
-from sklearn.mixture import BayesianGaussianMixture
+#from sklearn.experimental import enable_halving_search_cv
+#from sklearn.model_selection import HalvingGridSearchCV#, train_test_split
+from sklearn.cluster import SpectralBiclustering
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
+from sklearn.metrics.pairwise import polynomial_kernel
+from sklearn.preprocessing import Normalizer, StandardScaler
 
 from utils import residualize
 
-sns.set(style='whitegrid', context='paper')
-plt.rcParams["font.family"] = "monospace"
-plt.rcParams['font.monospace'] = 'Courier New'
+from datetime import datetime
+
+today = datetime.today().strftime('%Y-%m-%d')
+
+sns.set(style='white', context='paper')
+plt.rcParams["font.family"] = "Avenir Next Condensed"
 
 
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_vbgmm/"
@@ -26,7 +31,10 @@ FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
 df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
-#imputed_dcg = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "destrieux+gordon_MICEimputed_data.csv")), 
+
+# there are duplicated indices... why?
+df.columns[df.columns.duplicated()]
+#imputed_dcg = pd.read_csv(join(join(PROJ_DIR, DATA_DIR, "destrieux+gordon_MICEimputed_data-{today}.csv")), 
 #                          index_col='subjectkey', 
 #                          header=0)
 
@@ -35,12 +43,6 @@ scanners = [
     "GE MEDICAL SYSTEMS", 
     "Philips Medical Systems"
     ]
-
-scanner_ppts = {}
-for scanner in scanners:
-    scanner_ppts[scanner] = df[df['mri_info_manufacturer.baseline_year_1_arm_1'] == scanner].index
-
-
 
 noisy_modalities = {
     'smri': [
@@ -67,13 +69,17 @@ timepoints = [
     'change_score'
 ]
 
+scanner_ppts = {}
+for scanner in scanners:
+    scanner_ppts[scanner] = df[df['mri_info_manufacturer.baseline_year_1_arm_1'] == scanner].index
+
 imaging = df.filter(regex='.*mri.*change_score')
 for cov in [item for sublist in noisy_modalities.values() for item in sublist]:
     #print(cov)
     for tp in timepoints:
         if f'{cov}.{tp}' in imaging.columns:
             imaging = imaging.drop(f'{cov}.{tp}', axis=1)
-imaging_cols = list(imaging.columns)
+imaging_cols = list(set(imaging.columns) - set(df.filter(regex='rsfmri.*change_score').columns))
 imaging_cols.append('rel_family_id.baseline_year_1_arm_1')
 
 
@@ -81,48 +87,30 @@ atlases = {'desikankillany': df,
            #'destrieux+gordon': imputed_dcg
         }
 
-n_components = 25
+cluster_range = list(range(2,15))
+#cluster_range = list(range(2,6))
 
-parameter_grid = {
-    'weight_concentration_prior_type': [
-        #'dirichlet_process', 
-        'dirichlet_distribution'
-        ],
-    'weight_concentration_prior': [
-        #10**-3,
-        #10**-2,
-        #10**-1,
-        #10**0,
-        10**7,
-        10**8,
-        10**9
-    ],
-    #'n_components': list(range(2,10)),
-    'covariance_type': [
-        'diag', 'spherical'
-        ]
-}
-
-estimator = BayesianGaussianMixture(
-    n_components=n_components,
-    max_iter=1000
-)
+#scoring = make_scorer(davies_bouldin_score, greater_is_better=False)
 
 # hyper parameter tuning
-iterations = 2
+iterations = 10
 manager = enlighten.get_manager()
-tocks = manager.counter(total=iterations * len(atlases.keys()) * len(scanners),
+tocks = manager.counter(total=iterations * (len(cluster_range) ** 2) * len(scanners),
                         desc='Number of Iterations', 
                         unit='iter')
 max_comp = {}
 for atlas in atlases.keys():
     for scanner in scanners:
-        big_results = pd.DataFrame()
-        best_params = pd.DataFrame()
-        n_comps = 0
         ppts = scanner_ppts[scanner]
+        best_params = pd.DataFrame()
+        ppt_labels = pd.DataFrame(index=ppts)
+        mri_labels = pd.DataFrame(index=imaging_cols)
+
         data = atlases[atlas]
         data = data.loc[ppts][imaging_cols]
+        #print("duplicated columns",
+        #      np.sum(data.columns.duplicated()),
+        #      '\n', data.columns[data.columns.duplicated()])
         for i in range(0,iterations):
             all_subj = data.index.to_list()
             for id_ in data['rel_family_id.baseline_year_1_arm_1']:
@@ -133,9 +121,10 @@ for atlas in atlases.keys():
                     all_subj = list(set(all_subj) - set(siblings))
                 else:
                     pass
+            
             data = data.loc[all_subj]
+            data.index.duplicated()
             temp_data = data.drop('rel_family_id.baseline_year_1_arm_1', axis=1).dropna()
-            print(scanner, 'ppts ', len(temp_data.index))
             resid_temp = pd.DataFrame()
             for modality in noisy_modalities.keys():
                 cov_df = pd.DataFrame()
@@ -154,43 +143,39 @@ for atlas in atlases.keys():
                 #print(mini_dset.describe())
                 temp2 = residualize(mini_dset[img_cols], confounds=mini_dset[covs])
                 resid_temp = pd.concat([resid_temp, temp2], axis=1)
+            temp_data = pd.DataFrame(
+                Normalizer().fit_transform(resid_temp), 
+                index=resid_temp.index, 
+                columns=resid_temp.columns)
+            #print(data.isna().sum())
+        
+            for n_clusters in cluster_range:
+                for n_row_clust in cluster_range:
+                    estimator = SpectralBiclustering(
+                                    #n_best=n_best,
+                                    #n_components=n_best + 1,
+                                    method='bistochastic',
+                                    n_clusters=(n_row_clust, n_clusters),
+                                ).fit(temp_data)
+                    parameters = pd.Series(estimator.get_params(), name=f'{n_row_clust, n_clusters} {i}')
+                    parameters.at['ppt_clusters'] = n_row_clust
+                    parameters.at['mri_clusters'] = n_clusters
+                    
+                    parameters.at['col_davies_bouldin'] =  davies_bouldin_score(temp_data.T, estimator.column_labels_)
+                    parameters.at['row_davies_bouldin'] =  davies_bouldin_score(temp_data, estimator.row_labels_)
 
-            # need train test split
-            search = HalvingGridSearchCV(estimator, 
-                                        parameter_grid, 
-                                        factor=4, 
-                                        min_resources=200,
-                                        cv=5,
-                                        verbose=0, 
-                                        n_jobs=-1).fit(resid_temp)
-            parameters = pd.Series(search.best_estimator_.get_params(), name=i)
-            parameters['test_score'] = search.best_estimator_.score(resid_temp)
-            labels = search.best_estimator_.predict(resid_temp)
-            for k in range(0, parameters['n_components']):
-                parameters.loc[k] = np.sum(labels == k)
-                if np.max(labels) > n_comps:
-                    n_comps = np.max(labels)
-            nonzero_components = np.sum(parameters.loc[list(range(0, parameters['n_components']))] != 0)
-            parameters.loc['n_components_nonzero'] = nonzero_components
-            
-            #results = pd.DataFrame.from_dict(search.cv_results_)
-            #results["params_str"] = results.params.apply(str)
-            parameters.loc["converged"] = search.best_estimator_.converged_
-            
-            #big_results = pd.concat([big_results, results], axis=0)
-            
-            best_params = pd.concat([best_params, parameters], axis=1)
-            tocks.update()
+                    parameters.at['col_silhouette'] =  silhouette_score(temp_data.T, estimator.column_labels_)
+                    parameters.at['row_silhouette'] =  silhouette_score(temp_data, estimator.row_labels_)
+                    
+                    best_params = pd.concat([best_params, parameters], axis=1)
+                    tocks.update()
+                    
         try:
-            #big_results.to_csv(join(PROJ_DIR, 
-            #                        OUTP_DIR, 
-            #                        f'bgmm_{atlas}-{scanner}_cv-results.csv'))
+
             best_params.T.to_csv(join(PROJ_DIR,
                                     OUTP_DIR,
-                                    f'bgmm_{atlas}-{scanner}_best-models.csv'))
+                                    f'sbc-dbs_{atlas}-{scanner}_best-models-{today}-nofMRI.csv'))
         except:
-            #big_results.to_csv(join('..', 
-            #                        OUTP_DIR, 
-            #                        f'bgmm_{atlas}-{scanner}_cv-results.csv'))
-            best_params.T.to_csv(join(OUTP_DIR,
-                                    f'bgmm_{atlas}-{scanner}_best-models.csv'))
+
+            best_params.T.to_csv(join('/Users/katherine.b/Dropbox/Projects/deltaABCD_clustering/output',
+                                    f'sbc-dbs_{atlas}-{scanner}_best-models-{today}-nofMRI.csv'))
