@@ -30,6 +30,8 @@ mri_df <- read.csv("/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/Data/release
 
 mri_df <- mri_df[mri_df$eventname == "baseline_year_1_arm_1", ]
 rownames(mri_df) <- mri_df$subjectkey
+mri_df <- mri_df[mri_df$mri_info_manufacturer == "SIEMENS", ]
+ppts <- rownames(mri_df)
 
 # load cleaned and prepped  RSI data
 base_dir <- "/Volumes/projects_herting/LABDOCS/Personnel"
@@ -69,7 +71,7 @@ rnd_cols <- colnames(df[, grep(pattern = "dmri_rsirndgm.*\\change_score",
 temp_df <- df[, c(rnd_cols, cov_cols)]
 
 complete_df <- drop_na(temp_df)
-
+complete_df <- complete_df[ppts,]
 #load cleaned and prepped brain measures & covariates
 df_rsi <- complete_df[, rnd_cols]
 

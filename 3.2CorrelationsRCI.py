@@ -21,7 +21,7 @@ var_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'rsfmri_var_age-SA.pkl'))
 rni_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'dmri_rsirnigm_age-SA.pkl'))
 rnd_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'dmri_rsirndgm_age-SA.pkl'))
 
-change_scores =  pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'residualized_change_scores.pkl'))
+change_scores =  pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'residualized_rci.pkl'))
 
 # this cell does the correlations
 residualized_thk = change_scores.filter(like="smri_thick_cdk")
@@ -64,8 +64,8 @@ for i in residualized_rnd.index:
     age_rnd_corrs.at[i,'p'] = p
     age_rnd_corrs.at[i,'r'] = r
 
-sa_rnd_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_rnd_corrs.pkl'))
-age_rnd_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_rnd_corrs.pkl'))
+sa_rnd_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_rnd_corrs-rci.pkl'))
+age_rnd_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_rnd_corrs-rci.pkl'))
 
 # set the plotting settings so our graphs are pretty
 sns.set(context='talk', style='white', palette='husl')
@@ -77,7 +77,7 @@ sns.kdeplot(sa_rnd_corrs['r'], fill=True, ax=ax)
 ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
 ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
 #sns.kdeplot(sa_rnd_corrs[sa_rnd_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rnd_x_sa-axis.png'), bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rnd_x_sa-axis-rci.png'), bbox_inches='tight')
 
 # same for age effect
 fig,ax = plt.subplots()
@@ -86,7 +86,7 @@ ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
 ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
 #ax[0,1].axvline(4, lw=4, ls='--', color='#333333', alpha=0.4)
 #sns.kdeplot(age_rnd_corrs[age_rnd_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rnd_x_age.png'), bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rnd_x_age-rci.png'), bbox_inches='tight')
 
 
 # this cell does the correlations
@@ -127,8 +127,8 @@ for i in residualized_rni.index:
     age_rni_corrs.at[i,'p'] = p
     age_rni_corrs.at[i,'r'] = r
 
-sa_rni_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_rni_corrs.pkl'))
-age_rni_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_rni_corrs.pkl'))
+sa_rni_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_rni_corrs-rci.pkl'))
+age_rni_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_rni_corrs-rci.pkl'))
 
 
 # set the plotting settings so our graphs are pretty
@@ -141,7 +141,9 @@ sns.kdeplot(sa_rni_corrs['r'], fill=True, ax=ax, warn_singular=False)
 ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
 ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
 #sns.kdeplot(sa_rni_corrs[sa_rni_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rni_x_sa-axis.png'), bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rni_x_sa-axis-rci.png'), bbox_inches='tight')
+
+
 
 # same for age effect
 fig,ax = plt.subplots()
@@ -149,7 +151,7 @@ sns.kdeplot(age_rni_corrs['r'], fill=True, ax=ax, warn_singular=False)
 ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
 ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
 #sns.kdeplot(age_rni_corrs[age_rni_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rni_x_age.png'), bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rni_x_age-rci.png'), bbox_inches='tight')
 
 # this cell does the correlations
 
@@ -189,8 +191,8 @@ for i in residualized_var.index:
     age_var_corrs.at[i,'p'] = p
     age_var_corrs.at[i,'r'] = r
 
-sa_var_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_var_corrs.pkl'))
-age_var_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_var_corrs.pkl'))
+sa_var_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_var_corrs-rci.pkl'))
+age_var_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_var_corrs-rci.pkl'))
 
 
 # set the plotting settings so our graphs are pretty
@@ -203,7 +205,8 @@ sns.kdeplot(sa_var_corrs['r'], fill=True, ax=ax, warn_singular=False)
 ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
 ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
 #sns.kdeplot(sa_var_corrs[sa_var_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rsfmri_x_sa-axis.png'), bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rsfmri_x_sa-axis-rci.png'), bbox_inches='tight')
+
 
 # same for age effect
 fig,ax = plt.subplots()
@@ -211,7 +214,7 @@ sns.kdeplot(age_var_corrs['r'], fill=True, ax=ax, warn_singular=False)
 ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
 ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
 #sns.kdeplot(age_var_corrs[age_var_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rsfmri_x_age.png'), bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'rsfmri_x_age-rci.png'), bbox_inches='tight')
 
 
 # this cell does the correlations
@@ -252,8 +255,8 @@ for i in residualized_thk.index:
     age_thk_corrs.at[i,'p'] = p
     age_thk_corrs.at[i,'r'] = r
 
-sa_thk_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_thk_corrs.pkl'))
-age_thk_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_thk_corrs.pkl'))
+sa_thk_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'sa_thk_corrs-rci.pkl'))
+age_thk_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'age_thk_corrs-rci.pkl'))
 
 
 # set the plotting settings so our graphs are pretty
@@ -266,7 +269,8 @@ sns.kdeplot(sa_thk_corrs['r'], fill=True, ax=ax, warn_singular=False)
 ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
 ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
 #sns.kdeplot(sa_thk_corrs[sa_thk_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'thk_x_sa-axis.png'), bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'thk_x_sa-axis-rci.png'), bbox_inches='tight')
+
 
 
 # same for age effect
@@ -275,7 +279,8 @@ sns.kdeplot(age_thk_corrs['r'], fill=True, ax=ax, warn_singular=False)
 ax.axvline(x=0.31, lw=2, ls='--', color='#333333', alpha=0.4)
 ax.axvline(x=-0.31, lw=2, ls='--', color='#333333', alpha=0.4) 
 #sns.kdeplot(age_thk_corrs[age_thk_corrs['p'] < 0.01]['r'], fill=True, ax=ax)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'thk_x_age.png'), bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'thk_x_age-rci.png'), bbox_inches='tight')
+
 
 r_df = pd.concat(
     [
@@ -290,14 +295,13 @@ r_df = pd.concat(
 fig,ax = plt.subplots(figsize=(10,4))
 sns.heatmap(r_df.dropna().sort_values('Cortical thickness').T, ax=ax, cmap='RdBu_r', center=0, vmax=1, vmin=-1)
 ax.set_xticklabels('')
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'SA_corrs_across_measures.png'), dpi=400, bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'SA_corrs_across_measures-rci.png'), dpi=400, bbox_inches='tight')
 
 fig,ax = plt.subplots(figsize=(4,4))
 sns.kdeplot(r_df, palette='Set2', fill=True, ax=ax)
 ax.set_xlabel('')
 ax.set_xlim(-1, 1)
 legend = ax.get_legend()
-legend.set_ncols(2)
-legend.set_bbox_to_anchor((1,-0.1))
+legend.set_bbox_to_anchor((2,1))
 sns.despine()
-fig.savefig(join(PROJ_DIR, FIGS_DIR, 'distribution-SA_corrs_across_measures.png'), dpi=400, bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, 'distribution-SA_corrs_across_measures-rci.png'), dpi=400, bbox_inches='tight')

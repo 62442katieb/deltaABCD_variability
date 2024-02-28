@@ -54,7 +54,6 @@ df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
 #ppts = df.filter(regex="rsfmri_c_.*change_score").dropna().index
 df = df.drop(df.filter(regex='.*change_score', axis=1).columns, axis=1)
 
-
 covariates = {
     'thk': {
         'vlike': "smri_thick_cdk_",
@@ -228,8 +227,8 @@ for measure in list(covariates.keys()):
     #print(base_resid.head(), y2fu_resid.head())
     # calculate change scores
     for col in base_resid.columns:
-        age1 = df['interview_age']
-        age2 = df['interview_age_2']
+        age1 = df['interview_age'] / 12
+        age2 = df['interview_age_2'] / 12
         temp = pd.concat(
             [base_resid[col], y2fu_resid[col], age1, age2], 
             axis=1
@@ -247,10 +246,13 @@ for measure in list(covariates.keys()):
             age2y = age2.loc[i]
             change_scores.at[i, col] = (((y2fu - base) / np.mean([y2fu, base])) * 100) / (age2y - age0y)
             # and rci
-            sem = np.std(temp2.values, ddof=1) / np.sqrt(np.size(temp2.values))
+            s0 = temp2.T.iloc[0].std()
+            s2 = temp2.T.iloc[1].std()
+            r = np.corrcoef(temp2.T.iloc[0],temp2.T.iloc[1])[0,1]
+            sem = np.sqrt(((s0 * np.sqrt(1 - r)) ** 2) + ((s2 * np.sqrt(1 - r)) ** 2))
             #abs_sem = np.std(np.abs(temp.values), ddof=1) / np.sqrt(np.size(temp.values))
             
-            rci.at[i,col] = (y2fu - base) / sem
+            rci.at[i,col] = (y2fu - base) / sem / (age2y - age0y)
 change_scores = pd.concat(
     [
         change_scores, 

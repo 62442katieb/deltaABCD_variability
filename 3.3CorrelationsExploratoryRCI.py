@@ -18,24 +18,25 @@ OUTP_DIR = "output/"
 
 # set the plotting settings so our graphs are pretty
 sns.set(context='talk', style='white', palette='Set2')
-quartile_palette = sns.crayon_palette(['Goldenrod', 'Salmon', 'Razzmatazz', 'Violet (Purple)'])
+quartile_palette = sns.color_palette(['#A2B017', '#D87554', '#9518AA', '#0D0993'])
 
 thk_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'smri_thick_age-SA.pkl'))
 var_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'rsfmri_var_age-SA.pkl'))
 rni_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'dmri_rsirnigm_age-SA.pkl'))
 rnd_df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'dmri_rsirndgm_age-SA.pkl'))
 
-df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'residualized_change_scores.pkl'))
-# ONLY SIEMENS #
-# need to load in 3.0 vars that include head motion and brain volume
+df = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'residualized_rci.pkl'))
 
-smri_apd = df.filter(regex='smri_thick_cdk.*')
+big_df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'data_qcd.pkl'))
+big_df = big_df.drop(big_df.filter(like='mri'), axis=1)
 
-rni_apd = df.filter(regex='dmri_rsirnigm_cdk.*')
+ppts = list(set(df.index) & set(big_df.index))
 
-rnd_apd = df.filter(regex='dmri_rsirndgm_cdk.*')
 
-var_apd = df.filter(regex='rsfmri_var_cdk.*')
+smri_rci = df.filter(regex='smri_thick_cdk.*')
+rni_rci = df.filter(regex='dmri_rsirnigm_cdk.*')
+rnd_rci = df.filter(regex='dmri_rsirndgm_cdk.*')
+var_rci = df.filter(regex='rsfmri_var_cdk.*')
 
 # redo SA rank by hemisphere
 thk_df['hemi'] = [i.split('_')[-1][-2:] for i in thk_df.index]
@@ -57,27 +58,26 @@ right_sorted = rnd_df[rnd_df['hemi'] == 'rh'].sort_values('SA_avg')
 rnd_df = pd.concat([left_sorted, right_sorted])
 #print(rnd_df['SA_avg'])
 
+
 left_sorted = var_df[var_df['hemi'] == 'lh'].sort_values('SA_avg')
 right_sorted = var_df[var_df['hemi'] == 'rh'].sort_values('SA_avg')
 var_df = pd.concat([left_sorted, right_sorted])
 
-smri_long = smri_apd.melt()
+smri_long = smri_rci.melt()
 smri_long.index = smri_long['variable']
 
-rni_long = rni_apd.melt()
+rni_long = rni_rci.melt()
 rni_long.index = rni_long['variable']
 
-rnd_long = rnd_apd.melt()
+rnd_long = rnd_rci.melt()
 rnd_long.index = rnd_long['variable']
 
-var_long = var_apd.melt()
+var_long = var_rci.melt()
 var_long.index = var_long['variable']
-
-big_df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'data_qcd.pkl'))
-big_df = big_df.drop(big_df.filter(like='mri'), axis=1)
 
 f_ppts = list(set(big_df[big_df['sex.baseline_year_1_arm_1'] == 'F'].index) & set(df.index))
 m_ppts = list(set(big_df[big_df['sex.baseline_year_1_arm_1'] == 'M'].index) & set(df.index))
+
 
 for i in smri_long.index.unique():
     smri_long.at[i,'SA_avg'] = thk_df.loc[i]['SA_avg']
@@ -100,23 +100,23 @@ the_data = {
         'name': 'Cortical thickness',
         'vlike': 'smri_thick_cdk',
         'long_df': smri_long,
-        'wide_df': smri_apd,
+        'wide_df': smri_rci,
         'sa_df': thk_df,
-        'order': 3,
+        'order': 2,
     },
     'rnd': {
         'name': 'Directional diffusion',
         'vlike': 'dmri_rsirndgm_cdk',
         'long_df': rnd_long,
-        'wide_df': rnd_apd,
+        'wide_df': rnd_rci,
         'sa_df': rnd_df,
-        'order': 3,
+        'order': 0,
     },
     'rni': {
         'name': 'Isotropic diffusion',
         'vlike': 'dmri_rsirnigm_cdk',
         'long_df': rni_long,
-        'wide_df': rni_apd,
+        'wide_df': rni_rci,
         'sa_df': rni_df,
         'order': 1,
     },
@@ -124,9 +124,9 @@ the_data = {
         'name': 'BOLD variance',
         'vlike': 'rsfmri_var_cdk',
         'long_df': var_long,
-        'wide_df': var_apd,
+        'wide_df': var_rci,
         'sa_df': var_df,
-        'order': 1,
+        'order': 2,
     }
 }
 
@@ -196,8 +196,6 @@ for meas in the_data.keys():
         ax=ax[i,0],
         palette=quartile_palette
     )
-    g.set_title(temp['name'])
-    g.set_xlabel('Spearman correlation')
     legend = g.get_legend()
     if i > 0:
         legend.remove()
@@ -218,14 +216,15 @@ for meas in the_data.keys():
         ax=ax[i,1], 
         vmax=1, vmin=-1
     )
-    
+    g.set_title(temp['name'])
+    g.set_xlabel('Spearman correlation')
     h.set_xlabel('Quantile')
     h.set_ylabel('')
     h.set_xticklabels(['Q1', 'Q2', 'Q3', 'Q4'])
     h.set_yticklabels(['Q1', 'Q2', 'Q3', 'Q4'])
     ax[i,0].axvline(temp_long['value'].mean(), color='#333333', linestyle='dotted', alpha=0.2)
 plt.yticks(rotation=0)
-fig.savefig(join(PROJ_DIR, FIGS_DIR, f'SA_axis-quantiles-apd_avg.png'), dpi=400, bbox_inches='tight')
+fig.savefig(join(PROJ_DIR, FIGS_DIR, f'SA_axis-quantiles-rci_avg.png'), dpi=400, bbox_inches='tight')
 
 ##########################################################################
 ### Not an exploratory analysis, just plotting average change over SA ####
@@ -258,7 +257,7 @@ for meas in the_data.keys():
     )
     g.ax.set_ylabel(temp['name'])
     g.ax.set_xlabel('Sensorimotor-association axis rank')
-    g.savefig(join(PROJ_DIR, FIGS_DIR, f'SA_axis-{meas}_lowess-apd_avg.png'), dpi=400, bbox_inches='tight')
+    g.savefig(join(PROJ_DIR, FIGS_DIR, f'SA_axis-{meas}_lowess-rci_avg.png'), dpi=400, bbox_inches='tight')
 
 
     z = np.polyfit(
@@ -286,8 +285,6 @@ for meas in the_data.keys():
         ax=ax,
         
     )
-    
-    #plt.sca(ax)
     plt.plot(
         long.dropna()['SA_avg'].sort_values(), 
         p(long.dropna()['SA_avg'].sort_values()), 
@@ -305,22 +302,22 @@ for meas in the_data.keys():
     )
     upper_max = int(long['SA_avg'].max() // 10)
     #upper_max = 35
-    h.set_ylim(-50,50)
+    #h.set_ylim(-50,50)
     #h.set_xticks(range(0, upper_max, upper_max // 5))
     #h.set_xticklabels(list(range(0,upper_max,upper_max // 5)))
     h.set_xlabel('Sensorimotor-association axis rank')
-    h.set_ylabel(f"Change in {temp['name']} (%)")
+    h.set_ylabel(f"Reliable change in {temp['name']}")
     #ax.axhline(0, color='#333333', linestyle='dotted', alpha=0.2)
     sns.despine()
-    fig.savefig(join(PROJ_DIR, FIGS_DIR, f'SA_axis-{meas}-apd_avg.png'), dpi=400, bbox_inches='tight')
+    fig.savefig(join(PROJ_DIR, FIGS_DIR, f'SA_axis-{meas}-rci_avg.png'), dpi=400, bbox_inches='tight')
 
-smri_long.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-thick_long-apd_avgs.csv'))
-rnd_long.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-rnd_long-apd_avgs.csv'))
-rni_long.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-rni_long-apd_avgs.csv'))
-var_long.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-var_long-apd_avgs.csv'))
+smri_long.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-thick_long-rci_avgs.csv'))
+rnd_long.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-rnd_long-rci_avgs.csv'))
+rni_long.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-rni_long-rci_avgs.csv'))
+var_long.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-var_long-rci_avgs.csv'))
 
-corr_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-quartile_correlations-apd_avg.csv'))
-fk_stats.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-quartile_heteroscedasticity-apd_avg.csv'))
+corr_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-quartile_correlations-rci_avg.csv'))
+fk_stats.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-quartile_heteroscedasticity-rci_avg.csv'))
 
 ##########################################################################
 ################# Exploratory analysis 4: age effects ####################
@@ -328,11 +325,32 @@ fk_stats.to_csv(join(PROJ_DIR, OUTP_DIR, 'SA_axis-quartile_heteroscedasticity-ap
 
 sa_breakdown = ['all'] + [f'q{i}' for i in range_]
 sexes = ['all', 'F', 'M']
-# age effects for apd
-apd_age_fxs = pd.DataFrame(
+
+rci_over_time_sa = pd.DataFrame(
+    dtype=float,
+    index=df.index,
+    columns=pd.MultiIndex.from_product([list(the_data.keys()), ['r', 'p']])
+)
+
+for meas in the_data.keys():
+    temp = df.filter(like=the_data[meas]['vlike'], axis=1)
+    sa = the_data[meas]['sa_df']['SA_avg']
+    for i in temp.index:
+        temp2 = pd.concat([temp.loc[i], sa], axis=1)
+        cols = temp2.columns
+        corr,p = spearmanr(temp2[cols[0]], temp2[cols[1]])
+        rci_over_time_sa.at[i, (meas, 'r')] = corr
+        rci_over_time_sa.at[i, (meas, 'p')] = p
+
+rci_over_time_sa.to_pickle(join(PROJ_DIR, OUTP_DIR, 'corr_rci_over_time_sa.pkl'))
+
+age_fxs = pd.DataFrame(
     dtype=float,
     columns=['all', 'M', 'F']
 )
+sa_breakdown = ['all'] + [f'q{i}' for i in range_]
+sexes = ['all', 'F', 'M']
+
 index = pd.MultiIndex.from_product([sa_breakdown, sexes])
 age_x_sa_q = pd.DataFrame(
     dtype=float,
@@ -343,46 +361,44 @@ age_x_sa_q = pd.DataFrame(
 for measure in the_data.keys():
     temp_dict = the_data[measure]
     temp_quantiles = quantiles[measure]
-    temp_df = temp_dict['wide_df']
+    temp_df = df.filter(like=temp_dict['vlike'], axis=1)
+
     sa = temp_dict['sa_df']['SA_avg']
+    
+    mean_age = df.filter(like='interview_age', axis=1).T.mean()
+    mean_age.name = 'age'
     order = temp_dict['order']
     
-    mean_age = big_df.filter(like='interview_age', axis=1).T.mean()
-    mean_age.name = 'age'
-    for i in temp_df.index:
-        temp2 = pd.concat([temp_df.loc[i], sa], axis=1)
-        
-        #apd_sa_corrs.at[i,measure] = temp2.corr(method='spearman').loc[i]['SA_avg']
     for col in temp_df.columns:
-        temp2 = pd.concat([mean_age, temp_df[col]], axis=1)
+        temp = pd.concat([mean_age, temp_df[col]], axis=1)
 
-        apd_age_fxs.at[col,'all'] = temp2.corr(method='spearman', numeric_only=True).loc[col]['age']
-        apd_age_fxs.at[col,'F'] = temp2.loc[f_ppts].corr(method='spearman', numeric_only=True).loc[col]['age']
-        apd_age_fxs.at[col,'M'] = temp2.loc[m_ppts].corr(method='spearman', numeric_only=True).loc[col]['age']
+        age_fxs.at[col,'all'] = temp.corr(method='spearman', numeric_only=True).loc[col]['age']
+        age_fxs.at[col,'F'] = temp.loc[f_ppts].corr(method='spearman', numeric_only=True).loc[col]['age']
+        age_fxs.at[col,'M'] = temp.loc[m_ppts].corr(method='spearman', numeric_only=True).loc[col]['age']
 
     age_sa = pd.concat(
         [
-            apd_age_fxs.filter(like=temp_dict['vlike'], axis=0),
+            age_fxs.filter(like=temp_dict['vlike'], axis=0),
             sa
         ],
         axis=1
     )
     long_age = age_sa.melt(id_vars='SA_avg', var_name='ppts', value_name='age_corr')
     g = sns.lmplot(age_sa, x='SA_avg', y='all', #hue='ppts', 
-                   order=2, aspect=1.2)
-    g.facet_axis(0,0).set_ylabel(f'APD x age correlation: {temp_dict["name"]}')
+                   order=order, aspect=1.2)
+    g.facet_axis(0,0).set_ylabel(f'RC/T x age correlation: {temp_dict["name"]}')
     g.savefig(
         join(
-            PROJ_DIR, FIGS_DIR, f'apd_x_age-{measure}-correlation-SA_avg-polynomial-all.png'
+            PROJ_DIR, FIGS_DIR, f'rci_x_age-{measure}-correlation-SA_avg-polynomial-all.png'
             ),
             dpi=400, bbox_inches='tight'
         )
     
     h = sns.lmplot(long_age, x='SA_avg', y='age_corr', hue='ppts', lowess=True, aspect=1.2)
-    h.facet_axis(0,0).set_ylabel(f'APD x age correlation: {temp_dict["name"]}')
+    h.facet_axis(0,0).set_ylabel(f'RC/T x age correlation: {temp_dict["name"]}')
     h.savefig(
         join(
-            PROJ_DIR, FIGS_DIR, f'apd_x_age-{measure}-correlation-SA_avg-lowess.png'
+            PROJ_DIR, FIGS_DIR, f'rci_x_age-{measure}-correlation-SA_avg-lowess.png'
             ),
             dpi=400, bbox_inches='tight'
         )
@@ -395,16 +411,15 @@ for measure in the_data.keys():
         age_x_sa_q.at[(f'q{quantile}', 'all'), measure] = q_df.corr(method='spearman').loc['all']['SA_avg']
         age_x_sa_q.at[(f'q{quantile}', 'F'), measure] = q_df.corr(method='spearman').loc['F']['SA_avg']
         age_x_sa_q.at[(f'q{quantile}', 'M'), measure] = q_df.corr(method='spearman').loc['M']['SA_avg']
-age_x_sa_q.to_csv(join(PROJ_DIR, OUTP_DIR, 'apd_x_age-correlations-SA_avg.csv'))
-apd_age_fxs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'apd_x_age-correlations.pkl'))
+age_x_sa_q.to_csv(join(PROJ_DIR, OUTP_DIR, 'rci_x_age-correlations-SA_avg.csv'))
+age_fxs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'rci_x_age-correlations.pkl'))
 
 all_sa = pd.concat([thk_df, rni_df, rnd_df, var_df], axis=0)['SA_avg']
 sex = pd.get_dummies(big_df['sex.baseline_year_1_arm_1'].dropna())['F']
 
-# now do it again for apd
-age_fx_sa = pd.concat([apd_age_fxs, all_sa / 1000, sex], axis=1)
+# now do it again for rci
+age_fx_sa = pd.concat([age_fxs, all_sa / 1000, sex], axis=1)
 age_fx_sa['SA_avg^2'] = age_fx_sa['SA_avg'] ** 2
-
 
 
 smri = age_fx_sa.filter(like='smri', axis=0)
@@ -424,4 +439,6 @@ rni_reg = pg.linear_regression(X=rni[['SA_avg', 'SA_avg^2']], y=rni['all'], remo
 rni_reg.index = [f'rni_{i}' for i in rni_reg.index]
 
 regressions = pd.concat([smri_reg, rsfmri_reg, rni_reg, rnd_reg], axis=0)
-regressions.to_csv(join(PROJ_DIR, OUTP_DIR, 'apd_x_age-sa_axis-regressions.csv'))
+regressions.to_csv(join(PROJ_DIR, OUTP_DIR, 'rci_x_age-sa_axis-regressions.csv'))
+
+df
