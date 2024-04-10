@@ -43,7 +43,9 @@ demo_df <- demo_df[demo_df$eventname == 'baseline_year_1_arm_1',]
 pbty_df <- readRDS('/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/ABCD_Covariates/ABCD_release5.0/04_Physical_Health/ABCD_5.0_Physical_Health.RDS')
 base_puberty <- pbty_df[pbty_df$eventname == 'baseline_year_1_arm_1','Puberty_Stage']
 y2fu_puberty <- pbty_df[pbty_df$eventname == '2_year_follow_up_y_arm_1','Puberty_Stage']
+
 pbty_df <- cbind(base_puberty,y2fu_puberty)
+pbty_df$delta_puberty <- pbty_df$y2fu_puberty - pbty_df$base_puberty
 
 df <- cbind(demo_df, pbty_df)
 rownames(df) <- df$src_subject_id
