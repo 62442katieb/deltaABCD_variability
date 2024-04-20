@@ -18,9 +18,11 @@ library(RColorBrewer)
 library(sjPlot)
 library(sjmisc)
 library(sjlabelled)
-library(lavaan)
+library(lme4)
+library(naniar)
 library(reticulate)
 use_python("/usr/bin/python3")
+set_theme(base = theme_minimal())
 # print versions pls
 print(sessionInfo())
 
@@ -36,262 +38,275 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
+regform <- 'r ~ interview_age + I(interview_age^2) + demo_sex_v2_bl + base + delta_Puberty +
+base*demo_sex_v2_bl + delta_Puberty*demo_sex_v2_bl+
+race_ethnicity_c_bl + highest_parent_educ_bl + household_income_4bins_bl + (1|rel_family_id_bl:site_id_l)'
 
-demo_df <- readRDS('/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/ABCD_Covariates/ABCD_release5.0/01_Demographics/ABCD_5.0_demographics_concise_final.RDS')
-demo_df <- demo_df[demo_df$eventname == 'baseline_year_1_arm_1',]
+sexreg <- 'r ~ interview_age + I(interview_age^2) + base + delta_Puberty + race_ethnicity_c_bl + 
+highest_parent_educ_bl + household_income_4bins_bl + (1|rel_family_id_bl:site_id_l)'
 
-pbty_df <- readRDS('/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/ABCD_Covariates/ABCD_release5.0/04_Physical_Health/ABCD_5.0_Physical_Health.RDS')
-base_puberty <- pbty_df[pbty_df$eventname == 'baseline_year_1_arm_1','Puberty_Stage']
-y2fu_puberty <- pbty_df[pbty_df$eventname == '2_year_follow_up_y_arm_1','Puberty_Stage']
-
-pbty_df <- cbind(base_puberty,y2fu_puberty)
-pbty_df$delta_puberty <- pbty_df$y2fu_puberty - pbty_df$base_puberty
-
-df <- cbind(demo_df, pbty_df)
-rownames(df) <- df$src_subject_id
-
+# **CORTICAL THICKNESS **
 thk <- pd$read_pickle(paste(PROJ_DIR, 
                            OUTP_DIR, 
-                           'sa_thk_corrs-rci.pkl',
+                           'thk_plus_demos.pkl',
                            sep = "/",
                            collapse = NULL))
 
-exes = c('base_puberty',
-         'interview_age',
-        'race_ethnicity_bl', 
-        'demo_sex_v2_bl',
-        'highest_parent_educ_bl',
-        'y2fu_puberty',
-        'household_income_4bins_tp',
-        'site_id_l', 'rel_family_id_bl')
-ppts <- rownames(thk)
-temp <- df[df$demo_sex_v2_bl == "Female",]
-f_ppts <- rownames(temp)
-temp <- df[df$demo_sex_v2_bl == "Male",]
-m_ppts <- rownames(temp)
+temp <- replace_with_na(
+  thk,
+  replace = list(highest_parent_educ_bl = "Missing/Refused",
+                 household_income_4bins_bl = "Don't know/Refuse to answer")
+  )
+complete_df <- drop_na(temp)
+complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
+                      levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
+                      labels = c('White', 'Asian/Other', 'Black', 'Hispanic'), 
+                      ordered = FALSE)
+complete_df$household_income_4bins_bl <- factor(complete_df$household_income_4bins_bl,
+                                                levels = c("<50k", 
+                                                           "50k_100k",
+                                                           ">100k",
+                                                           "Don't know/Refuse to answer"
+                                                           ),
+                                                labels = c("<50k", 
+                                                           "50k_100k",
+                                                           ">100k",
+                                                           "Don't know/Refuse to answer"
+                                                           ),
+                                                ordered = FALSE)
+complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
+                                             levels = c("< HS Diploma",
+                                                        "HS Diploma/GED",
+                                                        "Some College",
+                                                        "Bachelor Degree",
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
+                                             labels = c("< HS Diploma",
+                                                        "HS Diploma/GED",
+                                                        "Some College",
+                                                        "Bachelor Degree",
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
+                                             ordered = FALSE)
+forward_puberty <- rownames(complete_df[complete_df$delta_Puberty > 0,])
+reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
 
-# **CORTICAL THICKNESS **
-temp_df <- cbind(thk, df[ppts,exes])
-complete_df <- drop_na(temp_df)
+#f <- rownames(complete_df[complete_df$demo_sex_v2_bl == "Female",])
+#m <- rownames(complete_df[complete_df$demo_sex_v2_bl == "Male",])
+
 write.table(complete_df, file=paste(PROJ_DIR, 
                                     OUTP_DIR, 
                                     'complete_smri.csv',
                                     sep = "/",
                                     collapse = NULL), row.names = TRUE, sep=',')
-# female ppts
-temp_f <- temp_df[f_ppts,]
-complete_f <- drop_na(temp_f)
-# male ptps
-temp_m <- temp_df[m_ppts,]
-complete_m <- drop_na(temp_m)
 
-model_stats <- data.frame(matrix(ncol = 3, nrow = 12))
-x <- c("F", "df", "p")
-y <- c("thk", "thk_f", "thk_m",
-       "rni", "rni_f", "rni_m",
-       "rnd", "rnd_f", "rnd_m",
-       "var", "var_f", "var_m")
-colnames(model_stats) <- x
-rownames(model_stats) <- y
 
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + demo_sex_v2_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
+thk_lm <- lmer(regform,
              na.action = na.omit, data = complete_df)
+thk_lm2 <- lmer(regform,
+               na.action = na.omit, data = complete_df[forward_puberty,])
+#thk_lmf <- lmer(sexreg,
+#               na.action = na.omit, data = complete_df[f,])
+#thk_lmm <- lmer(sexreg,
+#                na.action = na.omit, data = complete_df[m,])
 
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
+tab_model(thk_lm, digits = 4,show.aic = T, show.std = "std2", 
+          file=paste(PROJ_DIR,
+                     OUTP_DIR,
+                     'thk-sa_corr-results-rci_lme.html',
+                     sep = "/",
+                     collapse = NULL))
 
-model_stats['thk','p'] <- p
-model_stats['thk','F'] <- x$fstatistic['value']
-model_stats['thk','df'] <- x$fstatistic['dendf']
+tab_model(thk_lm2, digits = 4,show.aic = T, show.std = "std2", 
+          file=paste(PROJ_DIR,
+                     OUTP_DIR,
+                     'thk-sa_corr-results-rci_lme-fwd_only.html',
+                     sep = "/",
+                     collapse = NULL))
 
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                             OUTP_DIR,
-                             'thk-sa_corr-results-rci.html',
-                             sep = "/",
-                             collapse = NULL))
-# female ppts only
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_f)
-
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
-
-model_stats['thk_f','p'] <- p
-model_stats['thk_f','F'] <- x$fstatistic['value']
-model_stats['thk_f','df'] <- x$fstatistic['dendf']
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                             OUTP_DIR,
-                             'thk-sa_corr-results-female-rci.html',
-                             sep = "/",
-                             collapse = NULL))
-# male ppts only
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_m)
-
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
-
-model_stats['thk_m','p'] <- p
-model_stats['thk_m','F'] <- x$fstatistic['value']
-model_stats['thk_m','df'] <- x$fstatistic['dendf']
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                             OUTP_DIR,
-                             'thk-sa_corr-results-male-rci.html',
-                             sep = "/",
-                             collapse = NULL))
 
 ######### REPEAT FOR RNI #############
-thk <- pd$read_pickle(paste(PROJ_DIR, 
+rni <- pd$read_pickle(paste(PROJ_DIR, 
                             OUTP_DIR, 
-                            'sa_rni_corrs-rci.pkl',
+                            'rni_plus_demos.pkl',
                             sep = "/",
                             collapse = NULL))
 
-temp_df <- cbind(thk, df[ppts,exes])
-complete_df <- drop_na(temp_df)
+temp <- replace_with_na(
+  rni,
+  replace = list(highest_parent_educ_bl = "Missing/Refused",
+                 household_income_4bins_bl = "Don't know/Refuse to answer")
+)
+complete_df <- drop_na(temp)
+complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
+                                          levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
+                                          labels = c('White', 'Asian/Other', 'Black', 'Hispanic'), 
+                                          ordered = FALSE)
+complete_df$household_income_4bins_bl <- factor(complete_df$household_income_4bins_bl,
+                                                levels = c("<50k", 
+                                                           "50k_100k",
+                                                           ">100k",
+                                                           "Don't know/Refuse to answer"),
+                                                labels = c("<50k", 
+                                                           "50k_100k",
+                                                           ">100k",
+                                                           "Don't know/Refuse to answer"),
+                                                ordered = FALSE)
+complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
+                                             levels = c("< HS Diploma",
+                                                        "HS Diploma/GED",
+                                                        "Some College",
+                                                        "Bachelor Degree",
+                                                        "Post Graduate Degree",
+                                                        "Missing/Refused"),
+                                             labels = c("< HS Diploma",
+                                                        "HS Diploma/GED",
+                                                        "Some College",
+                                                        "Bachelor Degree",
+                                                        "Post Graduate Degree",
+                                                        "Missing/Refused"),
+                                             ordered = FALSE)
+forward_puberty <- rownames(complete_df[complete_df$delta_Puberty > 0,])
+reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
+
 write.table(complete_df, file=paste(PROJ_DIR, 
                                     OUTP_DIR, 
                                     'complete_dmri.csv',
                                     sep = "/",
                                     collapse = NULL), row.names = TRUE, sep=',')
 
+rni_lm <- lmer(regform,
+               na.action = na.omit, data = complete_df)
+rni_lm2 <- lmer(regform,
+               na.action = na.omit, data = complete_df[forward_puberty,])
 
-# female ppts
-temp_f <- temp_df[f_ppts,]
-complete_f <- drop_na(temp_f)
-# male ptps
-temp_m <- temp_df[m_ppts,]
-complete_m <- drop_na(temp_m)
 
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + demo_sex_v2_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_df)
+summary(rni_lm)
 
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
-
-model_stats['rni','p'] <- p
-model_stats['rni','F'] <- x$fstatistic['value']
-model_stats['rni','df'] <- x$fstatistic['dendf']
-
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'rni-sa_corr-results-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
-# female ppts only
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_f)
-
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
-
-model_stats['rni_f','p'] <- p
-model_stats['rni_f','F'] <- x$fstatistic['value']
-model_stats['rni_f','df'] <- x$fstatistic['dendf']
-
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'rni-sa_corr-results-female-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
-# male ppts only
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_m)
-
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
-
-model_stats['rni_m','p'] <- p
-model_stats['rni_m','F'] <- x$fstatistic['value']
-model_stats['rni_m','df'] <- x$fstatistic['dendf']
-
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'rni-sa_corr-results-male-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
+tab_model(rni_lm, digits = 4,show.aic = T, show.std = "std2", 
+          file=paste(PROJ_DIR,
+                     OUTP_DIR,
+                     'rni-sa_corr-results-rci_lme.html',
+                     sep = "/",
+                     collapse = NULL))
+tab_model(rni_lm2, digits = 4,show.aic = T, show.std = "std2", 
+          file=paste(PROJ_DIR,
+                     OUTP_DIR,
+                     'rni-sa_corr-results-rci_lme-fwd_only.html',
+                     sep = "/",
+                     collapse = NULL))
 
 
 ######### REPEAT FOR RND #############
-thk <- pd$read_pickle(paste(PROJ_DIR, 
+rnd <- pd$read_pickle(paste(PROJ_DIR, 
                             OUTP_DIR, 
-                            'sa_rnd_corrs-rci.pkl',
+                            'rnd_plus_demos.pkl',
                             sep = "/",
                             collapse = NULL))
 
-temp_df <- cbind(thk, df[ppts,exes])
-complete_df <- drop_na(temp_df)
-# female ppts
-temp_f <- temp_df[f_ppts,]
-complete_f <- drop_na(temp_f)
-# male ptps
-temp_m <- temp_df[m_ppts,]
-complete_m <- drop_na(temp_m)
+temp <- replace_with_na(
+  rnd,
+  replace = list(highest_parent_educ_bl = "Missing/Refused",
+                 household_income_4bins_bl = "Don't know/Refuse to answer")
+)
+complete_df <- drop_na(temp)
+complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
+                                          levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
+                                          labels = c('White', 'Asian/Other', 'Black', 'Hispanic'), 
+                                          ordered = FALSE)
+complete_df$household_income_4bins_bl <- factor(complete_df$household_income_4bins_bl,
+                                                levels = c("<50k", 
+                                                           "50k_100k",
+                                                           ">100k",
+                                                           "Don't know/Refuse to answer"),
+                                                labels = c("<50k", 
+                                                           "50k_100k",
+                                                           ">100k",
+                                                           "Don't know/Refuse to answer"),
+                                                ordered = FALSE)
+complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
+                                             levels = c("< HS Diploma",
+                                                        "HS Diploma/GED",
+                                                        "Some College",
+                                                        "Bachelor Degree",
+                                                        "Post Graduate Degree",
+                                                        "Missing/Refused"),
+                                             labels = c("< HS Diploma",
+                                                        "HS Diploma/GED",
+                                                        "Some College",
+                                                        "Bachelor Degree",
+                                                        "Post Graduate Degree",
+                                                        "Missing/Refused"),
+                                             ordered = FALSE)
+forward_puberty <- rownames(complete_df[complete_df$delta_Puberty > 0,])
+reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
 
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + demo_sex_v2_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_df)
+rnd_lm <- lmer(regform,
+               na.action = na.omit, data = complete_df)
+rnd_lm2 <- lmer(regform,
+               na.action = na.omit, data = complete_df[forward_puberty,])
 
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
+summary(rnd_lm)
 
-model_stats['rnd','p'] <- p
-model_stats['rnd','F'] <- x$fstatistic['value']
-model_stats['rnd','df'] <- x$fstatistic['dendf']
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'rnd-sa_corr-results-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
-# female ppts only
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_f)
-
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
-
-model_stats['rnd_f','p'] <- p
-model_stats['rnd_f','F'] <- x$fstatistic['value']
-model_stats['rnd_f','df'] <- x$fstatistic['dendf']
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'rnd-sa_corr-results-female-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
-# male ppts only
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_m)
-
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
-
-model_stats['rnd_m','p'] <- p
-model_stats['rnd_m','F'] <- x$fstatistic['value']
-model_stats['rnd_m','df'] <- x$fstatistic['dendf']
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'rnd-sa_corr-results-male-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
-
+tab_model(rnd_lm, digits = 4,show.aic = T, show.std = "std2",
+          file=paste(PROJ_DIR,
+                       OUTP_DIR,
+                       'rnd-sa_corr-results-rci_lme.html',
+                       sep = "/",
+                       collapse = NULL))
+tab_model(rnd_lm2, digits = 4,show.aic = T, show.std = "std2",
+          file=paste(PROJ_DIR,
+                     OUTP_DIR,
+                     'rnd-sa_corr-results-rci_lme-fwd_only.html',
+                     sep = "/",
+                     collapse = NULL))
 
 ######### REPEAT FOR VAR #############
-thk <- pd$read_pickle(paste(PROJ_DIR, 
+var <- pd$read_pickle(paste(PROJ_DIR, 
                             OUTP_DIR, 
-                            'sa_var_corrs-rci.pkl',
+                            'var_plus_demos.pkl',
                             sep = "/",
                             collapse = NULL))
 
-temp_df <- cbind(thk, df[ppts,exes])
-complete_df <- drop_na(temp_df)
+temp <- replace_with_na(
+  var,
+  replace = list(highest_parent_educ_bl = "Missing/Refused",
+                 household_income_4bins_bl = "Don't know/Refuse to answer")
+)
+complete_df <- drop_na(temp)
+complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
+                                          levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
+                                          labels = c('White', 'Asian/Other', 'Black', 'Hispanic'), 
+                                          ordered = FALSE)
+complete_df$household_income_4bins_bl <- factor(complete_df$household_income_4bins_bl,
+                                                levels = c("<50k", 
+                                                           "50k_100k",
+                                                           ">100k",
+                                                           "Don't know/Refuse to answer"),
+                                                labels = c("<50k", 
+                                                           "50k_100k",
+                                                           ">100k",
+                                                           "Don't know/Refuse to answer"),
+                                                ordered = FALSE)
+complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
+                                             levels = c("< HS Diploma",
+                                                        "HS Diploma/GED",
+                                                        "Some College",
+                                                        "Bachelor Degree",
+                                                        "Post Graduate Degree",
+                                                        "Missing/Refused"),
+                                             labels = c("< HS Diploma",
+                                                        "HS Diploma/GED",
+                                                        "Some College",
+                                                        "Bachelor Degree",
+                                                        "Post Graduate Degree",
+                                                        "Missing/Refused"),
+                                             ordered = FALSE)
+forward_puberty <- rownames(complete_df[complete_df$delta_Puberty > 0,])
+reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
+
 write.table(complete_df, file=paste(PROJ_DIR, 
                                     OUTP_DIR, 
                                     'complete_rsfmri.csv',
@@ -299,58 +314,81 @@ write.table(complete_df, file=paste(PROJ_DIR,
                                     collapse = NULL), row.names = TRUE, sep=',')
 
 
-# female ppts
-temp_f <- temp_df[f_ppts,]
-complete_f <- drop_na(temp_f)
-# male ptps
-temp_m <- temp_df[m_ppts,]
-complete_m <- drop_na(temp_m)
+var_lm <- lmer(regform,
+               na.action = na.omit, data = complete_df)
 
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + demo_sex_v2_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_df)
+var_lm2 <- lmer(regform,
+               na.action = na.omit, data = complete_df[forward_puberty,])
 
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
+summary(var_lm)
 
-model_stats['var','p'] <- p
-model_stats['var','F'] <- x$fstatistic['value']
-model_stats['var','df'] <- x$fstatistic['dendf']
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'var-sa_corr-results-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
-# female ppts only
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_f)
+tab_model(var_lm, digits = 4, show.fstat = T,
+          show.aic = T, show.std = "std2",
+          file=paste(PROJ_DIR,
+                     OUTP_DIR,
+                     'var-sa_corr-results-rci_lme.html',
+                     sep = "/",
+                     collapse = NULL))
 
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
+tab_model(var_lm2, digits = 4, show.fstat = T,
+          show.aic = T, show.std = "std2",
+          file=paste(PROJ_DIR,
+                     OUTP_DIR,
+                     'var-sa_corr-results-rci_lme-fwd_only.html',
+                     sep = "/",
+                     collapse = NULL))
 
-model_stats['var_f','p'] <- p
-model_stats['var_f','F'] <- x$fstatistic['value']
-model_stats['var_f','df'] <- x$fstatistic['dendf']
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'var-sa_corr-results-female-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
-# male ppts only
-thk_lm <- lm('r ~ base_puberty + y2fu_puberty + interview_age + race_ethnicity_bl + highest_parent_educ_bl + household_income_4bins_tp + site_id_l',
-             na.action = na.omit, data = complete_m)
+q <- plot_models(rnd_lm, rni_lm, var_lm, thk_lm,
+                 grid = TRUE, 
+            spacing = 1, 
+            colors=c("#1b9e77", "#d95f02", "#7570b3", "#e7298a"), 
+            vline.color="#999999",
+            dot.size=2, 
+            std.est = 'std2', #robust = TRUE,
+            legend.title = "Brain Changes", 
+            m.labels=c("Neurite Density",
+                       "Cellularity",
+                       "Functional fluctuations",
+                       "Cortical thickness"), 
+            rm.terms=c(
+              "race_ethnicity_c_bl [Asian/Other, Black, Hispanic]",
+              "highest_parent_educ_bl [HS Diploma/GED, Some College, Bachelor Degree, Post Graduate Degree]",
+              "household_income_4bins_bl [50k_100k, >100k]"
+            ),
+            show.p=TRUE) + ylim(-0.4,0.3)
+q + theme(legend.position="bottom",
+          legend.title=element_blank(),
+          panel.spacing = unit(1, "lines"))
+ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_fxs_grid.png", sep = "/"),
+       #plot = q,
+       bg = "#FFFFFF",
+       device = "png",
+       dpi = "retina")
 
-summary(thk_lm)
-x <- summary(thk_lm)
-p <- pf(x$fstatistic[1],x$fstatistic[2],x$fstatistic[3],lower.tail=FALSE)
+p <- plot_models(rnd_lm2, rni_lm2, var_lm2, thk_lm2,
+                 grid = TRUE, 
+                 spacing = 1, 
+                 colors=c("#1b9e77", "#d95f02", "#7570b3", "#e7298a"), 
+                 vline.color="#999999",
+                 dot.size=2, 
+                 std.est = 'std2', #robust = TRUE,
+                 legend.title = "Brain Changes", 
+                 m.labels=c("Neurite Density",
+                            "Cellularity",
+                            "Functional fluctuations",
+                            "Cortical thickness"), 
+                 rm.terms=c(
+                   "race_ethnicity_c_bl [Asian/Other, Black, Hispanic]",
+                   "highest_parent_educ_bl [HS Diploma/GED, Some College, Bachelor Degree, Post Graduate Degree]",
+                   "household_income_4bins_bl [50k_100k, >100k]"
+                 ),
+                 show.p=TRUE) + ylim(-0.4,0.3)
+p + theme(legend.position="bottom",
+          legend.title=element_blank(),
+          panel.spacing = unit(1, "lines"))
 
-model_stats['var_m','p'] <- p
-model_stats['var_m','F'] <- x$fstatistic['value']
-model_stats['var_m','df'] <- x$fstatistic['dendf']
-tab_model(thk_lm, digits = 4, file=paste(PROJ_DIR,
-                                         OUTP_DIR,
-                                         'var-sa_corr-results-male-rci.html',
-                                         sep = "/",
-                                         collapse = NULL))
-write.csv(model_stats, paste(PROJ_DIR, OUTP_DIR, 'sa_corr-lm_model-stats-rci.csv', sep='/'))
+ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_fxs_grid-fwd_only.png", sep = "/"),
+       #plot = p,
+       bg = "#FFFFFF",
+       device = "png",
+       dpi = "retina")
