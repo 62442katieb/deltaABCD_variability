@@ -1,0 +1,222 @@
+#!/usr/bin/env python
+# coding: utf-8
+import enlighten
+import warnings
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import nibabel as nib
+import matplotlib.pyplot as plt
+
+from os.path import join
+from scipy.stats import spearmanr
+from nilearn import datasets, plotting
+from sklearn.manifold import Isomap
+# https://distill.pub/2016/misread-tsne/
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.model_selection import LeaveOneGroupOut
+
+warnings.filterwarnings('ignore')
+
+PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis/"
+DATA_DIR = "data/"
+FIGS_DIR = "figures/"
+OUTP_DIR = "output/"
+K = 3
+iters = 3
+repeats = K * iters
+
+# set the plotting settings so our graphs are pretty
+sns.set(context='talk', style='white', palette='Set2')
+
+df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'residualized_change_scores.pkl'))
+site_df = pd.read_csv(
+    '/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/Data/release4.0/csv/abcd_lt01.csv',
+    usecols=['subjectkey', 'eventname', 'site_id_l'],
+    index_col='subjectkey'
+)
+mrisn_df = pd.read_csv(
+    '/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/Data/release4.0/csv/abcd_mri01.csv',
+    usecols=['subjectkey', 'eventname', 'mri_info_manufacturer'],
+    index_col='subjectkey'
+)
+mrisn_df = mrisn_df[mrisn_df['eventname'] == 'baseline_year_1_arm_1']
+keep = mrisn_df[mrisn_df['mri_info_manufacturer'] == 'SIEMENS'].index
+families = pd.read_csv(
+    '/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/Data/release4.0/csv/acspsw03.csv',
+    usecols=['subjectkey', 'eventname', 'rel_family_id'],
+    index_col='subjectkey'
+)
+
+########## try it again with only siemens data ############
+
+site_df = site_df[site_df['eventname'] == 'baseline_year_1_arm_1']
+families = families[families['eventname'] == 'baseline_year_1_arm_1']
+
+df = pd.concat([df, families, site_df.drop('eventname', axis=1)], axis=1)
+df = df.loc[keep]
+df = df[df['site_id_l'] != 'site22']
+
+thk = df.filter(like='smri_thick_cdk').dropna()
+rni = df.filter(like='dmri_rsirnigm_cdk').dropna()
+rnd = df.filter(like='dmri_rsirndgm_cdk').dropna()
+var = df.filter(like='rsfmri_var_cdk').dropna()
+
+measures = {
+    'thk': thk,
+    'rni': rni,
+    'rnd': rnd,
+    'var': var
+}
+
+ppts = list(df.index)
+groups = df['site_id_l']
+sites = groups.unique()
+
+gkf = LeaveOneGroupOut()
+ismp = Isomap(
+    n_components=2, 
+    n_neighbors=3,
+    #gamma=0.3,,
+    #max_iter=10000,
+    n_jobs=4
+)
+scale = StandardScaler()
+
+primary = {
+    'thk': pd.DataFrame(dtype=float,
+                        columns=thk.columns,
+                        #index=sites
+                        index=range(repeats)
+                        ),
+    'rni': pd.DataFrame(dtype=float,
+                        columns=rni.columns,
+                        #index=sites
+                        index=range(repeats)
+                        ),
+    'rnd': pd.DataFrame(dtype=float,
+                        columns=rnd.columns,
+                        #index=sites
+                        index=range(repeats)
+                        ),
+    'var': pd.DataFrame(dtype=float,
+                        columns=var.columns,
+                        #index=sites
+                        index=range(repeats)
+                        ),
+}
+
+secondary = {
+    'thk': pd.DataFrame(dtype=float,
+                        columns=thk.columns,
+                        #index=sites
+                        index=range(repeats)
+                        ),
+    'rni': pd.DataFrame(dtype=float,
+                        columns=rni.columns,
+                        #index=sites
+                        index=range(repeats)
+                        ),
+    'rnd': pd.DataFrame(dtype=float,
+                        columns=rnd.columns,
+                        #index=sites
+                        index=range(repeats)
+                        ),
+    'var': pd.DataFrame(dtype=float,
+                        columns=var.columns,
+                        #index=sites
+                        index=range(repeats)
+                        ),
+}
+manager = enlighten.get_manager()
+tocks = manager.counter(total=repeats * len(list(measures.keys())), desc='Progress', unit='iterations')
+
+j = 0
+for k in range(iters):
+    for i, (train_index, test_index) in enumerate(gkf.split(X=df[df.columns[0]],groups=groups)):
+        # placeholder for multimodal gradient
+        # align region varnames and then stack by region
+        train_ppts = df.iloc[train_index].index
+        #site = list(set(sites) - set(groups.loc[train_ppts].unique()))[0]
+        
+        for measure in list(measures.keys()):
+            temp = measures[measure]
+            ppts = list(set(temp.index) & set(train_ppts))
+
+            for id_ in df.loc[train_ppts]['rel_family_id'].unique():
+                siblings = df[df['rel_family_id'] == id_].index.to_list()
+                if len(siblings) > 1:
+                    keep = np.random.choice(siblings)
+                    siblings.remove(keep)
+                    ppts = list(set(ppts) - set(siblings))
+                else:
+                    pass
+            temp = temp.loc[ppts]
+            temp = scale.fit_transform(temp)
+            #affinity = spearmanr(scale.fit_transform(temp))[0]
+            X = ismp.fit_transform(temp.T)
+            #gradients[measure].at[j] = X
+            primary[measure].loc[j] = X[:,0]
+            secondary[measure].loc[j] = X[:,1]
+            tocks.update()
+        j += 1
+            
+
+for measure in measures.keys():
+    temp = primary[measure]
+    temp2 = secondary[measure]
+    print(
+        measure, 
+        temp.dropna().T.corr(method='spearman').mean().mean(), 
+        temp2.dropna().T.corr(method='spearman').mean().mean(), 
+        temp.corrwith(temp2, method='spearman').mean().mean()
+    )
+sns.set(context='poster')
+measure_names = list(measures.keys())
+for measure in measure_names:
+    temp = primary[measure]
+    fig,ax = plt.subplots(ncols=2, figsize=(25,10))
+    g = sns.heatmap(temp.T.corr(method='spearman'), square=True, cmap='seismic', center=0,ax=ax[0])
+    #g.savefig(join(PROJ_DIR, FIGS_DIR, f'ismp-gradient_primary-{measure}_corr.png'), dpi=400, bbox_inches='tight')
+    temp.to_pickle(join(PROJ_DIR, OUTP_DIR, f'ismp-gradient_primary-{measure}.pkl'))
+    temp = secondary[measure]
+    g = sns.heatmap(temp.T.corr(method='spearman'), square=True, cmap='seismic', center=0,ax=ax[1])
+    fig.savefig(join(PROJ_DIR, FIGS_DIR, f'ismp-gradient_secondary-{measure}_corr.png'), dpi=400, bbox_inches='tight')
+    temp.to_pickle(join(PROJ_DIR, OUTP_DIR, f'ismp-gradient_secondary-{measure}.pkl'))
+# try only looking at the gradeints that correlate positively with the other gradients
+
+# compare across folds
+
+thk_sa = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'smri_thick_age-SA.pkl'))
+var_sa = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'rsfmri_var_age-SA.pkl'))
+rni_sa = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'dmri_rsirnigm_age-SA.pkl'))
+rnd_sa = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'dmri_rsirndgm_age-SA.pkl'))
+
+SA_dfs = {
+    'thk': thk_sa,
+    'rni': rni_sa,
+    'rnd': rnd_sa,
+    'var': var_sa
+}
+
+gradients = ['primary','secondary']
+
+
+cols = pd.MultiIndex.from_product([gradients, measure_names])
+
+SA_corrs = pd.DataFrame(
+    dtype=float,
+    index=range(repeats),
+    columns=cols
+)
+
+
+for i in range(repeats):
+    for measure in measure_names:
+        sa_df = SA_dfs[measure]
+        r = pd.concat([sa_df['SA_avg'],primary[measure].T[i]], axis=1).corr(method='spearman').loc[i]['SA_avg']
+        SA_corrs.at[i,('primary', measure)] = r
+        r = pd.concat([sa_df['SA_avg'],secondary[measure].T[i]], axis=1).corr(method='spearman').loc[i]['SA_avg']
+        SA_corrs.at[i,('secondary', measure)] = r
+SA_corrs.to_pickle(join(PROJ_DIR, OUTP_DIR, 'ismp-gradient_x_SA-corrs.pkl'))

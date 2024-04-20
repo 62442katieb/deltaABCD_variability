@@ -32,7 +32,6 @@ big_df = big_df.drop(big_df.filter(like='mri'), axis=1)
 
 ppts = list(set(df.index) & set(big_df.index))
 
-
 smri_rci = df.filter(regex='smri_thick_cdk.*')
 rni_rci = df.filter(regex='dmri_rsirnigm_cdk.*')
 rnd_rci = df.filter(regex='dmri_rsirndgm_cdk.*')

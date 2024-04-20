@@ -11,10 +11,11 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-def residualize(X, y=None, confounds=None):
+def residualize(X, y=None, confounds=None, return_regs=False):
     '''
     all inputs need to be arrays, not dataframes
     '''
+    x_regs = []
     # residualize the outcome
     if confounds is not None:
         if y is not None:
@@ -29,9 +30,13 @@ def residualize(X, y=None, confounds=None):
                 X_temp = X[:, i]
                 # print(X_temp.shape)
                 X_ = pg.linear_regression(confounds, X_temp)
+                x_regs.append(X_)
                 # print(X_.residuals_.shape)
                 resid_X[:, i] = X_.residuals_.flatten()
-            return resid_y, resid_X
+            if return_regs:
+                return resid_y, y, resid_X, x_regs
+            else:
+                return resid_y, resid_X
         else:
             # residualize features
             resid_X = np.zeros_like(X)
@@ -40,9 +45,13 @@ def residualize(X, y=None, confounds=None):
                 X_temp = X[:, i]
                 # print(X_temp.shape)
                 X_ = pg.linear_regression(confounds, X_temp)
+                x_regs.append(X_)
                 # print(X_.residuals_.shape)
                 resid_X[:, i] = X_.residuals_.flatten()
-            return resid_X
+            if return_regs:
+                return resid_X, x_regs
+            else:
+                return resid_X
 
 
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis/"
@@ -54,6 +63,46 @@ df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, "data_qcd.pkl"))
 #ppts = df.filter(regex="rsfmri_c_.*change_score").dropna().index
 df = df.drop(df.filter(regex='.*change_score', axis=1).columns, axis=1)
 
+keep = df[df['mrif_score.baseline_year_1_arm_1'].between(1,2, inclusive='both')].index
+df = df.loc[keep]
+keep = df[df['mrif_score.2_year_follow_up_y_arm_1'].between(1,2, inclusive='both')].index
+df = df.loc[keep]
+
+# modality-specific filtering via masks
+# specify the data to keep, then invert the mask before applying
+rsfmri_mask1 = df['imgincl_rsfmri_include.baseline_year_1_arm_1'] == 1
+rsfmri_mask2 = df['rsfmri_var_ntpoints.baseline_year_1_arm_1'] >= 750.
+rsfmri_mask3 = df['imgincl_rsfmri_include.2_year_follow_up_y_arm_1'] == 1
+rsfmri_mask4 = df['rsfmri_var_ntpoints.2_year_follow_up_y_arm_1'] >= 750.
+rsfmri_mask5 = df['rsfmri_var_meanmotion.baseline_year_1_arm_1'] < 0.5
+rsfmri_mask6 = df['rsfmri_var_meanmotion.2_year_follow_up_y_arm_1'] < 0.5
+rsfmri_mask = rsfmri_mask1 * rsfmri_mask2 * rsfmri_mask3 * rsfmri_mask4 * rsfmri_mask5 * rsfmri_mask6
+
+# t1 quality for freesurfer ROI delineations
+# 1=include, 0=exclude
+smri_mask1 = df['imgincl_t1w_include.baseline_year_1_arm_1'] == 1
+smri_mask2 = df['imgincl_t1w_include.2_year_follow_up_y_arm_1'] == 1
+smri_mask = smri_mask1 * smri_mask2
+
+# dmri quality for RSI estimates
+# 1=include, 0=exclude
+# head motion greater than 2mm FD on average = exclude
+dmri_mask1 = df['imgincl_dmri_include.baseline_year_1_arm_1'] == 1
+dmri_mask2 = df['dmri_rsi_meanmotion.baseline_year_1_arm_1'] < 2.
+dmri_mask3 = df['imgincl_dmri_include.2_year_follow_up_y_arm_1'] == 1
+dmri_mask4 = df['dmri_rsi_meanmotion.2_year_follow_up_y_arm_1'] < 2.
+dmri_mask = dmri_mask1 * dmri_mask2 * dmri_mask3 * dmri_mask4
+
+smri_cols = list(df.filter(regex='smri.').columns) + list(df.filter(regex='mrisdp.').columns)
+rsfmri_cols = df.filter(regex='rsfmri.').columns
+dmri_cols = df.filter(regex='dmri').columns
+other_cols = set(df.columns) - set(smri_cols) - set(rsfmri_cols) - set(dmri_cols)
+
+rsfmri_quality = df[rsfmri_cols].mask(np.invert(rsfmri_mask))
+smri_quality = df[smri_cols].mask(np.invert(smri_mask))
+dmri_quality = df[dmri_cols].mask(np.invert(dmri_mask))
+other = df[other_cols]
+
 covariates = {
     'thk': {
         'vlike': "smri_thick_cdk_",
@@ -62,22 +111,22 @@ covariates = {
     'rnd': {
         'vlike': "dmri_rsirndgm_cdk_",
         'covar': ['dmri_rsi_meanmotion', 
-                  'dmri_rsi_meanrot', 
-                  'dmri_rsi_meantrans',
+                  #'dmri_rsi_meanrot', 
+                  #'dmri_rsi_meantrans',
                   ]
     },
     'rni': {
         'vlike': "dmri_rsirnigm_cdk_",
         'covar': ['dmri_rsi_meanmotion', 
-                  'dmri_rsi_meanrot', 
-                  'dmri_rsi_meantrans',
+                  #'dmri_rsi_meanrot', 
+                  #'dmri_rsi_meantrans',
                   ]
     },
     'var': {
         'vlike': "rsfmri_var_cdk_",
         'covar': ['rsfmri_var_meanmotion', 
-                  'rsfmri_var_meanrot', 
-                  'rsfmri_var_meantrans'
+                  #'rsfmri_var_meanrot', 
+                  #'rsfmri_var_meantrans'
                   ]
     }
 }
@@ -112,8 +161,13 @@ handedness = pd.read_csv(
 handedness = handedness.swaplevel(axis=0).loc['baseline_year_1_arm_1']
 age2 = mri_df.swaplevel(axis=0).loc['2_year_follow_up_y_arm_1']['interview_age']
 age2.name = 'interview_age_2'
+age2 = pd.to_datetime(age2)
+pre_covid = age2[age2 < '2020-3-1'].index
+
 mri_df = mri_df.swaplevel(axis=0).loc['baseline_year_1_arm_1']
-ppts = mri_df[mri_df['mri_info_manufacturer'] == 'SIEMENS'].index
+siemens = mri_df[mri_df['mri_info_manufacturer'] == 'SIEMENS'].index
+ppts = list(set(pre_covid) & set(siemens))
+
 mri_df['sex'] = pd.get_dummies(mri_df['sex'])['F']
 scanners = pd.get_dummies(mri_df.loc[ppts]['mri_info_deviceserialnumber'])
 
@@ -126,7 +180,7 @@ mri_df = pd.concat(
     ],
     axis=1
 )
-all_covars = list(scanners.columns) + ['sex', 'ehi_y_ss_scoreb']
+all_covars = list(scanners.columns) + ['ehi_y_ss_scoreb']
 
 # need to load in 4.0 vars that include head motion and brain volume
 
