@@ -90,7 +90,7 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         #"Missing/Refused"
                                                         ),
                                              ordered = FALSE)
-forward_puberty <- rownames(complete_df[complete_df$delta_Puberty > 0,])
+forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
 
 #f <- rownames(complete_df[complete_df$demo_sex_v2_bl == "Female",])
@@ -107,10 +107,6 @@ thk_lm <- lmer(regform,
              na.action = na.omit, data = complete_df)
 thk_lm2 <- lmer(regform,
                na.action = na.omit, data = complete_df[forward_puberty,])
-#thk_lmf <- lmer(sexreg,
-#               na.action = na.omit, data = complete_df[f,])
-#thk_lmm <- lmer(sexreg,
-#                na.action = na.omit, data = complete_df[m,])
 
 tab_model(thk_lm, digits = 4,show.aic = T, show.std = "std2", 
           file=paste(PROJ_DIR,
@@ -126,6 +122,46 @@ tab_model(thk_lm2, digits = 4,show.aic = T, show.std = "std2",
                      sep = "/",
                      collapse = NULL))
 
+ss1 <- interact_plot(
+  thk_lm2, 
+  pred = "base", 
+  modx = "demo_sex_v2_bl", 
+  interval = TRUE, 
+  plot.points = TRUE,
+  colors = c("#ffb000", "#648fff")
+  )
+ss1 + theme(
+  axis.text = element_text(size = 16), 
+  axis.title.x = element_text(size=16),
+  axis.title.y = element_text(size=16),
+  legend.position = "none"
+  )
+ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_thk_timing-fwd_only.png", sep = "/"),
+       plot = ss1,
+       bg = "#FFFFFF",
+       device = "png",
+       width = 4, height = 2,
+       dpi = 300)
+
+ss2 <- interact_plot(
+  thk_lm2, 
+  pred = "delta_Puberty", 
+  modx = "demo_sex_v2_bl", 
+  interval = TRUE, 
+  plot.points = TRUE,
+  colors = c("#ffb000", "#648fff")
+)
+ss2 + theme(
+    axis.text = element_text(size = 16), 
+    axis.title.x = element_text(size=16),
+    axis.title.y = element_text(size=16),
+    legend.position = "none")
+ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_thk_tempo-fwd_only.png", sep = "/"),
+       plot = ss2,
+       bg = "#FFFFFF",
+       device = "png",
+       width = 4, height = 2,
+       dpi = 300)
 
 ######### REPEAT FOR RNI #############
 rni <- pd$read_pickle(paste(PROJ_DIR, 
@@ -168,7 +204,7 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "Post Graduate Degree",
                                                         "Missing/Refused"),
                                              ordered = FALSE)
-forward_puberty <- rownames(complete_df[complete_df$delta_Puberty > 0,])
+forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
 
 write.table(complete_df, file=paste(PROJ_DIR, 
@@ -197,6 +233,44 @@ tab_model(rni_lm2, digits = 4,show.aic = T, show.std = "std2",
                      'rni-sa_corr-results-rci_lme-fwd_only.html',
                      sep = "/",
                      collapse = NULL))
+ss1 <- interact_plot(
+  rni_lm2, 
+  pred = "base", 
+  modx = "demo_sex_v2_bl", 
+  interval = TRUE, 
+  colors = c("#ffb000", "#648fff")
+)
+ss1 + theme(
+  axis.text = element_text(size = 16), 
+  axis.title.x = element_text(size=16),
+  axis.title.y = element_text(size=16),
+  legend.position = "none"
+)
+ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_rni_timing-fwd_only.png", sep = "/"),
+       plot = ss1,
+       bg = "#FFFFFF",
+       device = "png",
+       width = 4, height = 2,
+       dpi = 300)
+
+ss2 <- interact_plot(
+  rni_lm2, 
+  pred = "delta_Puberty", 
+  modx = "demo_sex_v2_bl", 
+  interval = TRUE, 
+  colors = c("#ffb000", "#648fff")
+)
+ss2 + theme(
+  axis.text = element_text(size = 16), 
+  axis.title.x = element_text(size=16),
+  axis.title.y = element_text(size=16),
+  legend.position = "none")
+ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_rni_tempo-fwd_only.png", sep = "/"),
+       plot = ss2,
+       bg = "#FFFFFF",
+       device = "png",
+       width = 4, height = 2,
+       dpi = 300)
 
 
 ######### REPEAT FOR RND #############
@@ -240,7 +314,7 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "Post Graduate Degree",
                                                         "Missing/Refused"),
                                              ordered = FALSE)
-forward_puberty <- rownames(complete_df[complete_df$delta_Puberty > 0,])
+forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
 
 rnd_lm <- lmer(regform,
@@ -304,7 +378,7 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "Post Graduate Degree",
                                                         "Missing/Refused"),
                                              ordered = FALSE)
-forward_puberty <- rownames(complete_df[complete_df$delta_Puberty > 0,])
+forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
 
 write.table(complete_df, file=paste(PROJ_DIR, 
@@ -392,3 +466,10 @@ ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_fxs_grid-fwd_only.png", sep = "/"),
        bg = "#FFFFFF",
        device = "png",
        dpi = "retina")
+
+
+
+
+
+
+

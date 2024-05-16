@@ -10,7 +10,6 @@ from os.path import join
 from scipy.stats import spearmanr, fligner, variation
 from sklearn.ensemble import IsolationForest
 
-
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis/"
 DATA_DIR = "data/"
 FIGS_DIR = "figures/"
@@ -424,20 +423,48 @@ age_fx_sa['SA_avg^2'] = age_fx_sa['SA_avg'] ** 2
 smri = age_fx_sa.filter(like='smri', axis=0)
 smri_reg = pg.linear_regression(X=smri[['SA_avg', 'SA_avg^2']], y=smri['all'], remove_na=True)
 smri_reg.index = [f'thk_{i}' for i in smri_reg.index]
+smri_reg.at['thk_1','standard_b'] = smri_reg.loc['thk_1']['coef'] * np.std(smri['SA_avg']) / np.std(smri['all'])
+smri_reg.at['thk_2','standard_b'] = smri_reg.loc['thk_2']['coef'] * np.std(smri['SA_avg^2']) / np.std(smri['all'])
+
+smri_reg.at['thk_1','standard_2.5'] = smri_reg.loc['thk_1']['CI[2.5%]'] * np.std(smri['SA_avg']) / np.std(smri['all'])
+smri_reg.at['thk_1','standard_97.5'] = smri_reg.loc['thk_1']['CI[97.5%]'] * np.std(smri['SA_avg']) / np.std(smri['all'])
+
+smri_reg.at['thk_2','standard_2.5'] = smri_reg.loc['thk_2']['CI[2.5%]'] * np.std(smri['SA_avg^2']) / np.std(smri['all'])
+smri_reg.at['thk_2','standard_97.5'] = smri_reg.loc['thk_2']['CI[97.5%]'] * np.std(smri['SA_avg^2']) / np.std(smri['all'])
 
 rsfmri = age_fx_sa.filter(like='rsfmri', axis=0)
 rsfmri_reg = pg.linear_regression(X=rsfmri[['SA_avg', 'SA_avg^2']], y=rsfmri['all'], remove_na=True)
 rsfmri_reg.index = [f'var_{i}' for i in rsfmri_reg.index]
+rsfmri_reg.at['var_1','standard_b'] = rsfmri_reg.loc['var_1']['coef'] * np.std(rsfmri['SA_avg']) / np.std(rsfmri['all'])
+rsfmri_reg.at['var_2','standard_b'] = rsfmri_reg.loc['var_2']['coef'] * np.std(rsfmri['SA_avg^2']) / np.std(rsfmri['all'])
+
+rsfmri_reg.at['var_1','standard_2.5'] = rsfmri_reg.loc['var_1']['CI[2.5%]'] * np.std(rsfmri['SA_avg']) / np.std(rsfmri['all'])
+rsfmri_reg.at['var_1','standard_97.5'] = rsfmri_reg.loc['var_1']['CI[97.5%]'] * np.std(rsfmri['SA_avg']) / np.std(rsfmri['all'])
+rsfmri_reg.at['var_2','standard_2.5'] = rsfmri_reg.loc['var_2']['CI[2.5%]'] * np.std(rsfmri['SA_avg^2']) / np.std(rsfmri['all'])
+rsfmri_reg.at['var_2','standard_97.5'] = rsfmri_reg.loc['var_2']['CI[97.5%]'] * np.std(rsfmri['SA_avg^2']) / np.std(rsfmri['all'])
 
 rnd = age_fx_sa.filter(like='dmri_rsirnd', axis=0)
 rnd_reg = pg.linear_regression(X=rnd[['SA_avg', 'SA_avg^2']], y=rnd['all'], remove_na=True)
 rnd_reg.index = [f'rnd_{i}' for i in rnd_reg.index]
+rnd_reg.at['rnd_1','standard_b'] = rnd_reg.loc['rnd_1']['coef'] * np.std(rnd['SA_avg']) / np.std(rnd['all'])
+rnd_reg.at['rnd_2','standard_b'] = rnd_reg.loc['rnd_2']['coef'] * np.std(rnd['SA_avg^2']) / np.std(rnd['all'])
+
+rnd_reg.at['rnd_1','standard_2.5'] = rnd_reg.loc['rnd_1']['CI[2.5%]'] * np.std(rnd['SA_avg']) / np.std(rnd['all'])
+rnd_reg.at['rnd_1','standard_97.5'] = rnd_reg.loc['rnd_1']['CI[97.5%]'] * np.std(rnd['SA_avg']) / np.std(rnd['all'])
+
+rnd_reg.at['rnd_2','standard_2.5'] = rnd_reg.loc['rnd_2']['CI[2.5%]'] * np.std(rnd['SA_avg^2']) / np.std(rnd['all'])
+rnd_reg.at['rnd_2','standard_97.5'] = rnd_reg.loc['rnd_2']['CI[97.5%]'] * np.std(rnd['SA_avg^2']) / np.std(rnd['all'])
 
 rni = age_fx_sa.filter(like='dmri_rsirni', axis=0)
 rni_reg = pg.linear_regression(X=rni[['SA_avg', 'SA_avg^2']], y=rni['all'], remove_na=True)
 rni_reg.index = [f'rni_{i}' for i in rni_reg.index]
+rni_reg.at['rni_1','standard_b'] = rni_reg.loc['rni_1']['coef'] * np.std(rni['SA_avg']) / np.std(rni['all'])
+rni_reg.at['rni_2','standard_b'] = rni_reg.loc['rni_2']['coef'] * np.std(rni['SA_avg^2']) / np.std(rni['all'])
+
+rni_reg.at['rni_1','standard_2.5'] = rni_reg.loc['rni_1']['CI[2.5%]'] * np.std(rni['SA_avg']) / np.std(rni['all'])
+rni_reg.at['rni_1','standard_97.5'] = rni_reg.loc['rni_1']['CI[97.5%]'] * np.std(rni['SA_avg']) / np.std(rni['all'])
+rni_reg.at['rni_2','standard_2.5'] = rni_reg.loc['rni_2']['CI[2.5%]'] * np.std(rni['SA_avg^2']) / np.std(rni['all'])
+rni_reg.at['rni_2','standard_97.5'] = rni_reg.loc['rni_2']['CI[97.5%]'] * np.std(rni['SA_avg^2']) / np.std(rni['all'])
 
 regressions = pd.concat([smri_reg, rsfmri_reg, rni_reg, rnd_reg], axis=0)
 regressions.to_csv(join(PROJ_DIR, OUTP_DIR, 'rci_x_age-sa_axis-regressions.csv'))
-
-df
