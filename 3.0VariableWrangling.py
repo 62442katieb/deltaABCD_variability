@@ -439,7 +439,7 @@ for ppt in df.index:
     if ppt in pre_covid.index:
         ppts.at[ppt,'Pre-COVID'] = 1
     if ppt in siemens.index:
-        ppts.at[ppt,'Pre-COVID'] = 1
+        ppts.at[ppt,'SIEMENS'] = 1
     if ppt in smri_include:
         ppts.at[ppt,'sMRI QC'] = 1
     if ppt in dmri_include:

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+import pyreadr
 
 import pandas as pd
 import numpy as np
@@ -13,132 +14,180 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-df = pd.read_pickle("/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/data/data.pkl")
-all_ppts = df.index
+ABCD_DIR = '/Volumes/projects_herting/LABDOCS/PROJECTS/ABCD/ABCD_Covariates/ABCD_release5.0/'
+demo_df = pyreadr.read_r(join(ABCD_DIR, '01_Demographics/ABCD_5.0_demographics_concise_final.RDS'))
+demo_df = demo_df[None]
+demo_df.index = pd.MultiIndex.from_arrays([demo_df['src_subject_id'], demo_df['eventname']])
+demo_df = demo_df.drop(['src_subject_id', 'eventname'], axis=1)
 
-df['interview_date.2_year_follow_up_y_arm_1'] = pd.to_datetime(df['interview_date.2_year_follow_up_y_arm_1'])
-before_covid = df[df['interview_date.2_year_follow_up_y_arm_1'] < '2020-3-1'].index
-after_covid = list(set(all_ppts) - set(before_covid))
+baseline = demo_df.xs('baseline_year_1_arm_1', level=1)[['interview_age', 'site_id_l', 
+                                                        'race_ethnicity_c_bl', 'demo_sex_v2_bl',
+       'household_income_4bins_bl', 'highest_parent_educ_bl', 'rel_family_id_bl']]
+year_two = demo_df.xs('2_year_follow_up_y_arm_1', level=1)['interview_age']
+year_two.name = 'interview_age.2_year_follow_up_y_arm_1'
 
-demographics = ["demo_prnt_ed_v2.baseline_year_1_arm_1",
-                "demo_comb_income_v2.baseline_year_1_arm_1",
-                "race_ethnicity.baseline_year_1_arm_1",
-                "sex.baseline_year_1_arm_1", 
-                "mri_info_manufacturer.baseline_year_1_arm_1"
-               ]
+demo_df = pd.concat(
+    [
+        baseline.rename({'interview_age': 'interview_age.baseline_year_1_arm_1'}, axis=1),
+        year_two
+    ],
+    axis=1
+)
 
+demo_df = demo_df.replace(
+    {
+        "[<50K]": "<50k",
+        "[≥50K and <100K]": "50k_100k",
+        "[≥100K]": ">100k"
+    }
+)
 
-demo_df = df[demographics]
-#df = None
+pbty_df = pyreadr.read_r(join(ABCD_DIR, '04_Physical_Health/ABCD_5.0_Physical_Health.RDS'))
+pbty_df = pbty_df[None]
+pbty_df.index = pbty_df['src_subject_id']
+pbty_df = pbty_df.drop(['src_subject_id'], axis=1)
+pbty_df1 = pbty_df.replace(
+    {
+        'Pre Puberty': 1,
+        'Early Puberty': 2,
+        'Mid Puberty': 3,
+        'Late Puberty': 4,
+        'Post Puberty': 5
+    }
+)
 
-small_df = df.loc[all_ppts][demographics]
-small_df = small_df.replace({'F': 1, 'M': 0})
+pbty_df1 = pd.concat(
+    [
+        pbty_df1[pbty_df1['eventname'] == 'baseline_year_1_arm_1']['Puberty_Stage'],
+        pbty_df1[pbty_df1['eventname'] == '1_year_follow_up_y_arm_1']['Puberty_Stage'],
+        pbty_df1[pbty_df1['eventname'] == '2_year_follow_up_y_arm_1']['Puberty_Stage']
+    ],
+    axis=1
+)
+pbty_df1.columns = ['PDS.baseline_year_1_arm_1', 'PDS.1_year_follow_up_y_arm_1', 'PDS.2_year_follow_up_y_arm_1']
 
-smri_ppts = pd.read_csv(join(PROJ_DIR, OUTP_DIR, 'complete_smri.csv'), index_col=0).index
-dmri_ppts = pd.read_csv(join(PROJ_DIR, OUTP_DIR, 'complete_dmri.csv'), index_col=0).index
-fmri_ppts = pd.read_csv(join(PROJ_DIR, OUTP_DIR, 'complete_rsfmri.csv'), index_col=0).index
+for i in pbty_df1.index:
+    bln = float(pbty_df1.loc[i]['PDS.baseline_year_1_arm_1'])
+    one = float(pbty_df1.loc[i]['PDS.1_year_follow_up_y_arm_1'])
+    two = float(pbty_df1.loc[i]['PDS.2_year_follow_up_y_arm_1'])
+    change_1 = one - bln
+    change_2 = two - one
+    time_diff = (demo_df.loc[i]['interview_age.2_year_follow_up_y_arm_1'] - demo_df.loc[i]['interview_age.baseline_year_1_arm_1']) / 12
+    pbty_df1.at[i, 'delta_Puberty'] = (change_1 + change_2) / time_diff
 
-left_out_smri = list(set(all_ppts) - set(smri_ppts))
-left_out_dmri = list(set(all_ppts) - set(dmri_ppts))
-left_out_fmri = list(set(all_ppts) - set(fmri_ppts))
+pbty_df = pd.concat(
+    [
+        pbty_df[pbty_df['eventname'] == 'baseline_year_1_arm_1']['Puberty_Stage'],
+        pbty_df[pbty_df['eventname'] == '2_year_follow_up_y_arm_1']['Puberty_Stage']
+    ],
+    axis=1
+)
+pbty_df.columns = ['PDS.baseline_year_1_arm_1', 'PDS.2_year_follow_up_y_arm_1']
+
+pbty_df = pbty_df.replace(
+    {
+        'Post Puberty': 'Late/Post Puberty',
+        'Late Puberty': 'Late/Post Puberty',
+    }
+)
+
+ppt_lists = pd.read_csv(join(PROJ_DIR, OUTP_DIR, 'ppts_qc.csv'), index_col=0)
+rci = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'residualized_rci.pkl'))
+apd = pd.read_pickle(join(PROJ_DIR, OUTP_DIR, 'residualized_change_scores.pkl'))
+qcd = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'data_qcd.pkl'))
+
+demographics = [
+    "highest_parent_educ_bl",
+    "household_income_4bins_bl",
+    "race_ethnicity_c_bl",
+    "demo_sex_v2_bl",
+    "PDS.baseline_year_1_arm_1",
+    "PDS.2_year_follow_up_y_arm_1"
+]
 
 col_to_df = {
-    'whole_sample': all_ppts, 
-    'pre_covid': before_covid,
-    'post_covid': after_covid,
-    'left_out_smri': left_out_smri,
-    'left_out_dmri': left_out_dmri,
-    'left_out_fmri': left_out_fmri,
-    'smri_qc': smri_ppts,
-    'dmri_qc': dmri_ppts,
-    'fmri_qc': fmri_ppts,
+    'whole_sample': ppt_lists.index, 
+    'pre_covid': ppt_lists[ppt_lists['Pre-COVID'] == 1].index,
+    'post_covid': list(set(ppt_lists.index) - set(ppt_lists[ppt_lists['Pre-COVID'] == 1].index)),
+    'siemens': ppt_lists[ppt_lists['SIEMENS'] == 1].index,
+    'left_out_siemens': list(set(ppt_lists.index) - set(ppt_lists[ppt_lists['SIEMENS'] == 1].index)),
+    'smri_qc': ppt_lists[ppt_lists['sMRI QC'] == 1].index,
+    'dmri_qc': ppt_lists[ppt_lists['dMRI QC'] == 1].index,
+    'fmri_qc': ppt_lists[ppt_lists['fMRI QC'] == 1].index,
+    'left_out_smri': list(set(ppt_lists.index) - set(ppt_lists[ppt_lists['sMRI QC'] == 1].index)),
+    'left_out_dmri': list(set(ppt_lists.index) - set(ppt_lists[ppt_lists['dMRI QC'] == 1].index)),
+    'left_out_fmri': list(set(ppt_lists.index) - set(ppt_lists[ppt_lists['fMRI QC'] == 1].index)),
 }
 
 table = pd.DataFrame(index=['N', 
                             'Age_mean_base',
                             'Age_sdev_base',
                             'Age_Missing',
-                            'Sex_M', 
-                            'Sex_F', 
+                            'Elapsed_Time',
+                            'Male', 
+                            'Female', 
                             'Sex_Missing',
-                            'RE_Black',
-                            'RE_White',
-                            'RE_Hispanic',
-                            'RE_AsianOther',
-                            'RE_Missing',
-                            'RE_Refuse',
-                            'Income_gt100k', 
-                            'Income_50to100k', 
-                            'Income_lt50k',
-                            'Income_dkrefuse',
+                            'Puberty_Change_mean',
+                            'Puberty_Change_sdev',
+                            'Puberty_Missing',
+                            'White',
+                            'Hispanic',
+                            'Black',
+                            'Asian/Other',
+                            'Race_Missing',
+                            '>100k', 
+                            '50k_100k', 
+                            '<50k',
+                            'Don\'t know/Refuse to answer',
                             'Income_Missing',
-                            'Education_uptoHSGED',
-                            'Education_SomeColAA',
-                            'Education_Bachelors',
-                            'Education_Graduate',
-                            'Education_Refused',
+                            '< HS Diploma',
+                            'HS Diploma/GED',
+                            'Some College',
+                            'Bachelor Degree',
+                            'Post Graduate Degree',
                             'Education_Missing',
-                            'MRI_Siemens', 
-                            'MRI_GE', 
-                            'MRI_Philips',
-                            'MRI_Missing',
                             ], 
                      columns=list(col_to_df.keys()))
 
 for subset in col_to_df.keys():
-    ppts = col_to_df[subset]
-    temp_df = df.loc[ppts]
-    table.at['N', subset] = len(temp_df.index)
-    table.at['Age_mean_base', subset] = np.mean(temp_df['interview_age.baseline_year_1_arm_1'])
-    table.at['Age_sdev_base', subset] = np.std(temp_df['interview_age.baseline_year_1_arm_1'])
-    
-
-    # demographics
-    table.at['Age_Missing', subset] = temp_df['interview_age.baseline_year_1_arm_1'].isna().sum()
-    table.at['Sex_M', subset] = len(temp_df[temp_df['sex.baseline_year_1_arm_1'] == 'M'].index)
-    table.at['Sex_F', subset] = len(temp_df[temp_df['sex.baseline_year_1_arm_1'] == 'F'].index)
-    table.at['Sex_Missing', subset] = temp_df['sex.baseline_year_1_arm_1'].isna().sum()
-    table.at['RE_White',
-             subset] = len(temp_df[temp_df['race_ethnicity.baseline_year_1_arm_1'] == 1.].index)
-    table.at['RE_Black',
-             subset] = len(temp_df[temp_df['race_ethnicity.baseline_year_1_arm_1'] == 2.].index)
-    table.at['RE_Hispanic',
-             subset] = len(temp_df[temp_df['race_ethnicity.baseline_year_1_arm_1'] == 3.].index)
-    table.at['RE_AsianOther',
-             subset] = len(temp_df[temp_df['race_ethnicity.baseline_year_1_arm_1'].between(4.,5.,inclusive='both')].index)
-    table.at['RE_Refuse',
-             subset] = len(temp_df[temp_df['race_ethnicity.baseline_year_1_arm_1'] == 777.].index)
-    table.at['RE_Missing',
-             subset] = temp_df['race_ethnicity.baseline_year_1_arm_1'].isna().sum() + len(temp_df[temp_df['race_ethnicity.baseline_year_1_arm_1'] == 999.].index)
-    table.at['Income_gt100k', 
-         subset] = len(temp_df[temp_df['demo_comb_income_v2.baseline_year_1_arm_1'].between(9.,10., inclusive='both')].index)
-    table.at['Income_50to100k', 
-         subset] = len(temp_df[temp_df['demo_comb_income_v2.baseline_year_1_arm_1'].between(7., 8., inclusive='both')].index)
-    table.at['Income_lt50k', 
-         subset] = len(temp_df[temp_df['demo_comb_income_v2.baseline_year_1_arm_1'] <= 6.].index)
-    table.at['Income_dkrefuse', 
-            subset] = len(temp_df[temp_df['demo_comb_income_v2.baseline_year_1_arm_1'] == 777.].index)
-    table.at['Income_Missing', 
-            subset] = len(temp_df[temp_df['demo_comb_income_v2.baseline_year_1_arm_1'] == 999.].index) + temp_df['demo_comb_income_v2.baseline_year_1_arm_1'].isna().sum()
-    table.at['MRI_Siemens', 
-            subset] = len(temp_df[temp_df['mri_info_manufacturer.baseline_year_1_arm_1'] == "SIEMENS"].index)
-    table.at['MRI_GE', 
-            subset] = len(temp_df[temp_df['mri_info_manufacturer.baseline_year_1_arm_1'] == "GE MEDICAL SYSTEMS"].index)
-    table.at['MRI_Philips', 
-            subset] = len(temp_df[temp_df['mri_info_manufacturer.baseline_year_1_arm_1'] == "Philips Medical Systems"].index)
-    table.at['MRI_Missing', 
-            subset] = len(temp_df[temp_df['mri_info_manufacturer.baseline_year_1_arm_1'].isna()].index)
-    table.at['Education_uptoHSGED', 
-            subset] = len(temp_df[temp_df['demo_prnt_ed_v2.baseline_year_1_arm_1'].between(0,14,inclusive='both')])
-    table.at['Education_SomeColAA', 
-            subset] = len(temp_df[temp_df['demo_prnt_ed_v2.baseline_year_1_arm_1'].between(15,17, inclusive='both')])
-    table.at['Education_Bachelors', 
-            subset] = len(temp_df[temp_df['demo_prnt_ed_v2.baseline_year_1_arm_1'] == 18])
-    table.at['Education_Graduate', 
-            subset] = len(temp_df[temp_df['demo_prnt_ed_v2.baseline_year_1_arm_1'].between(19,22, inclusive='both')])
-    table.at['Education_Refused', 
-            subset] = len(temp_df[temp_df['demo_prnt_ed_v2.baseline_year_1_arm_1'] == 777.])
-    table.at['Education_Missing', 
-            subset] = temp_df['demo_prnt_ed_v2.baseline_year_1_arm_1'].isna().sum() + len(temp_df[temp_df['demo_prnt_ed_v2.baseline_year_1_arm_1'] == 999.])
+     ppts = col_to_df[subset]
+     temp_df = demo_df.loc[ppts]
+     temp_2 = pbty_df.loc[ppts]
+     temp_3 = pbty_df1.loc[ppts]['delta_Puberty']
+     temp_df = pd.concat([temp_df, temp_2, temp_3], axis=1)
+     table.at['N', subset] = len(ppts)
+     table.at['Age_mean_base', subset] = temp_df['interview_age.baseline_year_1_arm_1'].mean()
+     table.at['Age_sdev_base', subset] = temp_df['interview_age.baseline_year_1_arm_1'].std()
+     table.at['Sex_Missing', subset] = temp_df['demo_sex_v2_bl'].isna().sum()
+     table.at['Puberty_Change_mean', subset] = temp_df['delta_Puberty'].mean()
+     table.at['Puberty_Change_sdev', subset] = temp_df['delta_Puberty'].std()
+     table.at['Puberty_Missing', subset] = temp_df['PDS.baseline_year_1_arm_1'].isna().sum()
+     table.at['Race_Missing', subset] = temp_df['race_ethnicity_c_bl'].isna().sum()
+     table.at['Income_Missing', subset] = temp_df['household_income_4bins_bl'].isna().sum()
+     table.at['Education_Missing', subset] = temp_df['highest_parent_educ_bl'].isna().sum()
+     for col in demographics:
+        counts = temp_df[col].value_counts()
+        for level in counts.index:
+            table.at[level,subset] = counts[level]
 
 table.to_csv(join(PROJ_DIR, OUTP_DIR, 'deltaSA-demographics.csv'))
+
+pd.concat(
+    [
+        rci,
+        demo_df,
+        pbty_df,
+        pbty_df1['delta_Puberty']
+    ],
+    axis=1
+).to_csv(join(PROJ_DIR, DATA_DIR, 'rci_covar.csv'))
+
+pd.concat(
+    [
+        apd,
+        demo_df,
+        pbty_df,
+        pbty_df1['delta_Puberty']
+    ],
+    axis=1
+).to_csv(join(PROJ_DIR, DATA_DIR, 'apd_covar.csv'))
