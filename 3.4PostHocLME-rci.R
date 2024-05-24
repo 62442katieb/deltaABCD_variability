@@ -21,6 +21,7 @@ library(sjlabelled)
 library(lme4)
 library(naniar)
 library(reticulate)
+library(interactions)
 use_python("/usr/bin/python3")
 set_theme(base = theme_minimal())
 # print versions pls
@@ -38,11 +39,11 @@ DATA_DIR = "data/"
 FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
-regform <- 'r ~ interview_age + I(interview_age^2) + demo_sex_v2_bl + base + delta_Puberty +
-base*demo_sex_v2_bl + delta_Puberty*demo_sex_v2_bl+
+regform <- 'r ~ interview_age.baseline_year_1_arm_1 + I(interview_age.baseline_year_1_arm_1^2) + demo_sex_v2_bl + baseline_Puberty	 + delta_Puberty +
+baseline_Puberty*demo_sex_v2_bl + delta_Puberty*demo_sex_v2_bl+
 race_ethnicity_c_bl + highest_parent_educ_bl + household_income_4bins_bl + (1|rel_family_id_bl:site_id_l)'
 
-sexreg <- 'r ~ interview_age + I(interview_age^2) + base + delta_Puberty + race_ethnicity_c_bl + 
+sexreg <- 'r ~ interview_age.baseline_year_1_arm_1 + I(interview_age.baseline_year_1_arm_1^2) + baseline_Puberty	 + delta_Puberty + race_ethnicity_c_bl + 
 highest_parent_educ_bl + household_income_4bins_bl + (1|rel_family_id_bl:site_id_l)'
 
 # **CORTICAL THICKNESS **
@@ -122,12 +123,26 @@ tab_model(thk_lm2, digits = 4,show.aic = T, show.std = "std2",
                      sep = "/",
                      collapse = NULL))
 
+ss_timing <- sim_slopes(
+  thk_lm2, 
+  pred = "baseline_Puberty", 
+  modx = "demo_sex_v2_bl"
+)
+ss_timing
+ss_tempo <- sim_slopes(
+  thk_lm2, 
+  pred = "delta_Puberty", 
+  modx = "demo_sex_v2_bl"
+)
+ss_tempo
+
+
 ss1 <- interact_plot(
   thk_lm2, 
-  pred = "base", 
+  pred = "baseline_Puberty", 
   modx = "demo_sex_v2_bl", 
   interval = TRUE, 
-  plot.points = TRUE,
+  plot.points = FALSE,
   colors = c("#ffb000", "#648fff")
   )
 ss1 + theme(
@@ -148,7 +163,7 @@ ss2 <- interact_plot(
   pred = "delta_Puberty", 
   modx = "demo_sex_v2_bl", 
   interval = TRUE, 
-  plot.points = TRUE,
+  plot.points = FALSE,
   colors = c("#ffb000", "#648fff")
 )
 ss2 + theme(
@@ -233,11 +248,26 @@ tab_model(rni_lm2, digits = 4,show.aic = T, show.std = "std2",
                      'rni-sa_corr-results-rci_lme-fwd_only.html',
                      sep = "/",
                      collapse = NULL))
+
+ss_timing <- sim_slopes(
+  rni_lm2, 
+  pred = "baseline_Puberty", 
+  modx = "demo_sex_v2_bl"
+)
+ss_timing
+ss_tempo <- sim_slopes(
+  rni_lm2, 
+  pred = "delta_Puberty", 
+  modx = "demo_sex_v2_bl"
+)
+ss_tempo
+
 ss1 <- interact_plot(
   rni_lm2, 
-  pred = "base", 
+  pred = "baseline_Puberty", 
   modx = "demo_sex_v2_bl", 
   interval = TRUE, 
+  plot.points = FALSE,
   colors = c("#ffb000", "#648fff")
 )
 ss1 + theme(
@@ -336,7 +366,18 @@ tab_model(rnd_lm2, digits = 4,show.aic = T, show.std = "std2",
                      'rnd-sa_corr-results-rci_lme-fwd_only.html',
                      sep = "/",
                      collapse = NULL))
-
+ss_timing <- sim_slopes(
+  rnd_lm2, 
+  pred = "baseline_Puberty", 
+  modx = "demo_sex_v2_bl"
+)
+ss_timing
+ss_tempo <- sim_slopes(
+  rnd_lm2, 
+  pred = "delta_Puberty", 
+  modx = "demo_sex_v2_bl"
+)
+ss_tempo
 ######### REPEAT FOR VAR #############
 var <- pd$read_pickle(paste(PROJ_DIR, 
                             OUTP_DIR, 
@@ -394,8 +435,19 @@ var_lm <- lmer(regform,
 var_lm2 <- lmer(regform,
                na.action = na.omit, data = complete_df[forward_puberty,])
 
-summary(var_lm)
-
+summary(var_lm2)
+ss_timing <- sim_slopes(
+  var_lm2, 
+  pred = "baseline_Puberty", 
+  modx = "demo_sex_v2_bl"
+)
+ss_timing
+ss_tempo <- sim_slopes(
+  var_lm2, 
+  pred = "delta_Puberty", 
+  modx = "demo_sex_v2_bl"
+)
+ss_tempo
 tab_model(var_lm, digits = 4, show.fstat = T,
           show.aic = T, show.std = "std2",
           file=paste(PROJ_DIR,

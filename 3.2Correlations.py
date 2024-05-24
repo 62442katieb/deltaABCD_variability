@@ -6,10 +6,9 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-import pyreadr
-
 from os.path import join
 from scipy.stats import spearmanr
+from utils import jili_sidak_mc
 
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis/"
 DATA_DIR = "data/"
@@ -233,6 +232,23 @@ for score in change_scores.keys():
         ],
         axis=1
     )
+    descriptives = r_df.describe()
+    for col in descriptives.columns:
+        descriptives.at['range', col] = descriptives.loc['max'][col] - descriptives.loc['min'][col]
+    descriptives.at['align', 'Cortical thickness'] = np.sum(sa_thk_corrs[sa_thk_corrs['p'] < 0.01]['r'] > 0)
+    descriptives.at['contrast', 'Cortical thickness'] = np.sum(sa_thk_corrs[sa_thk_corrs['p'] < 0.01]['r'] < 0)
+
+    descriptives.at['align', 'Functional variance'] = np.sum(sa_var_corrs[sa_var_corrs['p'] < 0.01]['r'] > 0)
+    descriptives.at['contrast', 'Functional variance'] = np.sum(sa_var_corrs[sa_var_corrs['p'] < 0.01]['r'] < 0)
+
+    descriptives.at['align', 'Isotropic diffusion'] = np.sum(sa_rni_corrs[sa_rni_corrs['p'] < 0.01]['r'] > 0)
+    descriptives.at['contrast', 'Isotropic diffusion'] = np.sum(sa_rni_corrs[sa_rni_corrs['p'] < 0.01]['r'] < 0)
+
+    descriptives.at['align', 'Directional diffusion'] = np.sum(sa_rnd_corrs[sa_rnd_corrs['p'] < 0.01]['r'] > 0)
+    descriptives.at['contrast', 'Directional diffusion'] = np.sum(sa_rnd_corrs[sa_rnd_corrs['p'] < 0.01]['r'] < 0)
+    descriptives.to_csv(join(PROJ_DIR, OUTP_DIR, f'{score}-alignment_descriptives.csv'))
+    a_corr, M_eff = jili_sidak_mc(r_df, 0.05)
+    np.savetxt(join(PROJ_DIR, OUTP_DIR, f'{score}-alpha_corr.txt'), np.asanyarray((a_corr, M_eff)))
     fig,ax = plt.subplots(figsize=(5,2))
     sns.heatmap(r_df.dropna().sort_values('Cortical thickness').T, ax=ax, cmap='RdBu_r', center=0, vmax=1, vmin=-1)
     ax.set_xticklabels('')

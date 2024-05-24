@@ -440,11 +440,11 @@ for ppt in df.index:
         ppts.at[ppt,'Pre-COVID'] = 1
     if ppt in siemens.index:
         ppts.at[ppt,'SIEMENS'] = 1
-    if ppt in smri_include:
+    if ppt in smri_ppts:
         ppts.at[ppt,'sMRI QC'] = 1
-    if ppt in dmri_include:
+    if ppt in dmri_ppts:
         ppts.at[ppt,'dMRI QC'] = 1
-    if ppt in fmri_include:
+    if ppt in fmri_ppts:
         ppts.at[ppt,'fMRI QC'] = 1
 
 ppts.to_csv(join(PROJ_DIR, OUTP_DIR, 'ppts_qc.csv'))

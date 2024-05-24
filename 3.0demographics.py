@@ -174,20 +174,9 @@ table.to_csv(join(PROJ_DIR, OUTP_DIR, 'deltaSA-demographics.csv'))
 
 pd.concat(
     [
-        rci,
         demo_df,
         pbty_df,
         pbty_df1['delta_Puberty']
     ],
     axis=1
-).to_csv(join(PROJ_DIR, DATA_DIR, 'rci_covar.csv'))
-
-pd.concat(
-    [
-        apd,
-        demo_df,
-        pbty_df,
-        pbty_df1['delta_Puberty']
-    ],
-    axis=1
-).to_csv(join(PROJ_DIR, DATA_DIR, 'apd_covar.csv'))
+).to_csv(join(PROJ_DIR, DATA_DIR, 'data_covar.csv'))
