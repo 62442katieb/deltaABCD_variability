@@ -70,19 +70,24 @@ for i in pbty_df1.index:
     bln = float(pbty_df1.loc[i]['PDS.baseline_year_1_arm_1'])
     one = float(pbty_df1.loc[i]['PDS.1_year_follow_up_y_arm_1'])
     two = float(pbty_df1.loc[i]['PDS.2_year_follow_up_y_arm_1'])
-    change_1 = one - bln
-    change_2 = two - one
-    time_diff = (demo_df.loc[i]['interview_age.2_year_follow_up_y_arm_1'] - demo_df.loc[i]['interview_age.baseline_year_1_arm_1']) / 12
-    pbty_df1.at[i, 'delta_Puberty'] = (change_1 + change_2) / time_diff
+    time_diff = (demo_df.loc[i]['interview_age.2_year_follow_up_y_arm_1'] - demo_df.loc[i]['interview_age.baseline_year_1_arm_1']) / 12.
+    if one is not np.nan:
+        change_1 = one - bln
+        change_2 = two - one
+        pbty_df1.at[i, 'delta_Puberty'] = (change_1 + change_2) / time_diff
+    else:
+        change = two - bln
+        pbty_df1.at[i, 'delta_Puberty'] = change / time_diff
 
 pbty_df = pd.concat(
     [
         pbty_df[pbty_df['eventname'] == 'baseline_year_1_arm_1']['Puberty_Stage'],
+        pbty_df[pbty_df['eventname'] == '1_year_follow_up_y_arm_1']['Puberty_Stage'],
         pbty_df[pbty_df['eventname'] == '2_year_follow_up_y_arm_1']['Puberty_Stage']
     ],
     axis=1
 )
-pbty_df.columns = ['PDS.baseline_year_1_arm_1', 'PDS.2_year_follow_up_y_arm_1']
+pbty_df.columns = ['PDS.baseline_year_1_arm_1', 'PDS.1_year_follow_up_y_arm_1', 'PDS.2_year_follow_up_y_arm_1']
 
 pbty_df = pbty_df.replace(
     {
@@ -102,7 +107,7 @@ demographics = [
     "race_ethnicity_c_bl",
     "demo_sex_v2_bl",
     "PDS.baseline_year_1_arm_1",
-    "PDS.2_year_follow_up_y_arm_1"
+    #"PDS.2_year_follow_up_y_arm_1"
 ]
 
 col_to_df = {
@@ -123,13 +128,17 @@ table = pd.DataFrame(index=['N',
                             'Age_mean_base',
                             'Age_sdev_base',
                             'Age_Missing',
-                            'Elapsed_Time',
+                            'Elapsed_Time_mean',
+                            'Elapsed_Time_sdev',
                             'Male', 
                             'Female', 
                             'Sex_Missing',
                             'Puberty_Change_mean',
                             'Puberty_Change_sdev',
-                            'Puberty_Missing',
+                            'Puberty_Change_Missing',
+                            'Puberty0_Missing',
+                            'Puberty1_Missing',
+                            'Puberty2_Missing',
                             'White',
                             'Hispanic',
                             'Black',
@@ -158,10 +167,16 @@ for subset in col_to_df.keys():
      table.at['N', subset] = len(ppts)
      table.at['Age_mean_base', subset] = temp_df['interview_age.baseline_year_1_arm_1'].mean()
      table.at['Age_sdev_base', subset] = temp_df['interview_age.baseline_year_1_arm_1'].std()
+     elapsed = temp_df['interview_age.2_year_follow_up_y_arm_1'] - temp_df['interview_age.baseline_year_1_arm_1']
+     table.at['Elapsed_Time_mean', subset] = elapsed.mean()
+     table.at['Elapsed_Time_sdev', subset] = elapsed.std()
      table.at['Sex_Missing', subset] = temp_df['demo_sex_v2_bl'].isna().sum()
      table.at['Puberty_Change_mean', subset] = temp_df['delta_Puberty'].mean()
      table.at['Puberty_Change_sdev', subset] = temp_df['delta_Puberty'].std()
-     table.at['Puberty_Missing', subset] = temp_df['PDS.baseline_year_1_arm_1'].isna().sum()
+     table.at['Puberty_Change_Missing', subset] = temp_df['delta_Puberty'].isna().sum()
+     table.at['Puberty0_Missing', subset] = temp_df['PDS.baseline_year_1_arm_1'].isna().sum()
+     table.at['Puberty1_Missing', subset] = temp_df['PDS.1_year_follow_up_y_arm_1'].isna().sum()
+     table.at['Puberty2_Missing', subset] = temp_df['PDS.2_year_follow_up_y_arm_1'].isna().sum()
      table.at['Race_Missing', subset] = temp_df['race_ethnicity_c_bl'].isna().sum()
      table.at['Income_Missing', subset] = temp_df['household_income_4bins_bl'].isna().sum()
      table.at['Education_Missing', subset] = temp_df['highest_parent_educ_bl'].isna().sum()

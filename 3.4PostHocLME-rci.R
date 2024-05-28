@@ -132,7 +132,8 @@ ss_timing
 ss_tempo <- sim_slopes(
   thk_lm2, 
   pred = "delta_Puberty", 
-  modx = "demo_sex_v2_bl"
+  modx = "demo_sex_v2_bl",
+  confint = TRUE,
 )
 ss_tempo
 
