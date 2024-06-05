@@ -55,9 +55,8 @@ thk <- pd$read_pickle(paste(PROJ_DIR,
 
 temp <- replace_with_na(
   thk,
-  replace = list(highest_parent_educ_bl = "Missing/Refused",
-                 household_income_4bins_bl = "Don't know/Refuse to answer")
-  )
+  replace = list(highest_parent_educ_bl = "Missing/Refused")
+)
 complete_df <- drop_na(temp)
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
                       levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
@@ -188,8 +187,7 @@ rni <- pd$read_pickle(paste(PROJ_DIR,
 
 temp <- replace_with_na(
   rni,
-  replace = list(highest_parent_educ_bl = "Missing/Refused",
-                 household_income_4bins_bl = "Don't know/Refuse to answer")
+  replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
 complete_df <- drop_na(temp)
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
@@ -211,14 +209,16 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              labels = c("< HS Diploma",
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              ordered = FALSE)
 forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
@@ -311,10 +311,10 @@ rnd <- pd$read_pickle(paste(PROJ_DIR,
                             sep = "/",
                             collapse = NULL))
 
+
 temp <- replace_with_na(
   rnd,
-  replace = list(highest_parent_educ_bl = "Missing/Refused",
-                 household_income_4bins_bl = "Don't know/Refuse to answer")
+  replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
 complete_df <- drop_na(temp)
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
@@ -336,14 +336,16 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              labels = c("< HS Diploma",
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              ordered = FALSE)
 forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
@@ -386,10 +388,10 @@ var <- pd$read_pickle(paste(PROJ_DIR,
                             sep = "/",
                             collapse = NULL))
 
+
 temp <- replace_with_na(
   var,
-  replace = list(highest_parent_educ_bl = "Missing/Refused",
-                 household_income_4bins_bl = "Don't know/Refuse to answer")
+  replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
 complete_df <- drop_na(temp)
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
@@ -411,14 +413,16 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              labels = c("< HS Diploma",
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              ordered = FALSE)
 forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
@@ -479,10 +483,10 @@ q <- plot_models(rnd_lm, rni_lm, var_lm, thk_lm,
                        "Cortical thickness"), 
             rm.terms=c(
               "race_ethnicity_c_bl [Asian/Other, Black, Hispanic]",
-              "highest_parent_educ_bl [HS Diploma/GED, Some College, Bachelor Degree, Post Graduate Degree]",
-              "household_income_4bins_bl [50k_100k, >100k]"
+              "highest_parent_educ_bl [HS Diploma/GED, Some College, Bachelor Degree, Post Graduate Degree,Missing/Refused]",
+              "household_income_4bins_bl [50k_100k, >100k, Don't know/Refuse to answer]"
             ),
-            show.p=TRUE) + ylim(-0.4,0.3)
+            show.p=TRUE) + ylim(-0.5,0.5)
 q + theme(legend.position="bottom",
           legend.title=element_blank(),
           panel.spacing = unit(1, "lines"))
@@ -506,10 +510,10 @@ p <- plot_models(rnd_lm2, rni_lm2, var_lm2, thk_lm2,
                             "Cortical thickness"), 
                  rm.terms=c(
                    "race_ethnicity_c_bl [Asian/Other, Black, Hispanic]",
-                   "highest_parent_educ_bl [HS Diploma/GED, Some College, Bachelor Degree, Post Graduate Degree]",
-                   "household_income_4bins_bl [50k_100k, >100k]"
+                   "highest_parent_educ_bl [HS Diploma/GED, Some College, Bachelor Degree, Post Graduate Degree,Missing/Refused]",
+                   "household_income_4bins_bl [50k_100k, >100k, Don't know/Refuse to answer]"
                  ),
-                 show.p=TRUE) + ylim(-0.4,0.3)
+                 show.p=TRUE) + ylim(-0.5,0.5)
 p + theme(legend.position="bottom",
           legend.title=element_blank(),
           panel.spacing = unit(1, "lines"))

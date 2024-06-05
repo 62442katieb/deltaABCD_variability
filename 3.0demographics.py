@@ -42,6 +42,12 @@ demo_df = demo_df.replace(
     }
 )
 
+demo_df = demo_df.replace(
+    {
+        'Missing/Refused': np.nan
+    }
+)
+
 pbty_df = pyreadr.read_r(join(ABCD_DIR, '04_Physical_Health/ABCD_5.0_Physical_Health.RDS'))
 pbty_df = pbty_df[None]
 pbty_df.index = pbty_df['src_subject_id']

@@ -55,8 +55,7 @@ thk <- pd$read_pickle(paste(PROJ_DIR,
 
 temp <- replace_with_na(
   thk,
-  replace = list(highest_parent_educ_bl = "Missing/Refused",
-                 household_income_4bins_bl = "Don't know/Refuse to answer")
+  replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
 complete_df <- drop_na(temp)
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
@@ -187,8 +186,7 @@ rni <- pd$read_pickle(paste(PROJ_DIR,
 
 temp <- replace_with_na(
   rni,
-  replace = list(highest_parent_educ_bl = "Missing/Refused",
-                 household_income_4bins_bl = "Don't know/Refuse to answer")
+  replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
 complete_df <- drop_na(temp)
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
@@ -210,14 +208,16 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              labels = c("< HS Diploma",
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              ordered = FALSE)
 forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
@@ -312,8 +312,7 @@ rnd <- pd$read_pickle(paste(PROJ_DIR,
 
 temp <- replace_with_na(
   rnd,
-  replace = list(highest_parent_educ_bl = "Missing/Refused",
-                 household_income_4bins_bl = "Don't know/Refuse to answer")
+  replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
 complete_df <- drop_na(temp)
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
@@ -335,14 +334,16 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              labels = c("< HS Diploma",
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              ordered = FALSE)
 forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
@@ -387,8 +388,7 @@ var <- pd$read_pickle(paste(PROJ_DIR,
 
 temp <- replace_with_na(
   var,
-  replace = list(highest_parent_educ_bl = "Missing/Refused",
-                 household_income_4bins_bl = "Don't know/Refuse to answer")
+  replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
 complete_df <- drop_na(temp)
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
@@ -410,14 +410,16 @@ complete_df$highest_parent_educ_bl <- factor(complete_df$highest_parent_educ_bl,
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              labels = c("< HS Diploma",
                                                         "HS Diploma/GED",
                                                         "Some College",
                                                         "Bachelor Degree",
-                                                        "Post Graduate Degree",
-                                                        "Missing/Refused"),
+                                                        "Post Graduate Degree"#,
+                                                        #"Missing/Refused"
+                                                        ),
                                              ordered = FALSE)
 forward_puberty <- rownames(complete_df[complete_df$delta_Puberty >= 0,])
 reverse_puberty <- rownames(complete_df[complete_df$delta_Puberty < 0,])
