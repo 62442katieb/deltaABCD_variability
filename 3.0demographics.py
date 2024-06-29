@@ -201,3 +201,13 @@ pd.concat(
     ],
     axis=1
 ).to_csv(join(PROJ_DIR, DATA_DIR, 'data_covar.csv'))
+
+
+pd.concat(
+    [
+        demo_df,
+        pbty_df,
+        pbty_df1['delta_Puberty']
+    ],
+    axis=1
+).to_pickle(join(PROJ_DIR, DATA_DIR, 'data_covar.pkl'))

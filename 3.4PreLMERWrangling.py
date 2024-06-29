@@ -18,7 +18,7 @@ FIGS_DIR = "figures/"
 OUTP_DIR = "output/"
 
 
-demo_df = pd.read_csv(join(PROJ_DIR, DATA_DIR, 'data_covar.csv'), index_col=0)
+demo_df = pd.read_pickle(join(PROJ_DIR, DATA_DIR, 'data_covar.pkl'))
 
 demo_df = demo_df.replace(
     {
@@ -81,10 +81,10 @@ var_df = pd.concat(
     axis=1
 ).dropna()
 
-thk_df.to_pickle(join(PROJ_DIR, OUTP_DIR, 'thk_plus_demos.pkl'))
-rni_df.to_pickle(join(PROJ_DIR, OUTP_DIR, 'rni_plus_demos.pkl'))
-rnd_df.to_pickle(join(PROJ_DIR, OUTP_DIR, 'rnd_plus_demos.pkl'))
-var_df.to_pickle(join(PROJ_DIR, OUTP_DIR, 'var_plus_demos.pkl'))
+thk_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'thk_plus_demos.csv'))
+rni_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'rni_plus_demos.csv'))
+rnd_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'rnd_plus_demos.csv'))
+var_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'var_plus_demos.csv'))
 
 
 thk = pd.read_pickle(join(PROJ_DIR, 
@@ -131,9 +131,9 @@ var_df = pd.concat(
 ).dropna()
 
 
-thk_df.to_pickle(join(PROJ_DIR, OUTP_DIR, 'thk_plus_demos-apd.pkl'))
-rni_df.to_pickle(join(PROJ_DIR, OUTP_DIR, 'rni_plus_demos-apd.pkl'))
-rnd_df.to_pickle(join(PROJ_DIR, OUTP_DIR, 'rnd_plus_demos-apd.pkl'))
-var_df.to_pickle(join(PROJ_DIR, OUTP_DIR, 'var_plus_demos-apd.pkl'))
+thk_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'thk_plus_demos-apd.csv'))
+rni_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'rni_plus_demos-apd.csv'))
+rnd_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'rnd_plus_demos-apd.csv'))
+var_df.to_csv(join(PROJ_DIR, OUTP_DIR, 'var_plus_demos-apd.csv'))
 
 

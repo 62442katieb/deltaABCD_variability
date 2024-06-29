@@ -34,10 +34,10 @@ print(sessionInfo())
 pd <- import("pandas")
 
 
-PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis/"
-DATA_DIR = "data/"
-FIGS_DIR = "figures/"
-OUTP_DIR = "output/"
+PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis"
+DATA_DIR = "data"
+FIGS_DIR = "figures"
+OUTP_DIR = "output"
 
 regform <- 'r ~ interview_age.baseline_year_1_arm_1 + I(interview_age.baseline_year_1_arm_1^2) + demo_sex_v2_bl + baseline_Puberty	 + delta_Puberty +
 baseline_Puberty*demo_sex_v2_bl + delta_Puberty*demo_sex_v2_bl+
@@ -47,9 +47,9 @@ sexreg <- 'r ~ interview_age.baseline_year_1_arm_1 + I(interview_age.baseline_ye
 highest_parent_educ_bl + household_income_4bins_bl + (1|rel_family_id_bl:site_id_l)'
 
 # **CORTICAL THICKNESS **
-thk <- pd$read_pickle(paste(PROJ_DIR, 
+thk <- read.csv(paste(PROJ_DIR, 
                             OUTP_DIR, 
-                            'thk_plus_demos-apd.pkl',
+                            'thk_plus_demos-apd.csv',
                             sep = "/",
                             collapse = NULL))
 
@@ -57,7 +57,9 @@ temp <- replace_with_na(
   thk,
   replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
-complete_df <- drop_na(temp)
+#complete_df <- drop_na(temp)
+complete_df <- temp
+
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
                                           levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
                                           labels = c('White', 'Asian/Other', 'Black', 'Hispanic'), 
@@ -178,9 +180,9 @@ ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_thk_tempo-fwd_only-apd.png", sep = "/"),
        dpi = 300)
 
 ######### REPEAT FOR RNI #############
-rni <- pd$read_pickle(paste(PROJ_DIR, 
+rni <- read.csv(paste(PROJ_DIR, 
                             OUTP_DIR, 
-                            'rni_plus_demos-apd.pkl',
+                            'rni_plus_demos-apd.csv',
                             sep = "/",
                             collapse = NULL))
 
@@ -188,7 +190,8 @@ temp <- replace_with_na(
   rni,
   replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
-complete_df <- drop_na(temp)
+#complete_df <- drop_na(temp)
+complete_df <- temp
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
                                           levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
                                           labels = c('White', 'Asian/Other', 'Black', 'Hispanic'), 
@@ -304,9 +307,9 @@ ggsave(paste(PROJ_DIR, FIGS_DIR, "lmer_rni_tempo-fwd_only-apd.png", sep = "/"),
 
 
 ######### REPEAT FOR RND #############
-rnd <- pd$read_pickle(paste(PROJ_DIR, 
+rnd <- read.csv(paste(PROJ_DIR, 
                             OUTP_DIR, 
-                            'rnd_plus_demos-apd.pkl',
+                            'rnd_plus_demos-apd.csv',
                             sep = "/",
                             collapse = NULL))
 
@@ -314,7 +317,8 @@ temp <- replace_with_na(
   rnd,
   replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
-complete_df <- drop_na(temp)
+#complete_df <- drop_na(temp)
+complete_df <- temp
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
                                           levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
                                           labels = c('White', 'Asian/Other', 'Black', 'Hispanic'), 
@@ -380,9 +384,9 @@ ss_tempo <- sim_slopes(
 )
 ss_tempo
 ######### REPEAT FOR VAR #############
-var <- pd$read_pickle(paste(PROJ_DIR, 
+var <- read.csv(paste(PROJ_DIR, 
                             OUTP_DIR, 
-                            'var_plus_demos-apd.pkl',
+                            'var_plus_demos-apd.csv',
                             sep = "/",
                             collapse = NULL))
 
@@ -390,7 +394,9 @@ temp <- replace_with_na(
   var,
   replace = list(highest_parent_educ_bl = "Missing/Refused")
 )
-complete_df <- drop_na(temp)
+#complete_df <- drop_na(temp)
+complete_df <- temp
+
 complete_df$race_ethnicity_c_bl <- factor(complete_df$race_ethnicity_c_bl, 
                                           levels = c('White', 'Asian/Other', 'Black', 'Hispanic'),
                                           labels = c('White', 'Asian/Other', 'Black', 'Hispanic'), 
