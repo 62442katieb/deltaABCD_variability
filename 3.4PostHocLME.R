@@ -20,9 +20,9 @@ library(sjmisc)
 library(sjlabelled)
 library(lme4)
 library(naniar)
-library(reticulate)
+
 library(interactions)
-use_python("/usr/bin/python3")
+
 set_theme(base = theme_minimal())
 # print versions pls
 print(sessionInfo())
@@ -31,7 +31,7 @@ print(sessionInfo())
 #grouped into two different datasets -
 #one for RSI measures and other for Air
 #pollutants exposure measures from ABCD data.
-pd <- import("pandas")
+
 
 
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_SAaxis"
