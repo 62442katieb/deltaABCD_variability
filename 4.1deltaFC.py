@@ -32,6 +32,20 @@ def unvectorize_r(df, networks):
                 print(e)
     return corrmat
 
+def sem_unequal_variance(df):
+    if len(df.columns) == 2:
+        time1 = df.T.iloc[0]
+        time2 = df.T.iloc[1]
+    elif len(df.index) == 2:
+        time1 = df.iloc[0]
+        time2 = df.iloc[1]
+    s0 = time1.std()
+    s2 = time2.std()
+    r = np.corrcoef(time1,time2)[0,1]
+    sem = np.sqrt(((s0 * np.sqrt(1 - r)) ** 2) + ((s2 * np.sqrt(1 - r)) ** 2))
+    return sem
+        
+
 PROJ_DIR = "/Volumes/projects_herting/LABDOCS/Personnel/Katie/deltaABCD_clustering/"
 DATA_DIR = "data/"
 FIGS_DIR = "figures/"
@@ -70,7 +84,7 @@ for i in [j.split('_')[3] for j in within_network]:
 between_network = [i for i in base_rsfc.columns if i.split('_')[3] != i.split('_')[5]]
 
 conns = base_rsfc.columns
-
+# @Jo, add a df (can copy/paste) for "simple_change"
 sign_change = pd.DataFrame(index=ppts, columns=conns, dtype=float)
 change = pd.DataFrame(index=ppts, columns=conns, dtype=float)
 change_abs = pd.DataFrame(index=ppts, columns=conns, dtype=float)
@@ -79,6 +93,7 @@ rci = pd.DataFrame(index=ppts, columns=conns, dtype=float)
 rci_abs = pd.DataFrame(index=ppts, columns=conns, dtype=float)
 
 measures = {
+    # @Jo add simple_change
     'rci': rci,
     '|rci|': rci_abs,
     'apd': change,
@@ -86,23 +101,23 @@ measures = {
     'delta+1': change_plus1
 }
 
-for i in ppts:
-    if i not in base_rsfc.index or i not in y2fu_rsfc.index:
-        pass
-    else:
-        age0 = df.loc[i, 'interview_age.baseline_year_1_arm_1'] / 12.
-        age2 = df.loc[i, 'interview_age.2_year_follow_up_y_arm_1'] / 12.
-        for conn in conns:
+
+for conn in conns:
+    temp = pd.concat([base_rsfc[conn], y2fu_rsfc[conn]], axis=1)
+            
+    sem = sem_unequal_variance(temp.dropna())
+    abs_sem = sem_unequal_variance(abs(temp.dropna()))
+    for i in ppts:
+        if i not in base_rsfc.index or i not in y2fu_rsfc.index:
+            pass
+        else:
+            age0 = df.loc[i, 'interview_age.baseline_year_1_arm_1'] / 12.
+            age2 = df.loc[i, 'interview_age.2_year_follow_up_y_arm_1'] / 12.
             base = base_rsfc.loc[i, conn]
             y2fu = y2fu_rsfc.loc[i, conn]
-            
-            temp = pd.concat([base_rsfc[conn], y2fu_rsfc[conn]])
-            
-            sem = np.std(temp.values, ddof=1) / np.sqrt(np.size(temp.values))
-            abs_sem = np.std(np.abs(temp.values), ddof=1) / np.sqrt(np.size(temp.values))
-            
-            rci.at[i,conn] = (y2fu - base) / sem
-            rci_abs.at[i,conn] = (np.abs(y2fu) - np.abs(base)) / abs_sem
+            # @Jo add simple_change using np.tanh(base)
+            rci.at[i,conn] = ((y2fu - base) / sem) / (age2 - age0)
+            rci_abs.at[i,conn] = ((np.abs(y2fu) - np.abs(base)) / abs_sem) / (age2 - age0)
             #print(base * y2fu)
             if base * y2fu > 0:
                 if y2fu > 0:
@@ -124,8 +139,9 @@ for i in ppts:
             base_plus1 = np.tanh(base) + 1
             y2fu_plus1 = np.tanh(y2fu) + 1
             change_plus1.at[i, conn] = (((y2fu_plus1 - base_plus1) / np.mean([y2fu_plus1, base_plus1])) * 100) / (age2 - age0)
+            
 
-
+# @Jo add simple change
 sign_change.to_pickle(join(PROJ_DIR, DATA_DIR, 'delta_rsFC-sign_changes.pkl'))
 rci.to_pickle(join(PROJ_DIR, DATA_DIR, 'delta_rsFC-rci.pkl'))
 rci_abs.to_pickle(join(PROJ_DIR, DATA_DIR, 'delta_rsFC-rci_abs.pkl'))
@@ -133,6 +149,7 @@ change.to_pickle(join(PROJ_DIR, DATA_DIR, 'delta_rsFC-change.pkl'))
 change_abs.to_pickle(join(PROJ_DIR, DATA_DIR, 'delta_rsFC-change_abs.pkl'))
 change_plus1.to_pickle(join(PROJ_DIR, DATA_DIR, 'delta_rsFC-change_plus1.pkl'))
 
+# @Jo, add long_simple
 long_corr = pd.concat(
     [
         change.melt(), 
@@ -176,6 +193,7 @@ long_plus1 = pd.concat(
 long_plus1['score'] = ['corr + 1'] * 593136
 
 mega_df = pd.concat([
+    # @Jo add long_simple
     long_corr,
     long_rci,
     long_abs, 
@@ -202,6 +220,7 @@ sns.boxenplot(
 )
 ax.set_yscale("symlog")
 ax.set_ylim(bottom=-(10**7), top=10**7)
+ax.set_xticklabels(['APΔ', 'RC/T', '|APΔ|', '|RC/T|', 'r + 1'])
 ax.set_ylabel('Change Estimate')
 ax.set_xlabel('Change Algorithm')
 ax.legend(bbox_to_anchor=(1,1.05), title='Sign Change')
