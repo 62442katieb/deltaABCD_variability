@@ -25,6 +25,7 @@ func_cmap = sns.cubehelix_palette(n_colors=4, start=3.0, rot=-0.6, gamma=1.0, hu
 big_pal = morph_pal + cell_pal + func_pal
 morph_cell_pal = morph_pal + cell_pal
 
+
 sns.set(style="white", 
         context="talk", 
         font_scale=0.8,
@@ -631,4 +632,5 @@ cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal',
                                values=range_, 
                               )
 ax.set_xlabel('Annualized percent change')
-plt.savefig(f'{PROJ_DIR}/figures/func-cmap_1-{-vmax,vmax}.png', bbox_inches='tight', dpi=600)
+
+plt.savefig(f'{PROJ_DIR}/figures/func-cmap_1-{-vmax,vmax}.png', bbox_inches='tight', dpi=400)
